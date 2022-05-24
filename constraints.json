@@ -1,0 +1,272 @@
+{
+  "core_duties": {
+    "0": {
+      "enabled": true
+    }
+  },
+  "cons_of_the_week": {
+    "1": {
+      "daterange": {
+        "startdate": null,
+        "enddate": null,
+        "exclusions": [
+          {
+            "start": "2022-12-25",
+            "end": "2022-12-25"
+          }
+        ]
+      },
+      "enabled": true
+    }
+  },
+  "cons_of_the_weekend": {
+    "2": {
+      "startenddate": "for all dates",
+      "enabled": true
+    }
+  },
+  "cons_of_the_weekend_nights": {
+    "3": {
+      "startenddate": "for all dates",
+      "enabled": true
+    }
+  },
+  "some_shifts_are_locum": {
+    "4": {
+      "startenddate": "for all dates",
+      "enabled": true
+    }
+  },
+  "no_multitasking": {
+    "5": {
+      "enabled": true
+    }
+  },
+  "enforce_weekend_not_following_week": {
+    "6": {
+      "startenddate": "for all dates",
+      "enabled": true
+    }
+  },
+  "enforce_acceptable_deviation": {
+    "7": {
+      "shift": "weekday daytime",
+      "deviation": 8,
+      "startenddate": "for all dates",
+      "enabled": true
+    },
+    "8": {
+      "shift": "weekday oncall",
+      "deviation": 5,
+      "startenddate": "for all dates",
+      "enabled": true
+    },
+    "9": {
+      "shift": "weekend oncall",
+      "deviation": 5,
+      "startenddate": "for all dates",
+      "enabled": true
+    },
+    "10": {
+      "shift": "weekend daytime",
+      "deviation": 6,
+      "startenddate": "for all dates",
+      "enabled": true
+    }
+  },
+  "balance_tallies": {
+    "11": {
+      "enabled": true
+    }
+  },
+  "enforce_no_multiple_weekday_calls": {
+    "12": {
+      "startenddate": "for all dates",
+      "enabled": true
+    }
+  },
+  "enforce_no_night_before_dcc": {
+    "13": {
+      "startenddate": "for all dates",
+      "enabled": true,
+      "daterange": {
+        "startdate": null,
+        "enddate": null,
+        "exclusions": [
+          {
+            "start": "2022-05-10",
+            "end": "2022-05-10"
+          }
+        ]
+      }
+    }
+  },
+  "enforce_no_monday_after_weekend": {
+    "14": {
+      "startenddate": "for all dates",
+      "enabled": true,
+      "daterange": {
+        "startdate": null,
+        "enddate": null,
+        "exclusions": [
+          {
+            "start": "2022-06-20",
+            "end": "2022-06-20"
+          }
+        ]
+      }
+    }
+  },
+  "enforce_max_weekends_per_period": {
+    "15": {
+      "numerator": 1,
+      "denominator": 2,
+      "startenddate": "for all dates",
+      "enabled": true
+    },
+    "16": {
+      "numerator": 3,
+      "denominator": 5,
+      "startenddate": "for all dates",
+      "enabled": true
+    }
+  },
+  "enforce_max_weeks_per_period": {
+    "18": {
+      "numerator": 1,
+      "denominator": 2,
+      "startenddate": "for all dates",
+      "enabled": true
+    }
+  },
+  "enforce_max_oncalls_per_period": {
+    "19": {
+      "numerator": 6,
+      "denominator": 12,
+      "startenddate": "for all dates",
+      "enabled": true
+    }
+  },
+  "limit_locum_shifts": {
+    "20": {
+      "shift_type": [
+        "weekday daytime"
+      ],
+      "staff": [
+        "RORY"
+      ],
+      "collectively": "individually",
+      "moreless": "at most",
+      "minimum": 0,
+      "maximum": 0,
+      "startDate": "2022-06-01T00:00:00+01:00",
+      "endDate": "2022-08-31T00:00:00+01:00",
+      "enabled": true
+    },
+    "21": {
+      "shift_type": [
+        "weekday daytime"
+      ],
+      "staff": [
+        "Bartek"
+      ],
+      "collectively": "individually",
+      "moreless": "at least",
+      "maximum": 999,
+      "minimum": 2,
+      "startDate": "2022-06-01T00:00:00+01:00",
+      "endDate": "2022-08-31T00:00:00+01:00",
+      "enabled": true
+    }
+  },
+  "apply_jobplan": {
+    "22": {
+      "staff": "RORY",
+      "working_days": [
+        "monday",
+        "wednesday",
+        "thursday",
+        "friday"
+      ],
+      "startenddate": "for all dates",
+      "enabled": true
+    },
+    "23": {
+      "staff": "SANJIV",
+      "working_days": [
+        "monday",
+        "friday"
+      ],
+      "startenddate": "for all dates",
+      "enabled": true
+    },
+    "24": {
+      "staff": "JIM",
+      "working_days": [
+        "monday",
+        "thursday"
+      ],
+      "startenddate": "for all dates",
+      "enabled": true
+    },
+    "25": {
+      "staff": "DAN",
+      "working_days": [
+        "tuesday",
+        "thursday",
+        "friday"
+      ],
+      "startenddate": "for all dates",
+      "enabled": true
+    },
+    "26": {
+      "staff": "CHOITI",
+      "working_days": [
+        "tuesday",
+        "wednesday",
+        "friday"
+      ],
+      "startenddate": "for all dates",
+      "enabled": true
+    },
+    "27": {
+      "staff": "SAM",
+      "working_days": [
+        "tuesday",
+        "wednesday"
+      ],
+      "startenddate": "for all dates",
+      "enabled": true
+    },
+    "28": {
+      "staff": "BARTEK",
+      "working_days": [
+        "monday",
+        "wednesday",
+        "friday"
+      ],
+      "startenddate": "for all dates",
+      "enabled": true,
+      "daterange": {
+        "startdate": null,
+        "enddate": null,
+        "exclusions": []
+      }
+    },
+    "29": {
+      "staff": "SCOTT",
+      "working_days": [
+        "Thursday",
+        "Friday"
+      ],
+      "startenddate": "for all dates",
+      "enabled": true
+    }
+  },
+  "enforce_rules": {
+    "0": {
+      "enabled": true,
+      "enforcement": "must"
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{"type": "info", "message": "applying constraint:CoreDuties"}
+{"type": "info", "message": "applying constraint:ConsOfTheWeek"}
+{"type": "info", "message": "applying constraint:ConsOfTheWeekEnd"}
+{"type": "info", "message": "applying constraint:ConsOfTheWeekendNights"}
+{"type": "info", "message": "applying constraint:SomeShiftsAreLocum"}
+{"type": "info", "message": "applying constraint:NoMultiTasking"}
+{"type": "info", "message": "applying constraint:EnforceWeekendNotFollowingWeek"}
+{"type": "info", "message": "applying constraint:EnforceAcceptableDeviation"}
+{"type": "info", "message": "applying constraint:EnforceAcceptableDeviation"}
+{"type": "info", "message": "applying constraint:EnforceAcceptableDeviation"}
+{"type": "info", "message": "applying constraint:EnforceAcceptableDeviation"}
+{"type": "info", "message": "applying constraint:BalanceTallies"}
+{"type": "info", "message": "applying constraint:EnforceNoMultipleWeekdayCalls"}
+{"type": "info", "message": "applying constraint:EnforceNoNightBeforeDcc"}
+{"type": "info", "message": "applying constraint:EnforceNoMondayAfterWeekend"}
+{"type": "info", "message": "applying constraint:EnforceMaxWeekendsPerPeriod"}
+{"type": "info", "message": "applying constraint:EnforceMaxWeekendsPerPeriod"}
+{"type": "info", "message": "applying constraint:EnforceMaxWeekendsPerPeriod"}
+{"type": "info", "message": "applying constraint:EnforceMaxWeeksPerPeriod"}
+{"type": "info", "message": "applying constraint:EnforceMaxOncallsPerPeriod"}
+{"type": "info", "message": "applying constraint:LimitLocumShifts"}
+{"type": "info", "message": "applying constraint:LimitLocumShifts"}
+{"type": "info", "message": "applying constraint:ApplyJobPlan"}
+{"type": "info", "message": "applying constraint:ApplyJobPlan"}
+{"type": "info", "message": "applying constraint:ApplyJobPlan"}
+{"type": "info", "message": "applying constraint:ApplyJobPlan"}
+{"type": "info", "message": "applying constraint:ApplyJobPlan"}
+{"type": "info", "message": "applying constraint:ApplyJobPlan"}
+{"type": "info", "message": "applying constraint:ApplyJobPlan"}
+{"type": "info", "message": "applying constraint:ApplyJobPlan"}
+{"type": "info", "message": "applying constraint:IsOnShift"}
+{"type": "info", "message": "applying constraint:IsOnLeave"}
+{"type": "info", "message": "number of variables: 25380"}
+{"type": "progress", "time": 0, "objective": null}
+{"type": "solveStatus", "statusName": "INFEASIBLE", "status": 3}
+{"type": "eof"}

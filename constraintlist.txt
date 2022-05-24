@@ -1,0 +1,30 @@
+{"id": "0", "constraint": "core_duties"}
+{"id": "1", "constraint": "cons_of_the_week", "daterange": {"startdate": null, "enddate": null, "exclusions": [{"start": "2022-12-25", "end": "2022-12-25"}]}}
+{"id": "2", "constraint": "cons_of_the_week_end", "startenddate": "for all dates"}
+{"id": "3", "constraint": "cons_of_the_weekend_nights", "startenddate": "for all dates"}
+{"id": "4", "constraint": "some_shifts_are_locum", "startenddate": "for all dates"}
+{"id": "5", "constraint": "no_multi_tasking"}
+{"id": "6", "constraint": "enforce_weekend_not_following_week", "startenddate": "for all dates"}
+{"id": "7", "constraint": "enforce_acceptable_deviation", "shift": "weekday daytime", "deviation": 8, "startenddate": "for all dates"}
+{"id": "8", "constraint": "enforce_acceptable_deviation", "shift": "weekday oncall", "deviation": 5, "startenddate": "for all dates"}
+{"id": "9", "constraint": "enforce_acceptable_deviation", "shift": "weekend oncall", "deviation": 5, "startenddate": "for all dates"}
+{"id": "10", "constraint": "enforce_acceptable_deviation", "shift": "weekend daytime", "deviation": 6, "startenddate": "for all dates"}
+{"id": "11", "constraint": "balance_tallies"}
+{"id": "12", "constraint": "enforce_no_multiple_weekday_calls", "startenddate": "for all dates"}
+{"id": "13", "constraint": "enforce_no_night_before_dcc", "startenddate": "for all dates"}
+{"id": "14", "constraint": "enforce_no_monday_after_weekend", "startenddate": "for all dates"}
+{"id": "15", "constraint": "enforce_max_weekends_per_period", "numerator": 1, "denominator": 2, "startenddate": "for all dates"}
+{"id": "16", "constraint": "enforce_max_weekends_per_period", "numerator": 2, "denominator": 6, "startenddate": "for all dates"}
+{"id": "17", "constraint": "enforce_max_weekends_per_period", "numerator": 3, "denominator": 9, "startenddate": "for all dates"}
+{"id": "18", "constraint": "enforce_max_weeks_per_period", "numerator": 1, "denominator": 3, "startenddate": "for all dates"}
+{"id": "19", "constraint": "enforce_max_oncalls_per_period", "numerator": 4, "denominator": 12, "startenddate": "for all dates"}
+{"id": "20", "constraint": "limit_locum_shifts", "shift_type": ["weekday daytime"], "staff": ["RORY"], "collectively": "individually", "moreless": "at most", "minimum": 0, "maximum": 0, "startDate": "2022-06-01T00:00:00+01:00", "endDate": "2022-08-31T00:00:00+01:00"}
+{"id": "21", "constraint": "limit_locum_shifts", "shift_type": ["weekday daytime"], "staff": ["Bartek"], "collectively": "individually", "moreless": "at least", "maximum": 999, "minimum": 2, "startDate": "2022-06-01T00:00:00+01:00", "endDate": "2022-08-31T00:00:00+01:00"}
+{"id": "22", "constraint": "apply_job_plan", "staff": "RORY", "working_days": ["monday", "wednesday", "thursday", "friday"], "startenddate": "for all dates"}
+{"id": "23", "constraint": "apply_job_plan", "staff": "SANJIV", "working_days": ["monday", "friday"], "startenddate": "for all dates"}
+{"id": "24", "constraint": "apply_job_plan", "staff": "JIM", "working_days": ["monday", "thursday"], "startenddate": "for all dates"}
+{"id": "25", "constraint": "apply_job_plan", "staff": "DAN", "working_days": ["tuesday", "thursday", "friday"], "startenddate": "for all dates"}
+{"id": "26", "constraint": "apply_job_plan", "staff": "CHOITI", "working_days": ["tuesday", "wednesday", "friday"], "startenddate": "for all dates"}
+{"id": "27", "constraint": "apply_job_plan", "staff": "SAM", "working_days": ["tuesday", "wednesday"], "startenddate": "for all dates"}
+{"id": "28", "constraint": "apply_job_plan", "staff": "BARTEK", "working_days": ["monday", "wednesday", "friday"], "startenddate": "for all dates"}
+{"id": "29", "constraint": "apply_job_plan", "staff": "SCOTT", "working_days": ["thursday", "friday"], "startenddate": "for all dates"}

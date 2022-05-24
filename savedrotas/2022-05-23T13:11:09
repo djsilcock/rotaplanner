@@ -1,0 +1,14 @@
+{"type": "info", "message": "applying constraint:CoreDuties"}
+{"type": "info", "message": "applying constraint:ConsOfTheWeek"}
+{"type": "info", "message": "applying constraint:ConsOfTheWeekEnd"}
+{"type": "info", "message": "applying constraint:ConsOfTheWeekendNights"}
+{"type": "info", "message": "applying constraint:SomeShiftsAreLocum"}
+{"type": "info", "message": "applying constraint:NoMultiTasking"}
+{"type": "info", "message": "applying constraint:EnforceWeekendNotFollowingWeek"}
+{"type": "info", "message": "applying constraint:EnforceAcceptableDeviation"}
+{"type": "info", "message": "applying constraint:EnforceAcceptableDeviation"}
+{"type": "info", "message": "applying constraint:EnforceAcceptableDeviation"}
+{"type": "info", "message": "applying constraint:EnforceAcceptableDeviation"}
+{"type": "info", "message": "applying constraint:BalanceTallies"}
+{"type": "info", "message": "applying constraint:EnforceNoMultipleWeekdayCalls"}
+{"type": "info", "message": "applying constraint:EnforceNoNightBeforeDcc"}
