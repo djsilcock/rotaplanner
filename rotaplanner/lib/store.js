@@ -89,6 +89,10 @@ export function dutyReducer(state, action) {
     }
     if (action.type == 'statistic') {
         console.log(action)
+        return
+    }
+    if (action.type == 'result') {
+        return {...state,duties:action.result}
     }
     const {dutyType,name,shift,day}=action
     switch (dutyType) {
@@ -107,8 +111,7 @@ export function dutyReducer(state, action) {
                         return val
                     }
                     )),state)
-                
-            
+
         //eslint-disable-next-line no-fallthrough
         default:
             return setDeep(state,['duties',name,shift,day],dutyType)

@@ -18,7 +18,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import locale from 'date-fns/locale/en-GB'
 
-import { addDays, format } from 'date-fns';
+import { addDays, format,differenceInCalendarDays, isValid } from 'date-fns';
 import { dutyReducer} from '../lib/store';
 import { names } from '../lib/names';
 import { Cell } from '../components/Cell';
@@ -27,21 +27,50 @@ import { SettingsDialog } from '../components/SettingsDialog';
 import { setConstraint } from '../lib/setDuty';
 import { Grid } from '@mui/material';
 import { DateRangeDialog } from '../components/DateRangeDialog';
+import Pusher from 'pusher-js'
 
-const days = Array(16 * 7).fill(0).map((x, i) => i)
+const rotaEpoch = new Date(2020, 10, 2)
+
+function MessageBox() {
+  const [message,setMessage]=React.useState('meh')
+  React.useEffect(() => {
+    
+    Pusher.logToConsole = true;
+
+    var pusher = new Pusher('d5b9dd3a90ae13c7c36f', {
+      cluster: 'eu'
+    });
+
+    var channel = pusher.subscribe('my-channel');
+    channel.bind('my-event', function (data) {
+      setMessage(JSON.stringify(data));
+    });
+  
+  },[])
+  return message
+}
 
 function App() {
-
   const [dutyType, setDutyType] = React.useState('DEFINITE_ICU')
-  const [startDate, setStartDate] = React.useState('2022-02-02')
+  const [proposedStartDate, setProposedStartDate] = React.useState(rotaEpoch)
+  const [startDate,setStartDate]=React.useState(null)
   const handleChange = React.useCallback((evt, newValue) => {
     if (newValue !== null) {
       setDutyType(newValue)
     }
   }, [setDutyType])
+  React.useEffect(() => {
+    if (isValid(proposedStartDate)){
+      setStartDate(proposedStartDate)
+    }
+  }, [proposedStartDate])
+  React.useEffect(() => {
+    setProposedStartDate(new Date())
+  },[])
+  const days = React.useMemo(() => isValid(startDate) ? (
+    Array(16 * 7).fill(0).map((x, i) => i + differenceInCalendarDays(startDate, rotaEpoch))) : [], [startDate])
   
   const [{ duties, message },setDuty]=React.useReducer(dutyReducer,undefined,dutyReducer)
-  React.useEffect(() => {recalculate({ lastsaved: true }, setDuty) },[])
   return (
     <div className="App">
       <LocalizationProvider dateAdapter={AdapterDateFns} locale={locale}>
@@ -54,6 +83,7 @@ function App() {
             aria-label="text alignment"
           >
             <ToggleButton value="DEFINITE_ICU">ICU</ToggleButton>
+            <ToggleButton value="DEFINITE_LOCUM_ICU">ICU(£)</ToggleButton>
             <ToggleButton value="LEAVE">Leave</ToggleButton>
             <ToggleButton value="NOC">NOC</ToggleButton>
             <ToggleButton value="CLEAR">Clear</ToggleButton>
@@ -62,15 +92,17 @@ function App() {
           <DatePicker
             value={startDate}
             onChange={(newValue) => {
-              setStartDate(newValue);
+              setProposedStartDate(newValue);
             }}
+            minDate={rotaEpoch}
+            showTodayButton
             renderInput={(params) => (
               <TextField variant="standard" {...params} />
             )}
           />
           <SettingsDialog />
           <DateRangeDialog onChange={(v)=>console.log(v)}/>
-          <span>{message}</span>
+          <span>{message}</span><MessageBox/>
         </Paper>
        
         <TableContainer component={Paper}>
@@ -87,7 +119,7 @@ function App() {
                 }}></TableCell>
                 {days.map((x) => (
                   <TableCell key={x}>
-                    {format(addDays(new Date("2022-05-02"), x), "E d MMM")}
+                    {format(addDays(rotaEpoch, x), "E d MMM")}
                   </TableCell>
                 ))}
               </TableRow>
@@ -129,5 +161,4 @@ function App() {
 }
 
 export default App;
-
 

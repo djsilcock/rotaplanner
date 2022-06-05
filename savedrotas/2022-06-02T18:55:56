@@ -1,0 +1,4 @@
+{"type": "info", "message": "number of variables: 25668"}
+{"type": "progress", "time": 0, "objective": null}
+{"type": "solveStatus", "statusName": "INFEASIBLE", "status": 3}
+{"type": "eof"}

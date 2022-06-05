@@ -19,7 +19,7 @@ class Constraint(BaseConstraint):
             for constraint in self.rota.constraint_atoms:
                 self.rota.model.Add(constraint == 1)
         else:
-            self.rota.model.Maximize(sum(self.rota.constraint_atoms))
+            self.rota.minimize_targets.extend(atom.Not() for atom in self.rota.constraint_atoms)
 
     def event_stream(self, solver, event_stream):
         yield from event_stream

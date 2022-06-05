@@ -4,8 +4,12 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: '/backend/:slug',
-        destination: 'http://localhost:8000/:slug', // Matched parameters can be used in the destination
+        source: '/backend/:path*',
+        destination: 'http://localhost:8000/backend/:path*', // Matched parameters can be used in the destination
+      },
+      {
+        source: '/socket.io',
+        destination:'http://localhost:8000/socket.io'
       }
     ]
   },

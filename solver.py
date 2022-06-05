@@ -106,6 +106,7 @@ class RotaSolver(RSAbstract):
         self.model = cp_model.CpModel()
         self.all_duties = {}
         self.constraint_atoms=[]
+        self.minimize_targets=[]
         self.targets = None
 
     def set_enforcement_period(self, startdate, enddate, exclusions=None):
@@ -137,7 +138,7 @@ class RotaSolver(RSAbstract):
             exc_start=(date.fromisoformat(exclusion_range['start'])-self.startdate).days
             exc_end=(date.fromisoformat(exclusion_range['end'])-self.startdate).days+1
             days_to_exclude.extend(range(exc_start,exc_end))
-            with open('logfile.txt', 'a') as logfile:
+            with open('logfile.txt', 'a',encoding='utf-8') as logfile:
                 print(f'all exclusions:{days_to_exclude}', file=logfile)
                 
         if startdate is None:
@@ -173,12 +174,11 @@ class RotaSolver(RSAbstract):
     # Create a solver and solve.
     def solve(self):
         """solve model"""
-
         for constraint in self.constraints.values():
-            self.pipe.send(
-                {'type': 'info',
-                 'message': f'applying constraint:{type(constraint).__name__}'})
             constraint.apply_constraint()
+        with open('model.proto','w') as modelfile:
+            print(self.model,file=modelfile)
+        self.model.Minimize(sum(self.minimize_targets))
         solver = cp_model.CpSolver()
         self.pipe.send(
             {'type': 'info', 'message': f'number of variables: {len(self.all_duties)}'})
@@ -188,12 +188,16 @@ class RotaSolver(RSAbstract):
             self.model, VarArrayAndObjectiveSolutionPrinter(self.pipe))
         self.pipe.send({'type': 'solveStatus', 'statusName': solver.StatusName(
             status), 'status': status})
-        generator = []
+        event_generator = []
+        pairs=[]
         if solver.StatusName(status) in ['FEASIBLE', 'OPTIMAL']:
             for cons in self.constraints.values():
-                generator = cons.event_stream(solver, generator)
-            for event in generator:
-                self.pipe.send(event)
+                event_generator = cons.event_stream(solver, event_generator)
+                pairs=cons.process_output(solver,pairs)
+            for ((staff,shift,day),value) in pairs:
+                self.pipe.send({'type':'result','name':staff.name,'shift':shift.name,'day':day.name,'duty':value})
+            for event in event_generator:
+                self.pipe.send(event)          
         self.pipe.send({'type': 'eof'})
 
     # Enumerate all solutions.

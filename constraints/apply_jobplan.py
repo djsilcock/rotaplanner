@@ -43,16 +43,11 @@ class Constraint(BaseConstraint):
         for day in self.days():
             self.rota.model.Add(self.rota.get_duty(
                                 Duties.THEATRE, day, Shifts.ONCALL, staff) == 0)
-            with open('logfile.txt', 'a', encoding='utf-8') as logfile:
-                if day % 7 < 5:
-                    # is a weekday
-                    if day % 7 in working_days:
-                        self.rota.model.Add(self.rota.get_duty(
-                            Duties.OFF, day, Shifts.DAYTIME, staff) == 0)
-                        print(
-                            (f'jobplan {staff} on day {day%7} - working\n'), file=logfile)
-                    else:
-                        self.rota.model.Add(self.rota.get_duty(
-                            Duties.THEATRE, day, Shifts.DAYTIME, staff) == 0)
-                        print(
-                            f'jobplan {staff} on day {day%7} - not working', file=logfile)
+        
+            if day % 7 in working_days:
+                self.rota.model.Add(self.rota.get_duty(
+                    Duties.OFF, day, Shifts.DAYTIME, staff) == 0)
+            else:
+                self.rota.model.Add(self.rota.get_duty(
+                    Duties.THEATRE, day, Shifts.DAYTIME, staff) == 0)
+            

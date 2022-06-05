@@ -53,7 +53,7 @@ class Constraint(BaseConstraint):
                         for day in self.days()
                         if dayfilter(day))-targets[key])
 
-        self.rota.model.Minimize(sum(deltas.values()))
+        self.rota.minimize_targets.extend(deltas.values())
         self.targets = targets
 
     def event_stream(self, solver, event_stream):

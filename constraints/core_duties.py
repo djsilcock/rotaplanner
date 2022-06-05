@@ -18,16 +18,12 @@ class Constraint(BaseConstraint):
                         for staff in Staff) == 1
                 )
 
-    def event_stream(self, solver, event_stream):
-        yield from event_stream
+    def process_output(self, solver, pairs):
         for day in self.days():
-            for staff_member in Staff:
+            for duty in [Duties.ICU, Duties.THEATRE,Duties.LEAVE,Duties.OFF]:
                 for shift in Shifts:
-                    for duty in [Duties.ICU, Duties.THEATRE]:
-                        if solver.Value(self.rota.get_duty(duty, day, shift, staff_member)):
-                            yield (
-                                {'type': 'duty',
-                                 'dutyType': duty.name,
-                                 'day': day,
-                                 'shift': shift.name,
-                                 'name': staff_member.name})
+                    for staff in Staff:
+                        if solver.Value(self.rota.get_duty(duty, day, shift, staff)):
+                            yield ((staff,shift,day),duty.name)
+
+

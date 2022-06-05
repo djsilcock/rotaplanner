@@ -39,7 +39,7 @@ class Constraint(BaseConstraint):
             'weekend oncall': ([FRIDAY, SATURDAY, SUNDAY], [Shifts.ONCALL]),
             'weekend daytime': ([FRIDAY, SATURDAY, SUNDAY], [Shifts.DAYTIME]),
             'weekday oncall': ([MONDAY, TUESDAY, WEDNESDAY, THURSDAY], [Shifts.ONCALL]),
-            'weekday daytime': ([FRIDAY, SATURDAY, SUNDAY], [Shifts.DAYTIME]),
+            'weekday daytime': ([MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY], [Shifts.DAYTIME]),
             'any weekend': ([FRIDAY, SATURDAY, SUNDAY], [Shifts.ONCALL, Shifts.DAYTIME])
 
         }[shift]
@@ -47,8 +47,8 @@ class Constraint(BaseConstraint):
         for staff in Staff:
             for day in self.days():
                 for shift in Shifts:
-                    duties = [self.rota.get_duty(Duties.ICU, dd, shift, staff) for dd in range(
-                        0, day) if day in days and shift in shifts]
+                    duties = [self.rota.get_duty(Duties.QUOTA_ICU, dd, shift, staff) for dd in range(
+                        0, day) if day%7 in days and shift in shifts]
                     tally = self.rota.model.NewIntVar(
                         0,
                         self.rota.rota_cycles*7*self.rota.slots_on_rota,
@@ -56,12 +56,10 @@ class Constraint(BaseConstraint):
                     self.rota.model.AddAbsEquality(
                         tally,
                         sum(duties))
-                    target = self.rota.model.NewIntVar(
-                        0,
-                        self.rota.rota_cycles*7*self.rota.slots_on_rota,
-                        'target')
-                    self.rota.model.Add(target == (
-                        len(duties)//self.rota.people_on_rota)).OnlyEnforceIf(enforced)
+                    target = self.rota.model.NewConstant(
+                        len(duties)//self.rota.slots_on_rota,
+                        )
+                    
                     delta = self.rota.model.NewIntVar(-deviation,
                                                       deviation,
                                                       f'delta{day}{shift}{staff}')

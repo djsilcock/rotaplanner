@@ -6,9 +6,10 @@
 import re
 import json
 from importlib import import_module
+import pkgutil
 
 from abstracttypes import RotaSolver
-
+import constraints
 
 constraint_store = {}
 
@@ -21,11 +22,12 @@ class ConstraintMeta(type):
         result = type.__new__(cls, name, bases, members)
         sc_name = '_'.join([s.lower() for s in reg.findall(name)])
         print(f'Registering: {sc_name}')
+        print(__name__)
         constraint_store[sc_name] = result
         return result
 
 
-class BaseConstraint(metaclass=ConstraintMeta):
+class BaseConstraint():
     """base class for constraints"""
     #pylint: disable=unused-argument
 
@@ -74,6 +76,10 @@ class BaseConstraint(metaclass=ConstraintMeta):
         """called after solver has completed"""
         yield from (event_stream if event_stream is not None else [])
 
+    def process_output(self,solver,pairs):
+        """process output"""
+        return pairs
+
     def remove(self):
         """remove constraint from model"""
         return
@@ -93,10 +99,14 @@ def apply_constraint(model, **kwargs):
         model, **kwargs)
 
 
-def get_constraint_config(name=None):
+def get_constraint_config():
     """get form definition for settings page"""
-    if name is None:
-        return {k: get_constraint_config(k) for k in constraint_store}
-    return {
-        'name': constraint_store[name].name,
-        'definition': list(constraint_store[name].definition())}
+    config={}
+    for mod in pkgutil.iter_modules(constraints.__path__):
+        constraint_module=import_module(f'constraints.{mod.name}')
+        if hasattr(constraint_module,'Constraint'):
+            config[mod.name]={
+                'name':constraint_module.Constraint.name,
+                'definition':list(constraint_module.Constraint.definition())}
+    
+    return config

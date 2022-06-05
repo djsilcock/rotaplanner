@@ -51,27 +51,27 @@
   "enforce_acceptable_deviation": {
     "7": {
       "shift": "weekday daytime",
-      "deviation": 8,
+      "deviation": 5,
       "startenddate": "for all dates",
       "enabled": true
     },
     "8": {
       "shift": "weekday oncall",
-      "deviation": 5,
+      "deviation": 3,
       "startenddate": "for all dates",
-      "enabled": true
+      "enabled": false
     },
     "9": {
       "shift": "weekend oncall",
-      "deviation": 5,
+      "deviation": 3,
       "startenddate": "for all dates",
-      "enabled": true
+      "enabled": false
     },
     "10": {
       "shift": "weekend daytime",
-      "deviation": 6,
+      "deviation": 5,
       "startenddate": "for all dates",
-      "enabled": true
+      "enabled": false
     }
   },
   "balance_tallies": {
@@ -174,7 +174,7 @@
       "moreless": "at least",
       "maximum": 999,
       "minimum": 2,
-      "startDate": "2022-06-01T00:00:00+01:00",
+      "startDate": "2022-06-27T00:00:00+01:00",
       "endDate": "2022-08-31T00:00:00+01:00",
       "enabled": true
     }

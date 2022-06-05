@@ -4,6 +4,7 @@ import { setDuty } from './setDuty';
 export const recalculate = async (store, dispatch) => {
 
     dispatch({ type: 'message', message: 'recalculating' })
+    console.log(store)
     const it = makeTextFileLineIterator('/backend/recalculate', {
         headers: { 'accept': 'application/json' },
         method: 'post',
@@ -12,6 +13,9 @@ export const recalculate = async (store, dispatch) => {
     for await (let line of it) {
         const action = JSON.parse(line);
         switch (action.type) {
+            case 'result':
+                dispatch({ type: 'result', result: action.result });
+                break;
             case 'duty':
                 dispatch({ dutyType: action.dutyType, shift: action.shift, name: action.name, day: action.day });
                 break;
