@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script>
+
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+<style>
+.firstcol {
+    position: sticky;
+    left: 0;
+    background: white;
+    boxShadow: 5px 2px 5px grey;
+    borderRight: 2px solid black;
+    zIndex:1000;
+}
+th {
+    white-space:nowrap;
+    }
+td {
+    background-color:#eeeeee;
+    margin: 1px;
+    }
+</style>
+
+</head>
+<body>
+    <div>
+    <div class="firstcol">
+    <input name="datepicker" id="datepicker">
+    </div>
+    <table>
+    <thead>
+        <tr>
+            <th class="firstcol"></th>
+            {% for date in dates %}
+            <th >{{date}}</th>
+            {% endfor%}
+        </tr>
+    </thead>
+    <tbody>
+        {% set dutyname = {
+            'DEFINITE_ICU':'ICU',
+            'ICU':'ICU?',
+            'DEFINITE_LOCUM_ICU':'ICU(£)',
+            'LEAVE':'leave',
+            'NOC':'noc',
+            'THEATRE':'Th'
+            } %}
+        {%for name in names %}
+        <tr>
+            <td class="firstcol">{{name}}</td>
+            {% for date in dates %}
+            {% set dayduty=data[date]['DAYTIME'][name] %}
+            {% set nightduty=data[date]['ONCALL'][name] %}
+            <td>{{dutyname.get(dayduty,'-')}}<br>{{dutyname.get(nightduty,'-')}}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+    </div>
+    <script>
+    $("#datepicker").datepicker()
+    </script>
+</body>
+</html>

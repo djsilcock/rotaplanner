@@ -8,9 +8,13 @@ const nextConfig = {
         destination: 'http://localhost:8000/backend/:path*', // Matched parameters can be used in the destination
       },
       {
+        source: '/socket.io/',
+        destination:'http://localhost:8000/socket.io/'
+      },
+      {
         source: '/socket.io',
-        destination:'http://localhost:8000/socket.io'
-      }
+        destination: 'http://localhost:8000/socket.io'
+      },
     ]
   },
 }

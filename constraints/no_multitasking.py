@@ -15,6 +15,7 @@ class Constraint(BaseConstraint):
             for staff in Staff:
                 for shift in Shifts:
                     dutyset = {Duties.ICU, Duties.THEATRE,
-                               Duties.OFF, Duties.LEAVE}
+                               Duties.OFF, Duties.LEAVE,
+                               Duties.TIMEBACK}
                     self.rota.model.Add(sum(self.rota.get_or_create_duty(duty, day, shift, staff)
                                             for duty in dutyset) == 1)

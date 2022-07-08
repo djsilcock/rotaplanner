@@ -3364,3 +3364,5918 @@ applying for 250
 exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
 all exclusions:[49]
 exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 4
+applying for 5
+applying for 7
+applying for 9
+applying for 11
+applying for 12
+applying for 14
+applying for 15
+applying for 16
+applying for 18
+applying for 19
+applying for 21
+applying for 22
+applying for 23
+applying for 25
+applying for 26
+applying for 28
+applying for 29
+applying for 30
+applying for 32
+applying for 33
+applying for 35
+applying for 36
+applying for 37
+applying for 39
+applying for 40
+applying for 42
+applying for 43
+applying for 44
+applying for 46
+applying for 47
+applying for 49
+applying for 50
+applying for 51
+applying for 53
+applying for 54
+applying for 56
+applying for 57
+applying for 58
+applying for 60
+applying for 61
+applying for 63
+applying for 64
+applying for 65
+applying for 67
+applying for 68
+applying for 70
+applying for 71
+applying for 72
+applying for 74
+applying for 75
+applying for 77
+applying for 78
+applying for 79
+applying for 81
+applying for 82
+applying for 84
+applying for 85
+applying for 86
+applying for 88
+applying for 89
+applying for 91
+applying for 92
+applying for 93
+applying for 95
+applying for 96
+applying for 98
+applying for 99
+applying for 100
+applying for 102
+applying for 103
+applying for 105
+applying for 106
+applying for 107
+applying for 109
+applying for 110
+applying for 112
+applying for 113
+applying for 114
+applying for 116
+applying for 117
+applying for 119
+applying for 120
+applying for 121
+applying for 123
+applying for 124
+applying for 126
+applying for 127
+applying for 128
+applying for 130
+applying for 131
+applying for 133
+applying for 134
+applying for 135
+applying for 137
+applying for 138
+applying for 140
+applying for 141
+applying for 142
+applying for 144
+applying for 145
+applying for 147
+applying for 148
+applying for 149
+applying for 151
+applying for 152
+applying for 154
+applying for 155
+applying for 156
+applying for 158
+applying for 159
+applying for 161
+applying for 162
+applying for 163
+applying for 165
+applying for 166
+applying for 168
+applying for 169
+applying for 170
+applying for 172
+applying for 173
+applying for 175
+applying for 176
+applying for 177
+applying for 179
+applying for 180
+applying for 182
+applying for 183
+applying for 184
+applying for 186
+applying for 187
+applying for 189
+applying for 190
+applying for 191
+applying for 193
+applying for 194
+applying for 196
+applying for 197
+applying for 198
+applying for 200
+applying for 201
+applying for 203
+applying for 204
+applying for 205
+applying for 207
+applying for 208
+applying for 210
+applying for 211
+applying for 212
+applying for 214
+applying for 215
+applying for 217
+applying for 218
+applying for 219
+applying for 221
+applying for 222
+applying for 224
+applying for 225
+applying for 226
+applying for 228
+applying for 229
+applying for 231
+applying for 232
+applying for 233
+applying for 235
+applying for 236
+applying for 238
+applying for 239
+applying for 240
+applying for 242
+applying for 243
+applying for 245
+applying for 246
+applying for 247
+applying for 249
+applying for 250
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 3
+applying for 4
+applying for 5
+applying for 6
+applying for 7
+applying for 9
+applying for 10
+applying for 11
+applying for 12
+applying for 13
+applying for 14
+applying for 15
+applying for 16
+applying for 17
+applying for 18
+applying for 19
+applying for 20
+applying for 21
+applying for 22
+applying for 23
+applying for 24
+applying for 25
+applying for 26
+applying for 27
+applying for 28
+applying for 29
+applying for 30
+applying for 31
+applying for 32
+applying for 33
+applying for 34
+applying for 35
+applying for 36
+applying for 37
+applying for 38
+applying for 39
+applying for 40
+applying for 41
+applying for 42
+applying for 43
+applying for 44
+applying for 45
+applying for 46
+applying for 47
+applying for 48
+applying for 49
+applying for 50
+applying for 51
+applying for 52
+applying for 53
+applying for 54
+applying for 55
+applying for 56
+applying for 57
+applying for 58
+applying for 59
+applying for 60
+applying for 61
+applying for 62
+applying for 63
+applying for 64
+applying for 65
+applying for 66
+applying for 67
+applying for 68
+applying for 69
+applying for 70
+applying for 71
+applying for 72
+applying for 73
+applying for 74
+applying for 75
+applying for 76
+applying for 77
+applying for 78
+applying for 79
+applying for 80
+applying for 81
+applying for 82
+applying for 83
+applying for 84
+applying for 85
+applying for 86
+applying for 87
+applying for 88
+applying for 89
+applying for 90
+applying for 91
+applying for 92
+applying for 93
+applying for 94
+applying for 95
+applying for 96
+applying for 97
+applying for 98
+applying for 99
+applying for 100
+applying for 101
+applying for 102
+applying for 103
+applying for 104
+applying for 105
+applying for 106
+applying for 107
+applying for 108
+applying for 109
+applying for 110
+applying for 111
+applying for 112
+applying for 113
+applying for 114
+applying for 115
+applying for 116
+applying for 117
+applying for 118
+applying for 119
+applying for 120
+applying for 121
+applying for 122
+applying for 123
+applying for 124
+applying for 125
+applying for 126
+applying for 127
+applying for 128
+applying for 129
+applying for 130
+applying for 131
+applying for 132
+applying for 133
+applying for 134
+applying for 135
+applying for 136
+applying for 137
+applying for 138
+applying for 139
+applying for 140
+applying for 141
+applying for 142
+applying for 143
+applying for 144
+applying for 145
+applying for 146
+applying for 147
+applying for 148
+applying for 149
+applying for 150
+applying for 151
+applying for 152
+applying for 153
+applying for 154
+applying for 155
+applying for 156
+applying for 157
+applying for 158
+applying for 159
+applying for 160
+applying for 161
+applying for 162
+applying for 163
+applying for 164
+applying for 165
+applying for 166
+applying for 167
+applying for 168
+applying for 169
+applying for 170
+applying for 171
+applying for 172
+applying for 173
+applying for 174
+applying for 175
+applying for 176
+applying for 177
+applying for 178
+applying for 179
+applying for 180
+applying for 181
+applying for 182
+applying for 183
+applying for 184
+applying for 185
+applying for 186
+applying for 187
+applying for 188
+applying for 189
+applying for 190
+applying for 191
+applying for 192
+applying for 193
+applying for 194
+applying for 195
+applying for 196
+applying for 197
+applying for 198
+applying for 199
+applying for 200
+applying for 201
+applying for 202
+applying for 203
+applying for 204
+applying for 205
+applying for 206
+applying for 207
+applying for 208
+applying for 209
+applying for 210
+applying for 211
+applying for 212
+applying for 213
+applying for 214
+applying for 215
+applying for 216
+applying for 217
+applying for 218
+applying for 219
+applying for 220
+applying for 221
+applying for 222
+applying for 223
+applying for 224
+applying for 225
+applying for 226
+applying for 227
+applying for 228
+applying for 229
+applying for 230
+applying for 231
+applying for 232
+applying for 233
+applying for 234
+applying for 235
+applying for 236
+applying for 237
+applying for 238
+applying for 239
+applying for 240
+applying for 241
+applying for 242
+applying for 243
+applying for 244
+applying for 245
+applying for 246
+applying for 247
+applying for 248
+applying for 249
+applying for 250
+applying for 251
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 3
+applying for 4
+applying for 5
+applying for 6
+applying for 7
+applying for 9
+applying for 10
+applying for 11
+applying for 12
+applying for 13
+applying for 14
+applying for 15
+applying for 16
+applying for 17
+applying for 18
+applying for 19
+applying for 20
+applying for 21
+applying for 22
+applying for 23
+applying for 24
+applying for 25
+applying for 26
+applying for 27
+applying for 28
+applying for 29
+applying for 30
+applying for 31
+applying for 32
+applying for 33
+applying for 34
+applying for 35
+applying for 36
+applying for 37
+applying for 38
+applying for 39
+applying for 40
+applying for 41
+applying for 42
+applying for 43
+applying for 44
+applying for 45
+applying for 46
+applying for 47
+applying for 48
+applying for 49
+applying for 50
+applying for 51
+applying for 52
+applying for 53
+applying for 54
+applying for 55
+applying for 56
+applying for 57
+applying for 58
+applying for 59
+applying for 60
+applying for 61
+applying for 62
+applying for 63
+applying for 64
+applying for 65
+applying for 66
+applying for 67
+applying for 68
+applying for 69
+applying for 70
+applying for 71
+applying for 72
+applying for 73
+applying for 74
+applying for 75
+applying for 76
+applying for 77
+applying for 78
+applying for 79
+applying for 80
+applying for 81
+applying for 82
+applying for 83
+applying for 84
+applying for 85
+applying for 86
+applying for 87
+applying for 88
+applying for 89
+applying for 90
+applying for 91
+applying for 92
+applying for 93
+applying for 94
+applying for 95
+applying for 96
+applying for 97
+applying for 98
+applying for 99
+applying for 100
+applying for 101
+applying for 102
+applying for 103
+applying for 104
+applying for 105
+applying for 106
+applying for 107
+applying for 108
+applying for 109
+applying for 110
+applying for 111
+applying for 112
+applying for 113
+applying for 114
+applying for 115
+applying for 116
+applying for 117
+applying for 118
+applying for 119
+applying for 120
+applying for 121
+applying for 122
+applying for 123
+applying for 124
+applying for 125
+applying for 126
+applying for 127
+applying for 128
+applying for 129
+applying for 130
+applying for 131
+applying for 132
+applying for 133
+applying for 134
+applying for 135
+applying for 136
+applying for 137
+applying for 138
+applying for 139
+applying for 140
+applying for 141
+applying for 142
+applying for 143
+applying for 144
+applying for 145
+applying for 146
+applying for 147
+applying for 148
+applying for 149
+applying for 150
+applying for 151
+applying for 152
+applying for 153
+applying for 154
+applying for 155
+applying for 156
+applying for 157
+applying for 158
+applying for 159
+applying for 160
+applying for 161
+applying for 162
+applying for 163
+applying for 164
+applying for 165
+applying for 166
+applying for 167
+applying for 168
+applying for 169
+applying for 170
+applying for 171
+applying for 172
+applying for 173
+applying for 174
+applying for 175
+applying for 176
+applying for 177
+applying for 178
+applying for 179
+applying for 180
+applying for 181
+applying for 182
+applying for 183
+applying for 184
+applying for 185
+applying for 186
+applying for 187
+applying for 188
+applying for 189
+applying for 190
+applying for 191
+applying for 192
+applying for 193
+applying for 194
+applying for 195
+applying for 196
+applying for 197
+applying for 198
+applying for 199
+applying for 200
+applying for 201
+applying for 202
+applying for 203
+applying for 204
+applying for 205
+applying for 206
+applying for 207
+applying for 208
+applying for 209
+applying for 210
+applying for 211
+applying for 212
+applying for 213
+applying for 214
+applying for 215
+applying for 216
+applying for 217
+applying for 218
+applying for 219
+applying for 220
+applying for 221
+applying for 222
+applying for 223
+applying for 224
+applying for 225
+applying for 226
+applying for 227
+applying for 228
+applying for 229
+applying for 230
+applying for 231
+applying for 232
+applying for 233
+applying for 234
+applying for 235
+applying for 236
+applying for 237
+applying for 238
+applying for 239
+applying for 240
+applying for 241
+applying for 242
+applying for 243
+applying for 244
+applying for 245
+applying for 246
+applying for 247
+applying for 248
+applying for 249
+applying for 250
+applying for 251
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+None None [{'start': '2022-05-10', 'end': '2022-05-10'}]
+applying for 0
+applying for 1
+applying for 2
+applying for 3
+applying for 4
+applying for 5
+applying for 6
+applying for 7
+applying for 9
+applying for 10
+applying for 11
+applying for 12
+applying for 13
+applying for 14
+applying for 15
+applying for 16
+applying for 17
+applying for 18
+applying for 19
+applying for 20
+applying for 21
+applying for 22
+applying for 23
+applying for 24
+applying for 25
+applying for 26
+applying for 27
+applying for 28
+applying for 29
+applying for 30
+applying for 31
+applying for 32
+applying for 33
+applying for 34
+applying for 35
+applying for 36
+applying for 37
+applying for 38
+applying for 39
+applying for 40
+applying for 41
+applying for 42
+applying for 43
+applying for 44
+applying for 45
+applying for 46
+applying for 47
+applying for 48
+applying for 49
+applying for 50
+applying for 51
+applying for 52
+applying for 53
+applying for 54
+applying for 55
+applying for 56
+applying for 57
+applying for 58
+applying for 59
+applying for 60
+applying for 61
+applying for 62
+applying for 63
+applying for 64
+applying for 65
+applying for 66
+applying for 67
+applying for 68
+applying for 69
+applying for 70
+applying for 71
+applying for 72
+applying for 73
+applying for 74
+applying for 75
+applying for 76
+applying for 77
+applying for 78
+applying for 79
+applying for 80
+applying for 81
+applying for 82
+applying for 83
+applying for 84
+applying for 85
+applying for 86
+applying for 87
+applying for 88
+applying for 89
+applying for 90
+applying for 91
+applying for 92
+applying for 93
+applying for 94
+applying for 95
+applying for 96
+applying for 97
+applying for 98
+applying for 99
+applying for 100
+applying for 101
+applying for 102
+applying for 103
+applying for 104
+applying for 105
+applying for 106
+applying for 107
+applying for 108
+applying for 109
+applying for 110
+applying for 111
+applying for 112
+applying for 113
+applying for 114
+applying for 115
+applying for 116
+applying for 117
+applying for 118
+applying for 119
+applying for 120
+applying for 121
+applying for 122
+applying for 123
+applying for 124
+applying for 125
+applying for 126
+applying for 127
+applying for 128
+applying for 129
+applying for 130
+applying for 131
+applying for 132
+applying for 133
+applying for 134
+applying for 135
+applying for 136
+applying for 137
+applying for 138
+applying for 139
+applying for 140
+applying for 141
+applying for 142
+applying for 143
+applying for 144
+applying for 145
+applying for 146
+applying for 147
+applying for 148
+applying for 149
+applying for 150
+applying for 151
+applying for 152
+applying for 153
+applying for 154
+applying for 155
+applying for 156
+applying for 157
+applying for 158
+applying for 159
+applying for 160
+applying for 161
+applying for 162
+applying for 163
+applying for 164
+applying for 165
+applying for 166
+applying for 167
+applying for 168
+applying for 169
+applying for 170
+applying for 171
+applying for 172
+applying for 173
+applying for 174
+applying for 175
+applying for 176
+applying for 177
+applying for 178
+applying for 179
+applying for 180
+applying for 181
+applying for 182
+applying for 183
+applying for 184
+applying for 185
+applying for 186
+applying for 187
+applying for 188
+applying for 189
+applying for 190
+applying for 191
+applying for 192
+applying for 193
+applying for 194
+applying for 195
+applying for 196
+applying for 197
+applying for 198
+applying for 199
+applying for 200
+applying for 201
+applying for 202
+applying for 203
+applying for 204
+applying for 205
+applying for 206
+applying for 207
+applying for 208
+applying for 209
+applying for 210
+applying for 211
+applying for 212
+applying for 213
+applying for 214
+applying for 215
+applying for 216
+applying for 217
+applying for 218
+applying for 219
+applying for 220
+applying for 221
+applying for 222
+applying for 223
+applying for 224
+applying for 225
+applying for 226
+applying for 227
+applying for 228
+applying for 229
+applying for 230
+applying for 231
+applying for 232
+applying for 233
+applying for 234
+applying for 235
+applying for 236
+applying for 237
+applying for 238
+applying for 239
+applying for 240
+applying for 241
+applying for 242
+applying for 243
+applying for 244
+applying for 245
+applying for 246
+applying for 247
+applying for 248
+applying for 249
+applying for 250
+applying for 251
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[{'start': '2022-12-25', 'end': '2022-12-25'}]
+all exclusions:[237]
+exclusions:[{'start': '2022-05-10', 'end': '2022-05-10'}]
+all exclusions:[8]
+exclusions:[{'start': '2022-06-20', 'end': '2022-06-20'}]
+all exclusions:[49]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]
+exclusions:[]

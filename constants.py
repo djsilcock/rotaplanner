@@ -17,6 +17,10 @@ class Duties(Enum):
     OFF = auto()
     LOCUM_ICU = auto()
     QUOTA_ICU = auto()
+    ICU_JP=auto()
+    ICU_TS=auto()
+    TIMEBACK=auto()
+    DROPPED_SESSION=auto()
 
 
 Staff = Enum('Staff', 'SANJIV RORY SCOTT BARTEK DAN SAM CHOITI JIM')

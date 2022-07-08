@@ -58,13 +58,18 @@ class VarArrayAndObjectiveSolutionPrinter(cp_model.CpSolverSolutionCallback):
         )
         self.StopSearch()
 
+    def stop_timeout(self):
+        """stop timer"""
+        if self._timer:
+            self._timer.cancel()
+
 
 class RotaSolver(RSAbstract):
     """Main rotasolver class"""
 
     def get_duty(self, duty: Duties, day: int, shift: Shifts, staff: Staff):
         """retrieve the duty atom"""
-        return self.all_duties[(duty, day, shift, staff)]
+        return self.all_duties.get((duty, day, shift, staff), 0)
 
     def create_duty(self, duty: Duties, day: int, shift: Shifts, staff: Staff):
         """create duty"""
@@ -79,89 +84,62 @@ class RotaSolver(RSAbstract):
     def get_or_create_duty(self, duty: Duties, day: int, shift: Shifts, staff: Staff):
         """Retrieve duty or create new if not found"""
         try:
-            return self.get_duty(duty, day, shift, staff)
+            return self.all_duties[(duty, day, shift, staff)]
         except KeyError:
             return self.create_duty(duty, day, shift, staff)
 
     def __init__(self,
-
-                 rota_cycles: int,
                  slots_on_rota: int,
                  people_on_rota: int,
-                 startdate: str,
+                 startdate:str,
+                 enddate:str,
                  pipe):
         # pylint: disable=super-init-not-called
         self.pipe = pipe
         self.constraints = collections.OrderedDict()
-        self.rota_cycles = rota_cycles
         self.slots_on_rota = slots_on_rota
         self.people_on_rota = people_on_rota
-        self.startdate = date.fromisoformat(startdate[0:10])
-        self.startingday = None
-        self.endingday = None
+        startdate = date.fromisoformat(startdate[0:10])
+        enddate = date.fromisoformat(enddate[0:10])
+        self.startdate = startdate-timedelta(days=startdate.weekday())
+            #wind back to previous monday
+        rota_length = (enddate-startdate).days
+        self.rota_length = rota_length+6-rota_length%7
         self.exclusions = None
-        if self.startdate.weekday() != 0:
-            raise ValueError('Starting date must be a Monday')
-
         self.model = cp_model.CpModel()
         self.all_duties = {}
-        self.constraint_atoms=[]
-        self.minimize_targets=[]
+        self.constraint_atoms = []
+        self.minimize_targets = []
         self.targets = None
-
-    def set_enforcement_period(self, startdate, enddate, exclusions=None):
-        """sets period for enforcement of rules
-        startdate:str enddate:str ,exclusions [str] - ISO format date strings"""
-        self.startingday = (date.fromisoformat(startdate)-self.startdate).days
-        self.endingday = (date.fromisoformat(enddate)-self.startdate).days
-        self.exclusions = exclusions if exclusions is not None else []
-
-    def clear_enforcement_period(self):
-        """clear previously set enforcement period"""
-        self.startingday = None
-        self.endingday = None
-        self.exclusions = None
-
+        
     def days(self, startdate=None, enddate=None, weekdays=None, exclusions=None):
         """returns iterator of days"""
         weekdays_to_include = weekdays if weekdays is not None else [
             MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY]
         days_to_exclude = []
-        all_exclusions=[]
+        all_exclusions = []
         if exclusions is not None:
-            with open('logfile.txt','a') as logfile:
-                print(f'exclusions:{exclusions}',file=logfile)
             all_exclusions.extend(exclusions)
         if self.exclusions is not None:
             all_exclusions.extend(self.exclusions)
         for exclusion_range in all_exclusions:
-            exc_start=(date.fromisoformat(exclusion_range['start'])-self.startdate).days
-            exc_end=(date.fromisoformat(exclusion_range['end'])-self.startdate).days+1
-            days_to_exclude.extend(range(exc_start,exc_end))
-            with open('logfile.txt', 'a',encoding='utf-8') as logfile:
-                print(f'all exclusions:{days_to_exclude}', file=logfile)
-                
+            exc_start = max(0, (date.fromisoformat(
+                exclusion_range['start'])-self.startdate).days)
+            exc_end = min(
+                (date.fromisoformat(exclusion_range['end'])-self.startdate).days+1, self.rota_length)
+            days_to_exclude.extend(range(exc_start, exc_end))
+           
         if startdate is None:
-            if self.startingday is not None:
-                startingday = self.startingday
-            else:
-                startingday = 0
-        elif date.fromisoformat(startdate) < self.startdate:
-            raise ValueError(
-                'starting date must not be before beginning of rota')
+            startingday = 0
         else:
-            startingday = (date.fromisoformat(startdate)-self.startdate).days
+            startingday = max(
+                0, (date.fromisoformat(startdate)-self.startdate).days)
         if enddate is None:
-            if self.endingday is not None:
-                endingday = self.endingday
-            else:
-                endingday = self.rota_cycles*self.slots_on_rota*7
-        elif date.fromisoformat(enddate) > self.startdate+timedelta(
-                days=self.rota_cycles*self.slots_on_rota*7):
-            raise ValueError(
-                'ending date must not be after end of rota')
+            endingday = self.rota_length
         else:
-            endingday = (date.fromisoformat(enddate)-self.startdate).days
+            endingday = min(
+                (date.fromisoformat(enddate)-self.startdate).days,
+                self.rota_length)
 
         return (r for r in range(startingday, endingday)
                 if r % 7 in weekdays_to_include
@@ -176,29 +154,36 @@ class RotaSolver(RSAbstract):
         """solve model"""
         for constraint in self.constraints.values():
             constraint.apply_constraint()
-        with open('model.proto','w') as modelfile:
-            print(self.model,file=modelfile)
+        with open('model.proto', 'w', encoding='utf-8') as modelfile:
+            print(self.model, file=modelfile)
         self.model.Minimize(sum(self.minimize_targets))
         solver = cp_model.CpSolver()
         self.pipe.send(
             {'type': 'info', 'message': f'number of variables: {len(self.all_duties)}'})
 
         self.pipe.send({'type': 'progress', 'time': 0, 'objective': None})
+        solution_printer = VarArrayAndObjectiveSolutionPrinter(self.pipe)
         status = solver.Solve(
-            self.model, VarArrayAndObjectiveSolutionPrinter(self.pipe))
+            self.model, solution_printer)
+        solution_printer.stop_timeout()
         self.pipe.send({'type': 'solveStatus', 'statusName': solver.StatusName(
             status), 'status': status})
         event_generator = []
-        pairs=[]
+        pairs = []
+        print(f'status:{solver.StatusName(status)}')
         if solver.StatusName(status) in ['FEASIBLE', 'OPTIMAL']:
             for cons in self.constraints.values():
                 event_generator = cons.event_stream(solver, event_generator)
-                pairs=cons.process_output(solver,pairs)
-            for ((staff,shift,day),value) in pairs:
-                self.pipe.send({'type':'result','name':staff.name,'shift':shift.name,'day':day.name,'duty':value})
+                pairs = cons.process_output(solver, pairs)
+            for ((staff, shift, day), value) in pairs:
+                text_day = (self.startdate +
+                            timedelta(days=day)).isoformat()
+                self.pipe.send({'type': 'result', 'name': staff.name,
+                               'shift': shift.name, 'day': text_day, 'duty': value})
             for event in event_generator:
-                self.pipe.send(event)          
+                self.pipe.send(event)
         self.pipe.send({'type': 'eof'})
+        print('done')
 
     # Enumerate all solutions.
     # solver.parameters.enumerate_all_solutions = True

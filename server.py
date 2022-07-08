@@ -1,34 +1,33 @@
+"""Webserver module"""
+
+from datetime import date, timedelta
 import multiprocessing
+import shelve
 import sys
 import json
 import asyncio
-import os.path
-import datetime
+import os
 import socketio
 
 import sanic
-from tinydb import TinyDB,Query, where
-from constants import Duties, Shifts, Staff
+
 from solver import RotaSolver
 from constraints.constraintmanager import get_constraint_config
-import pusher
 
-pusher_client = pusher.Pusher(
-    app_id='1418967',
-    key='d5b9dd3a90ae13c7c36f',
-    secret='ff0a2177dc2d9e0ffec2',
-    cluster='eu',
-    ssl=True
-)
 
 app = sanic.Sanic('RotaSolver')
-app.ctx.db=TinyDB('datafile.json')
+sio = socketio.AsyncServer(async_mode='sanic')
+sio.attach(app)
 
-def launch_solver(pipe):
+
+def launch_solver(pipe, startdate, enddate):
     """Launches solver task"""
-
-    rota = RotaSolver(rota_cycles=4,
-                      slots_on_rota=9, people_on_rota=8, startdate='2022-05-02', pipe=pipe)
+    rota = RotaSolver(
+        slots_on_rota=9,
+        people_on_rota=8,
+        pipe=pipe,
+        startdate=startdate,
+        enddate=enddate)
     rota.apply_base_rules()
     while True:
         message = pipe.recv()
@@ -41,27 +40,74 @@ def launch_solver(pipe):
             sys.exit()
 
 
-@app.post('/log')
-async def logfile(request):
-    print(request.json)
-    return sanic.response.json({'response': 'OK'})
+@sio.event
+async def connect(sid, environ, auth):
+    print('connect ', sid)
 
-async def recalculate(data,queue):
+
+@sio.event
+async def echo(sid, data):
+    print('echo')
+    await sio.emit('greeting', {'message': data}, to=sid)
+
+@sio.event
+async def show_tallies(sid,datestring):
+    """Generate tallies for staff"""
+    tallies={}
+    names=set()
+    with shelve.open('datafile') as db:
+        for key in db:
+            duty_weekday = date.fromisoformat(key).weekday()
+            oncall_type = 'wdoc' if duty_weekday < 4 else 'weoc'
+            day_type = 'wddt' if duty_weekday < 5 else 'wedt'
+            if key<=datestring:
+                tallies[('tot', day_type)] = tallies.get(
+                    ('tot', day_type), 0)+1
+                tallies[('tot', oncall_type)] = tallies.get(
+                    ('tot', oncall_type), 0)+1
+                for name,duty in db[key].get('DAYTIME',{}).items():
+                    names.add(name)
+                    if duty in ['DEFINITE_ICU','ICU']:
+                        tallies[(name,day_type)]=tallies.get((name,day_type),0)+1
+                        
+                for name, duty in db[key].get('ONCALL', {}).items():
+                        if duty in ['DEFINITE_ICU', 'ICU']:
+                            tallies[(name, oncall_type)] = tallies.get(
+                                (name, oncall_type), 0)+1
+                            
+
+    rows = [f'|{name}|{"|".join([str(tallies.get((name,duty),0)) for duty in ["wddt","wedt","wdoc","weoc"]])}|' for name in names]
+    targets = f'|Targets|{"|".join([str(tallies.get(("tot",duty),0)//9) for duty in ["wddt","wedt","wdoc","weoc"]])}|'
+
+    message="\n".join([
+        '| |Wkday day|Wkend day|Wkday oc|Wkend oc|',
+        '|---|---|---|---|---|',
+        targets,
+        "\n".join(rows),
+        ""])
+    await sio.emit('report', {'message': f"""Tallies for:{datestring} \n\n{message}"""})
+
+
+async def recalculate(data):
     """Run recalculation as background task"""
+    await sio.emit('message', {'message': 'recalculating...'})
     localpipe, remotepipe = multiprocessing.Pipe()
+    startdate = min(*data.keys())
+    enddate = max(*data.keys())
     process = multiprocessing.Process(
-        target=launch_solver, args=(remotepipe,))
+        target=launch_solver, args=(remotepipe, startdate, enddate))
     process.start()
-
     # remap data
-
     with open('constraints.json', 'r', encoding='utf-8') as constraintsfile:
         constraints = json.load(constraintsfile)
         for (constraint, defs) in constraints.items():
             for (constraintid, constraintparams) in defs.items():
                 if constraintparams.get('enabled'):
                     localpipe.send(dict(
-                        constraintparams, type='constraint', constraint=constraint, id=constraintid))
+                        constraintparams,
+                        type='constraint',
+                        constraint=constraint,
+                        id=constraintid))
     localpipe.send({
         'type': 'constraint',
         'constraint': 'apply_leavebook',
@@ -71,50 +117,38 @@ async def recalculate(data,queue):
 
     localpipe.send({'type': 'solve'})
     try:
+        d = {}
         while True:
             if localpipe.poll():
                 data = localpipe.recv()
-                await queue.put(data)
                 if data['type'] == 'eof':
-                    await queue.put('EOF')
                     localpipe.send({'type': 'exit'})
                     break
+                actiontype = data.pop('type', None)
+                if actiontype == 'result':
+                    d.setdefault(data['day'], {}).setdefault(
+                        data['shift'], {})[data['name']] = data['duty']
+
+                else:
+                    await sio.emit(actiontype, data)
             else:
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.01)
     except EOFError:
         print('pipe was closed')
+    with shelve.open('datafile') as database:
+        database.update(d)
+    await sio.emit('reload', {})
+    print('sent reload signal')
+
 
 @app.post("backend/recalculate")
 async def testserver(request):
     '''run query'''
-    data=request.app.ctx.db.all()
-    response = await request.respond(content_type="text/plain", headers={'x-accel-buffering': 'no'})
-    queue=asyncio.Queue()
-    request.app.add_task(recalculate(data,queue))
-    while True:
-        chunk=await queue.get()
-        if chunk=='EOF':
-            break
-        elif isinstance(chunk,dict):
-            actiontype=chunk.pop('type',None)
-            if actiontype=='result':
-                request.app.ctx.db.upsert(
-                    {
-                        'name':chunk['name'],
-                        'shift':chunk['shift'],
-                        'day':chunk['day'],
-                        'duty':chunk['duty']
-                    },
-                    (where('name')==chunk['name'])&
-                    (where('shift')==chunk['shift'])&
-                    (where('day')==chunk['day']))
-            else:
-                pusher_client.trigger('my-channel', 'my-event',
-                                  chunk)
-            
-    pusher_client.trigger('my-channel','my-event',{'status':'done'})
-    await response.eof()
-
+    with shelve.open('datafile') as database:
+        data = {}
+        data.update(database)
+    request.app.add_task(recalculate(data))
+    return sanic.response.json({'status': 'accepted'}, status=202)
 
 
 @app.get('backend/constraintdefs')
@@ -126,7 +160,7 @@ async def settings(request):
 @app.get('backend/constraints')
 async def get_constraints(request):
     """return list of current constraints"""
-    with open('constraints.json') as constraint_file:
+    with open('constraints.json', encoding='utf-8') as constraint_file:
         constraints = json.load(constraint_file)
     return sanic.response.json(constraints)
 
@@ -136,62 +170,48 @@ async def save_constraints(request):
     """save the constraints list from the ui"""
     data = request.json
     with open('constraints.json', 'w', encoding='utf-8') as constraint_file:
-        json.dump(data, constraint_file,indent=2)
+        json.dump(data, constraint_file, indent=2)
     return sanic.response.json({'status': 'OK'})
 
-@app.get('backend/getduties/<day:int>')
-async def get_day(request,day):
+
+@app.get('backend/getduties/<day:str>')
+async def get_day(request, day):
     """Get duties for day"""
-    db=request.app.ctx.db
+    with shelve.open('datafile') as db:
+        day_data = db.get(day, {})
+    # print(f"{day}:{repr(day_data)}")
     return sanic.response.json({
-        'result': {f"{duty['name']}-{duty['shift']}": duty['duty']
-            for duty in db.search(where('day') == day)}})
+        'result': day_data})
+
 
 @app.post('backend/setduty')
 async def set_duty(request):
     """Update duty for shift"""
-    json_request=request.json
-    db = request.app.ctx.db
-    Duty=Query()
-    shift=json_request['shift']
-    name=json_request['name']
-    day=json_request['day']
-    duty=json_request['duty']
-    if duty in ['DEFINITE_ICU','DEFINITE_LOCUM_ICU']:
-        db.update({'duty':None},(
-            Duty.day==day
-            )&(
-            Duty.shift==shift
-            )&(
-            Duty.duty.one_of([
-                'DEFINITE_ICU',
-                'ICU',
-                'LOCUM_ICU',
-                'DEFINITE_LOCUM_ICU'
-                ])))
-    db.upsert({
-        'shift':shift,
-        'name':name,
-        'day':day,
-        'duty':duty
-        },
-        (Duty.shift==shift)&(Duty.day==day)&(Duty.name==name)
-        )
+    json_request = request.json
+    shift = json_request['shift']
+    name = json_request['name']
+    day = json_request['day']
+    duty = json_request['duty']
+    with shelve.open('datafile', writeback=True) as database:
+        day_allocs = database.setdefault(day, {})
+        shift_allocs = day_allocs.setdefault(shift, {})
+        if duty in ['DEFINITE_ICU', 'DEFINITE_LOCUM_ICU', 'ICU_MAYBE_LOCUM']:
+            shift_allocs.update({
+                name1: (None if duty1 in [
+                    'ICU',
+                    'LOCUM_ICU',
+                    'DEFINITE_ICU',
+                    'DEFINITE_LOCUM_ICU',
+                    'ICU_MAYBE_LOCUM'] else duty1)
+                for name1, duty1 in shift_allocs.items()})
+        shift_allocs[name] = duty
+        day_data = {}
+        day_data.update(day_allocs)
     return sanic.response.json(
-        {'result':{f"{duty['name']}-{duty['shift']}":duty['duty'] 
-            for duty in db.search(where('day') == day)}})
+        {'result': day_data})
 
-@app.websocket('/backend/feed')
-async def feed(request, ws):
-    print('websocket connected')
-    while True:
-        data = "hello!"
-        await ws.send(data)
-        await asyncio.sleep(3)
-
-app.static('/', os.path.join(os.getcwd(), 'rotaplanner', 'out','index.html'))
-app.static('/',os.path.join(os.getcwd(),'rotaplanner','out'))
+app.static('/', os.path.join(os.getcwd(), 'rotaplanner', 'out','index.html')) 
+app.static('/_next',os.path.join(os.getcwd(),'rotaplanner','out','_next'))
 
 if __name__ == "__main__":
-    app.run(dev=True)
-    # asyncio.run(test())
+    app.run(auto_reload=True)

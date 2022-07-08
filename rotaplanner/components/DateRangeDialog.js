@@ -125,7 +125,7 @@ export function DateRangeDialog({ value, onChange, name }) {
         enddate: isValid(enddate) ? formatISO(enddate, { representation: 'date' }) : null,
         exclusions: exclusions.map(exc => ({
           start: formatISO(exc.start, { representation: 'date' }),
-          end: formatISO(exc.start, { representation: 'date' })
+          end: formatISO(exc.end, { representation: 'date' })
       }))
       },
       

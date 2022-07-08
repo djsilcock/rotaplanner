@@ -5,33 +5,13 @@ export const recalculate = async (store, dispatch) => {
 
     dispatch({ type: 'message', message: 'recalculating' })
     console.log(store)
-    const it = makeTextFileLineIterator('/backend/recalculate', {
+    const it = fetch('/backend/recalculate', {
         headers: { 'accept': 'application/json' },
         method: 'post',
         body: JSON.stringify(store)
     });
-    for await (let line of it) {
-        const action = JSON.parse(line);
-        switch (action.type) {
-            case 'result':
-                dispatch({ type: 'result', result: action.result });
-                break;
-            case 'duty':
-                dispatch({ dutyType: action.dutyType, shift: action.shift, name: action.name, day: action.day });
-                break;
-            case 'info':
-                dispatch({ type: 'message', message: action.message });
-                break;
-            case 'progress':
-                dispatch({ type: 'message', message: `Working... ${action.objective} to go after ${action.time}s` });
-                break;
-            case 'solveStatus':
-                dispatch({type:'message',message:`Solution: ${action.statusName}`});
-                break;
-            default:
-                console.log(JSON.parse(line));
-        }
-    }
+    
+    
 };
 
 async function* makeTextFileLineIterator(fileURL, fetchparams) {

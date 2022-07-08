@@ -43,11 +43,36 @@ class Constraint(BaseConstraint):
         for day in self.days():
             self.rota.model.Add(self.rota.get_duty(
                                 Duties.THEATRE, day, Shifts.ONCALL, staff) == 0)
-        
+            for duty in [Duties.ICU_TS,Duties.ICU_JP,Duties.TIMEBACK]:
+                self.rota.get_or_create_duty(
+                    duty, day, Shifts.DAYTIME, staff)
             if day % 7 in working_days:
                 self.rota.model.Add(self.rota.get_duty(
                     Duties.OFF, day, Shifts.DAYTIME, staff) == 0)
+                self.rota.model.Add(self.rota.get_duty(
+                    Duties.ICU_TS,day,Shifts.DAYTIME,staff)==0)
+                #self.rota.model.Add(self.rota.get_duty(
+                #    Duties.LEAVE,day,Shifts.DAYTIME,staff)==
+                #    self.rota.get_duty(
+                #    Duties.DROPPED_SESSION, day, Shifts.DAYTIME, staff)
+                #)
             else:
                 self.rota.model.Add(self.rota.get_duty(
                     Duties.THEATRE, day, Shifts.DAYTIME, staff) == 0)
-            
+                self.rota.model.Add(self.rota.get_duty(
+                    Duties.ICU_JP, day, Shifts.DAYTIME, staff) == 0)
+                self.rota.model.Add(self.rota.get_duty(
+                    Duties.TIMEBACK, day, Shifts.DAYTIME, staff)==0)
+                #self.rota.model.Add(self.rota.get_duty(
+                #    Duties.DROPPED_SESSION, day, Shifts.DAYTIME, staff) == 0)
+
+            self.rota.model.Add(self.rota.get_duty(
+                Duties.ICU_TS, day, Shifts.DAYTIME, staff)+
+                self.rota.get_duty(
+                Duties.ICU_JP, day, Shifts.DAYTIME, staff) == self.rota.get_duty(
+                Duties.ICU, day, Shifts.DAYTIME, staff))
+        self.rota.model.Add(
+            sum(self.rota.get_duty(
+            Duties.ICU_TS, day, Shifts.DAYTIME, staff) for day in self.days()) >=
+            sum(self.rota.get_duty(
+                Duties.TIMEBACK, day, Shifts.DAYTIME, staff) for day in self.days()))

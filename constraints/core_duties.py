@@ -20,10 +20,19 @@ class Constraint(BaseConstraint):
 
     def process_output(self, solver, pairs):
         for day in self.days():
-            for duty in [Duties.ICU, Duties.THEATRE,Duties.LEAVE,Duties.OFF]:
+            for duty in [Duties.ICU, Duties.THEATRE,Duties.LEAVE,Duties.OFF,Duties.TIMEBACK]:
                 for shift in Shifts:
                     for staff in Staff:
                         if solver.Value(self.rota.get_duty(duty, day, shift, staff)):
                             yield ((staff,shift,day),duty.name)
+
+    def build_output(self, solver, outputdict):
+        for day in self.days():
+            for duty in [Duties.ICU, Duties.THEATRE, Duties.LEAVE, Duties.OFF, Duties.TIMEBACK]:
+                for shift in Shifts:
+                    for staff in Staff:
+                        if solver.Value(self.rota.get_duty(duty, day, shift, staff)):
+                            outputdict.setdefault(duty.name,{}).setdefault(shift.name,{})[staff.name]=duty.name
+        return outputdict
 
 

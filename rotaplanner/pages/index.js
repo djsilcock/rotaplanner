@@ -12,42 +12,71 @@ import Button from '@mui/material/Button';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import TextField from '@mui/material/TextField';
-
+import Link from '@mui/material/Link';
+import { useSWRConfig } from 'swr';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import locale from 'date-fns/locale/en-GB'
 
-import { addDays, format,differenceInCalendarDays, isValid } from 'date-fns';
+import { addDays, format,differenceInCalendarDays, isValid, formatISO } from 'date-fns';
 import { dutyReducer} from '../lib/store';
 import { names } from '../lib/names';
 import { Cell } from '../components/Cell';
 import { recalculate } from '../lib/recalculate';
 import { SettingsDialog } from '../components/SettingsDialog';
-import { setConstraint } from '../lib/setDuty';
-import { Grid } from '@mui/material';
+import { MessageDialog } from '../components/MessageDialog';
 import { DateRangeDialog } from '../components/DateRangeDialog';
-import Pusher from 'pusher-js'
+
+import {useSocket,SocketProvider } from '../lib/socketContext';
 
 const rotaEpoch = new Date(2020, 10, 2)
 
 function MessageBox() {
-  const [message,setMessage]=React.useState('meh')
+  const [message, setMessage] = React.useState('meh')
+  const socket=useSocket()
   React.useEffect(() => {
-    
-    Pusher.logToConsole = true;
-
-    var pusher = new Pusher('d5b9dd3a90ae13c7c36f', {
-      cluster: 'eu'
-    });
-
-    var channel = pusher.subscribe('my-channel');
-    channel.bind('my-event', function (data) {
-      setMessage(JSON.stringify(data));
-    });
-  
-  },[])
+    if (!socket) return
+    socket.on('progress', data => {
+      setMessage(`Objective:${data.objective}, time:${data.time}s`)
+    })
+    socket.on('message',data=>{setMessage(data.message)})
+    socket.on('solveStatus', data => {
+      setMessage(`Solver status: ${data.statusName}`)
+    })
+  },[socket])
   return message
+}
+
+
+
+function SocketIO() {
+  const { cache, mutate } = useSWRConfig()
+  const socket=useSocket()
+  React.useEffect(() => {
+    if (!socket) return
+    socket.on('connect', () => {
+      console.log('connected')
+      socket.emit('echo','hello!')
+    })
+    socket.on('greeting', (data) => { console.log(data) })
+    socket.onAny((evt, data) => console.log({ evt, data }))
+    socket.on('reload', () => {
+      for (let k of cache.keys()){ console.log(k); mutate(k) }
+    })
+  }, [cache,mutate,socket])
+  return null
+}
+
+function DateLink({ date }) {
+  const socket=useSocket()
+  const clickHandler = React.useCallback(() => {
+    socket.emit('show_tallies',formatISO(date,{representation:'date'}))
+  },[date,socket])
+  return <Link sx={{ cursor: 'pointer' }} onClick={clickHandler}>
+    {format(date, "E d MMM")}
+  </Link>
+
 }
 
 function App() {
@@ -73,6 +102,7 @@ function App() {
   const [{ duties, message },setDuty]=React.useReducer(dutyReducer,undefined,dutyReducer)
   return (
     <div className="App">
+      <SocketProvider>
       <LocalizationProvider dateAdapter={AdapterDateFns} locale={locale}>
         <Paper>
           <Button onClick={() => recalculate(duties,setDuty)}>recalculate</Button>
@@ -84,6 +114,7 @@ function App() {
           >
             <ToggleButton value="DEFINITE_ICU">ICU</ToggleButton>
             <ToggleButton value="DEFINITE_LOCUM_ICU">ICU(£)</ToggleButton>
+            <ToggleButton value="ICU_MAYBE_LOCUM">ICU(£?)</ToggleButton>
             <ToggleButton value="LEAVE">Leave</ToggleButton>
             <ToggleButton value="NOC">NOC</ToggleButton>
             <ToggleButton value="CLEAR">Clear</ToggleButton>
@@ -102,9 +133,9 @@ function App() {
           />
           <SettingsDialog />
           <DateRangeDialog onChange={(v)=>console.log(v)}/>
-          <span>{message}</span><MessageBox/>
+          <MessageBox/><SocketIO/>
         </Paper>
-       
+          <MessageDialog/>
         <TableContainer component={Paper}>
           <Table style={{ border: "solid 1px" }}>
             <TableHead>
@@ -119,8 +150,8 @@ function App() {
                 }}></TableCell>
                 {days.map((x) => (
                   <TableCell key={x}>
-                    {format(addDays(rotaEpoch, x), "E d MMM")}
-                  </TableCell>
+                    <DateLink date={addDays(rotaEpoch,x)}/>
+                    </TableCell>
                 ))}
               </TableRow>
             </TableHead>
@@ -143,9 +174,8 @@ function App() {
                         key={day}
                         dutyType={dutyType}
                         name={name}
-                        day={day}
-                        daytimeValue={duties[name]["DAYTIME"][day]}
-                        oncallValue={duties[name]["ONCALL"][day]}
+                        day={format(addDays(rotaEpoch, day), "yyyy-MM-dd")}
+                        
                         setDuty={setDuty}
                       />
                     ))}
@@ -155,7 +185,8 @@ function App() {
             </TableBody>
           </Table>
         </TableContainer>
-      </LocalizationProvider>
+        </LocalizationProvider>
+      </SocketProvider>
     </div>
   );
 }

@@ -42,10 +42,10 @@ class RotaSolver():
  
     def __init__(self,
                  leavebook: dict,
-                 rota_cycles: int,
                  slots_on_rota: int,
                  people_on_rota: int,
                  startdate: str,
+                 enddate:str,
                  pipe):
 
         pass

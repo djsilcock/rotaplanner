@@ -13,11 +13,7 @@ class Constraint(BaseConstraint):
     @classmethod
     def definition(cls):
         names = [s.name.title() for s in Staff]
-        return ['Between',
-                dict(component='date', name='startDate'),
-                'and',
-                dict(component='date', name='endDate'),
-                dict(component='multiselect', name='staff', options=names),
+        return [ dict(component='multiselect', name='staff', options=names),
                 'should',
                 dict(
                     component='select',

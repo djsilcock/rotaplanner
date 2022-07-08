@@ -50,6 +50,7 @@ class BaseConstraint():
             weekdays=None,
             **kwargs):
         self.rota: RotaSolver = rota
+        self.variables={}
         self.startdate = daterange.get(
             'startdate') if daterange is not None else None
         self.enddate = daterange.get(
@@ -58,7 +59,7 @@ class BaseConstraint():
         self.exclusions = daterange.get(
             'exclusions') if daterange is not None else None
         self.kwargs = kwargs
-
+        
     @classmethod
     def definition(cls):
         """form definition for frontend"""
@@ -79,6 +80,10 @@ class BaseConstraint():
     def process_output(self,solver,pairs):
         """process output"""
         return pairs
+
+    def build_output(self,solver,outputdict):
+        """build output dict in format outputdict[date][shift][name]=duty"""
+        return outputdict
 
     def remove(self):
         """remove constraint from model"""
