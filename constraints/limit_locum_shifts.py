@@ -52,7 +52,7 @@ class Constraint(BaseConstraint):
         enforced = self.get_constraint_atom()
         shift_types = ['_'.join(shifttype.upper().split())
                        for shifttype in kwargs.pop('shift_type', [])]
-        if kwargs.pop('collectively') == 'individually':
+        if kwargs.pop('collectively',None) == 'individually':
             list_of_lists = [[Staff[s.upper()]]
                              for s in kwargs.pop('staff', [])]
         else:

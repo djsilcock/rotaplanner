@@ -1,6 +1,6 @@
 """Webserver module"""
 
-from datetime import date, timedelta
+from datetime import date
 import multiprocessing
 import shelve
 import sys
@@ -41,45 +41,42 @@ def launch_solver(pipe, startdate, enddate):
 
 
 @sio.event
-async def connect(sid, environ, auth):
-    print('connect ', sid)
-
-
-@sio.event
 async def echo(sid, data):
     print('echo')
     await sio.emit('greeting', {'message': data}, to=sid)
 
+
 @sio.event
-async def show_tallies(sid,datestring):
+async def show_tallies(sid, datestring):
     """Generate tallies for staff"""
-    tallies={}
-    names=set()
+    tallies = {}
+    names = set()
     with shelve.open('datafile') as db:
         for key in db:
             duty_weekday = date.fromisoformat(key).weekday()
             oncall_type = 'wdoc' if duty_weekday < 4 else 'weoc'
             day_type = 'wddt' if duty_weekday < 5 else 'wedt'
-            if key<=datestring:
+            if key <= datestring:
                 tallies[('tot', day_type)] = tallies.get(
                     ('tot', day_type), 0)+1
                 tallies[('tot', oncall_type)] = tallies.get(
                     ('tot', oncall_type), 0)+1
-                for name,duty in db[key].get('DAYTIME',{}).items():
+                for name, duty in db[key].get('DAYTIME', {}).items():
                     names.add(name)
-                    if duty in ['DEFINITE_ICU','ICU']:
-                        tallies[(name,day_type)]=tallies.get((name,day_type),0)+1
-                        
-                for name, duty in db[key].get('ONCALL', {}).items():
-                        if duty in ['DEFINITE_ICU', 'ICU']:
-                            tallies[(name, oncall_type)] = tallies.get(
-                                (name, oncall_type), 0)+1
-                            
+                    if duty in ['DEFINITE_ICU', 'ICU']:
+                        tallies[(name, day_type)] = tallies.get(
+                            (name, day_type), 0)+1
 
-    rows = [f'|{name}|{"|".join([str(tallies.get((name,duty),0)) for duty in ["wddt","wedt","wdoc","weoc"]])}|' for name in names]
+                for name, duty in db[key].get('ONCALL', {}).items():
+                    if duty in ['DEFINITE_ICU', 'ICU']:
+                        tallies[(name, oncall_type)] = tallies.get(
+                            (name, oncall_type), 0)+1
+
+    rows = [
+        f'|{name}|{"|".join([str(tallies.get((name,duty),0)) for duty in ["wddt","wedt","wdoc","weoc"]])}|' for name in names]
     targets = f'|Targets|{"|".join([str(tallies.get(("tot",duty),0)//9) for duty in ["wddt","wedt","wdoc","weoc"]])}|'
 
-    message="\n".join([
+    message = "\n".join([
         '| |Wkday day|Wkend day|Wkday oc|Wkend oc|',
         '|---|---|---|---|---|',
         targets,
@@ -88,11 +85,11 @@ async def show_tallies(sid,datestring):
     await sio.emit('report', {'message': f"""Tallies for:{datestring} \n\n{message}"""})
 
 
-async def recalculate(data):
+async def do_recalculate(data, startdate):
     """Run recalculation as background task"""
     await sio.emit('message', {'message': 'recalculating...'})
     localpipe, remotepipe = multiprocessing.Pipe()
-    startdate = min(*data.keys())
+    #startdate = min(*data.keys())
     enddate = max(*data.keys())
     process = multiprocessing.Process(
         target=launch_solver, args=(remotepipe, startdate, enddate))
@@ -142,12 +139,13 @@ async def recalculate(data):
 
 
 @app.post("backend/recalculate")
-async def testserver(request):
+async def recalculate(request):
     '''run query'''
+    start_date = request.json.get('startDate', '1970-01-01')
     with shelve.open('datafile') as database:
         data = {}
         data.update(database)
-    request.app.add_task(recalculate(data))
+    request.app.add_task(do_recalculate(data, start_date))
     return sanic.response.json({'status': 'accepted'}, status=202)
 
 
@@ -174,24 +172,19 @@ async def save_constraints(request):
     return sanic.response.json({'status': 'OK'})
 
 
-@app.get('backend/getduties/<day:str>')
-async def get_day(request, day):
+@sio.event
+async def get_duties(sid, day):
     """Get duties for day"""
+    print(f'get duty: {day}')
     with shelve.open('datafile') as db:
         day_data = db.get(day, {})
-    # print(f"{day}:{repr(day_data)}")
-    return sanic.response.json({
-        'result': day_data})
+    return day_data
 
 
-@app.post('backend/setduty')
-async def set_duty(request):
+@sio.event
+async def set_duty(sid, duty, shift, name, day):
     """Update duty for shift"""
-    json_request = request.json
-    shift = json_request['shift']
-    name = json_request['name']
-    day = json_request['day']
-    duty = json_request['duty']
+    print(f'set duty: {duty},{shift},{name},{day}')
     with shelve.open('datafile', writeback=True) as database:
         day_allocs = database.setdefault(day, {})
         shift_allocs = day_allocs.setdefault(shift, {})
@@ -207,11 +200,11 @@ async def set_duty(request):
         shift_allocs[name] = duty
         day_data = {}
         day_data.update(day_allocs)
-    return sanic.response.json(
-        {'result': day_data})
+    return {'result': day_data}
 
-app.static('/', os.path.join(os.getcwd(), 'rotaplanner', 'out','index.html')) 
-app.static('/_next',os.path.join(os.getcwd(),'rotaplanner','out','_next'))
+
+app.static('/', os.path.join(os.getcwd(), 'static', 'index.html'))
+app.static('/static', os.path.join(os.getcwd(), 'static'))
 
 if __name__ == "__main__":
     app.run(auto_reload=True)

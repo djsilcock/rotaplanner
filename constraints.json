@@ -188,21 +188,6 @@
     }
   },
   "limit_locum_shifts": {
-    "20": {
-      "shift_type": [
-        "weekday daytime"
-      ],
-      "staff": [
-        "RORY"
-      ],
-      "collectively": "individually",
-      "moreless": "at most",
-      "minimum": 0,
-      "maximum": 0,
-      "startDate": "2022-06-01T00:00:00+01:00",
-      "endDate": "2022-08-31T00:00:00+01:00",
-      "enabled": true
-    },
     "21": {
       "shift_type": [
         "weekday oncall"
@@ -220,6 +205,25 @@
       "daterange": {
         "startdate": "2022-08-01",
         "enddate": "2022-08-31",
+        "exclusions": []
+      }
+    },
+    "k1wdp5dtvih": {
+      "staff": [
+        "Rory"
+      ],
+      "moreless": "at most",
+      "maximum": 0,
+      "shift_type": [
+        "weekday daytime",
+        "weekend daytime",
+        "weekend oncall",
+        "weekday oncall"
+      ],
+      "enabled": true,
+      "daterange": {
+        "startdate": "2022-07-31",
+        "enddate": null,
         "exclusions": []
       }
     }
