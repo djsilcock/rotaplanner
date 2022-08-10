@@ -12,97 +12,83 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import TextField from '@mui/material/TextField';
 import Link from '@mui/material/Link';
-import { useSWRConfig } from 'swr';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import locale from 'date-fns/locale/en-GB'
-
-import { addDays, format,differenceInCalendarDays, isValid, formatISO } from 'date-fns';
+import isEqual from 'lodash/isEqual';
+import { format,formatISO, parseISO } from 'date-fns';
 import { names } from '../lib/names';
 import { Cell } from '../components/Cell';
-import { recalculate } from '../lib/recalculate';
 import { SettingsDialog } from '../components/SettingsDialog';
 import { MessageDialog } from '../components/MessageDialog';
 import { DateRangeDialog } from '../components/DateRangeDialog';
-
-import {useSocket,SocketProvider } from '../lib/socketContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { ReduxProvider } from '../lib/store';
 
 const rotaEpoch = new Date(2020, 10, 2)
 
+//Selectors
+const selectors={
+  getMessage:(state=>state?.statusMessage),
+  getDaysArray:state=>state.daysArray
+
+}
+
+//Actions
+const actions={
+  showTallies:(dateISO)=>({type:'remote/showTallies',payload:dateISO}),
+  setStartDate:(startDate=>({
+    type:'remote/setStartDate',
+    payload:formatISO(startDate,{representation:'date'})}
+    )),
+  recalculate:()=>({type:'remote/recalculate'})
+}
+
 function MessageBox() {
-  const [message, setMessage] = React.useState('meh')
-  const socket=useSocket()
-  React.useEffect(() => {
-    if (!socket) return
-    socket.on('progress', data => {
-      setMessage(`Objective:${data.objective}, time:${data.time}s`)
-    })
-    socket.on('message',data=>{setMessage(data.message)})
-    socket.on('solveStatus', data => {
-      setMessage(`Solver status: ${data.statusName}`)
-    })
-  },[socket])
+  const message=useSelector(selectors.getMessage)
   return message
 }
 
 
 
-function SocketIO() {
-  const { cache, mutate } = useSWRConfig()
-  const socket=useSocket()
-  React.useEffect(() => {
-    if (!socket) return
-    socket.on('connect', () => {
-      console.log('connected')
-      socket.emit('echo','hello!')
-    })
-    socket.on('greeting', (data) => { console.log(data) })
-    socket.onAny((evt, data) => console.log({ evt, data }))
-    socket.on('reload', () => {
-      for (let k of cache.keys()){ console.log(k); mutate(k) }
-    })
-  }, [cache,mutate,socket])
-  return null
-}
 
 function DateLink({ date }) {
-  const socket=useSocket()
+  const dispatch=useDispatch()
   const clickHandler = React.useCallback(() => {
-    socket.emit('show_tallies',formatISO(date,{representation:'date'}))
-  },[date,socket])
+    dispatch(actions.showTallies(date))
+  },[date]) 
   return <Link sx={{ cursor: 'pointer' }} onClick={clickHandler}>
-    {format(date, "E d MMM")}
+    {format(parseISO(date), "E d MMM")}
   </Link>
 
 }
 
-function App() {
+function App(){
+  return <ReduxProvider><InnerApp/></ReduxProvider>
+}
+
+function InnerApp() {
   const [dutyType, setDutyType] = React.useState('DEFINITE_ICU')
-  const [proposedStartDate, setProposedStartDate] = React.useState(rotaEpoch)
-  const [startDate,setStartDate]=React.useState(null)
+  
+  const days=useSelector(selectors.getDaysArray,isEqual)
+  const dispatch=useDispatch()
+
   const handleChange = React.useCallback((evt, newValue) => {
     if (newValue !== null) {
       setDutyType(newValue)
     }
   }, [setDutyType])
-  React.useEffect(() => {
-    if (isValid(proposedStartDate)){
-      setStartDate(proposedStartDate)
-    }
-  }, [proposedStartDate])
-  React.useEffect(() => {
-    setProposedStartDate(new Date())
-  },[])
-  const days = React.useMemo(() => isValid(startDate) ? (
-    Array(16 * 7).fill(0).map((x, i) => i + differenceInCalendarDays(startDate, rotaEpoch))) : [], [startDate])
-  
+
+   
   return (
     <div className="App">
-      <SocketProvider>
+  
       <LocalizationProvider dateAdapter={AdapterDateFns} locale={locale}>
         <Paper>
-            <Button onClick={() => { recalculate(startDate) }}>recalculate</Button>
+            <Button onClick={() => { dispatch(actions.recalculate()) }}>
+              recalculate
+            </Button>
           <ToggleButtonGroup
             value={dutyType}
             exclusive
@@ -118,9 +104,9 @@ function App() {
           </ToggleButtonGroup>
 
           <DatePicker
-            value={startDate}
+            value={parseISO(days[0])}
             onChange={(newValue) => {
-              setProposedStartDate(newValue);
+              dispatch(actions.setStartDate(newValue));
             }}
             minDate={rotaEpoch}
             showTodayButton
@@ -130,7 +116,7 @@ function App() {
           />
           <SettingsDialog />
           <DateRangeDialog onChange={(v)=>console.log(v)}/>
-          <MessageBox/><SocketIO/>
+          <MessageBox/>
         </Paper>
           <MessageDialog/>
         <TableContainer component={Paper}>
@@ -145,9 +131,9 @@ function App() {
                   borderRight: "2px solid black",
                   zIndex:1000
                 }}></TableCell>
-                {days.map((x) => (
-                  <TableCell key={x}>
-                    <DateLink date={addDays(rotaEpoch,x)}/>
+                {days.map((day,i) => (
+                  <TableCell key={i}>
+                    <DateLink date={day}/>
                     </TableCell>
                 ))}
               </TableRow>
@@ -171,7 +157,7 @@ function App() {
                         key={day}
                         dutyType={dutyType}
                         name={name}
-                        day={format(addDays(rotaEpoch, day), "yyyy-MM-dd")}
+                        day={day}
                       />
                     ))}
                   </TableRow>
@@ -181,7 +167,6 @@ function App() {
           </Table>
         </TableContainer>
         </LocalizationProvider>
-      </SocketProvider>
     </div>
   );
 }

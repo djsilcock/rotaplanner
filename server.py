@@ -1,16 +1,19 @@
 """Webserver module"""
 
-from datetime import date
+from datetime import date, datetime, timedelta
 import multiprocessing
 import shelve
+from sre_parse import State
+import subprocess
 import sys
 import json
 import asyncio
 import os
+import webbrowser
 import socketio
 
 import sanic
-
+from sanic.signals import Event
 from solver import RotaSolver
 from constraints.constraintmanager import get_constraint_config
 
@@ -40,15 +43,17 @@ def launch_solver(pipe, startdate, enddate):
             sys.exit()
 
 
+
 @sio.event
 async def echo(sid, data):
     print('echo')
     await sio.emit('greeting', {'message': data}, to=sid)
 
 
-@sio.event
-async def show_tallies(sid, datestring):
+
+def show_tallies(payload):
     """Generate tallies for staff"""
+    datestring=payload
     tallies = {}
     names = set()
     with shelve.open('datafile') as db:
@@ -82,8 +87,12 @@ async def show_tallies(sid, datestring):
         targets,
         "\n".join(rows),
         ""])
-    await sio.emit('report', {'message': f"""Tallies for:{datestring} \n\n{message}"""})
+    state.setdefault('messagePopup',[])
+    state['messagePopup'].append(f"""Tallies for:{datestring} \n\n{message}""")
 
+def dismiss_popup():
+    state.setdefault('messagePopup',[])
+    state['messagePopup']=state['messagePopup'][1:]
 
 async def do_recalculate(data, startdate):
     """Run recalculation as background task"""
@@ -181,14 +190,14 @@ async def get_duties(sid, day):
     return day_data
 
 
-@sio.event
-async def set_duty(sid, duty, shift, name, day):
+
+def set_duty(dutyType, shift, name, day):
     """Update duty for shift"""
-    print(f'set duty: {duty},{shift},{name},{day}')
+    print(f'set duty: {dutyType},{shift},{name},{day}')
     with shelve.open('datafile', writeback=True) as database:
         day_allocs = database.setdefault(day, {})
         shift_allocs = day_allocs.setdefault(shift, {})
-        if duty in ['DEFINITE_ICU', 'DEFINITE_LOCUM_ICU', 'ICU_MAYBE_LOCUM']:
+        if dutyType in ['DEFINITE_ICU', 'DEFINITE_LOCUM_ICU', 'ICU_MAYBE_LOCUM']:
             shift_allocs.update({
                 name1: (None if duty1 in [
                     'ICU',
@@ -197,14 +206,67 @@ async def set_duty(sid, duty, shift, name, day):
                     'DEFINITE_LOCUM_ICU',
                     'ICU_MAYBE_LOCUM'] else duty1)
                 for name1, duty1 in shift_allocs.items()})
-        shift_allocs[name] = duty
-        day_data = {}
-        day_data.update(day_allocs)
-    return {'result': day_data}
+        shift_allocs[name] = dutyType
+        state['duties'][day]=day_allocs
+
+
+days_to_display=16*7
+state={'daysArray':[],'duties':{}}
+def populate_state(payload):
+    starting_date=date.fromisoformat(payload)
+    state['daysArray']=[(starting_date+timedelta(days=daydelta)).isoformat() for daydelta in range(days_to_display)]
+    with shelve.open('datafile') as db:
+        state['duties']=dict([(day,db.get(day, {})) for day in state['daysArray']])
+
+populate_state(date.today().isoformat())
+
+@sio.event
+async def reset_state(sid):
+    print ('reset state')
+    return {'type':'remote/replaceState','newState':state}
+
+@sio.event
+async def dispatch(sid,evt,*args):
+    print(evt)
+    evttype=evt.pop('type')
+    try:
+        {
+            'remote/setDuty':set_duty,
+            'remote/showTallies':show_tallies,
+            'remote/dismissPopup':dismiss_popup,
+            'remote/setStartDate':populate_state
+        }[evttype](**evt)
+        return {'type':'remote/replaceState','newState':state}
+    except KeyError:
+        print (f'unknown action type {evttype}')
+
+status={1:False}
+@sio.event
+def connect(*args):
+    print(f'hello {args}')
+    status[1]=True
+@sio.event
+async def disconnect(*sid):
+    print ('bye')
+    status[1]=False
+    await asyncio.sleep(5)
+    if status[1]==False:
+        app.stop()
+
+@app.signal(Event.SERVER_INIT_AFTER)
+def launcher(app,loop):
+    subprocess.Popen('start msedge --app="{}"'.format('http://localhost:8000'),
+        stdout=sys.stdout, stderr=sys.stderr, stdin=subprocess.PIPE, shell=True)
+
+@app.signal(Event.SERVER_SHUTDOWN_AFTER)
+def shutdown(app,loop):
+    sys.exit(0)
+    
 
 
 app.static('/', os.path.join(os.getcwd(), 'static', 'index.html'))
 app.static('/static', os.path.join(os.getcwd(), 'static'))
 
 if __name__ == "__main__":
-    app.run(auto_reload=True)
+    print(os.path.join(os.getcwd(),'static'))
+    app.run()

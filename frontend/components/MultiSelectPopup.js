@@ -7,7 +7,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
-import { Stack } from '@mui/material';
+import Stack from '@mui/material/Stack';
 import { Hyperlink } from './Hyperlink';
 
 export function MultiSelectPopup({ name, options, value: suppliedDefaultValue, onChange }) {

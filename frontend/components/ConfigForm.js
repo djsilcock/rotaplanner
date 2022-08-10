@@ -1,4 +1,5 @@
-import { Button, Checkbox } from "@mui/material";
+import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox"
 import React from "react";
 import { DateRangeDialog } from "./DateRangeDialog";
 import { GenericComponent } from "./GenericComponent";

@@ -7,27 +7,36 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import { ConfigForm } from './ConfigForm';
 import { deleteDeep, setDeep, updateDeep } from "../lib/updateDeep";
-import { Accordion, AccordionActions, AccordionDetails, AccordionSummary } from '@mui/material';
+import Accordion from '@mui/material';
+import AccordionActions from '@mui/material/AccordionActions';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
 
+import { useDispatch, useSelector } from 'react-redux';
+import isEqual from 'lodash/isEqual';
+
+
+//selectors
+const selectors={
+    formSpec:(state)=>state?.config?.constraintDefs || {},
+    constraints:(state)=>state?.config?.constraints || {}
+}
+const actions={
+    saveConstraints:(constraints)=>({type:'remote/saveConstraints',constraints})
+}
 export function SettingsDialog() {
     const [open, setOpen] = React.useState(false);
-    const [formSpecs, setFormSpecs] = React.useState({})
+    const formSpecs= useSelector(selectors.formSpec,isEqual)
+    const serverConstraints=useSelector(selectors.constraints,isEqual)
+    const dispatch=useDispatch()
     const [constraints, updateConstraint] = React.useReducer(
         (state, action) => {
-            console.log({ state, action })
             switch (action.type) {
-                case 'loading':
-                    return { ...state, loadingStatus: 'loading' }
-                case 'loaded':
-                    return {
-                        ...state,
-                        loadingStatus: 'loaded'
-                    }
                 case 'reset':
                     return {
-                        ...state,
-                        loadingStatus: 'no'
-                    }
+                        ...state, 
+                        constraints: serverConstraints, 
+                        }                    
                 case 'delete':
                     return deleteDeep(state, ['constraints', action.constraintName, action.id])
                 case 'update':
@@ -37,33 +46,14 @@ export function SettingsDialog() {
                 case 'addAnother':
                     return setDeep(state, ['constraints', action.constraintName, Math.random().toString(36).slice(2)], {})
                 case 'replaceAll':
-                    return { ...state, constraints: action.constraintdefs, loadingStatus: 'loaded' }
+                    return { ...state, constraints: action.constraintdefs}
                 case 'updateField':
                     return setDeep(state, ['constraints', action.constraintName, action.id, action.name], action.value)
             }
-        }, { loadingStatus: 'no', constraints: {} })
-
-    React.useEffect(() => {
-        fetch('/backend/constraintdefs').then(
-            response => response.json()
-        ).then(
-            formdef => {
-                setFormSpecs(formdef)
-            }
-        )
-    }, [open])
-    React.useEffect(() => {
-        if (constraints.loadingStatus == 'no') {
-            updateConstraint({ type: 'loading' })
-            fetch('/backend/constraints').then(
-                response => response.json()
-            ).then(
-                constraintdefs => {
-                    updateConstraint({ type: 'replaceAll', constraintdefs })
-                })
-        }
-    }, [constraints.loadingStatus])
+        }, {constraints: serverConstraints })
+    
     const handleClickOpen = () => {
+        updateConstraint({type:'reset'})
         setOpen(true);
     };
 
@@ -74,13 +64,8 @@ export function SettingsDialog() {
         updateConstraint({ type: 'reset' })
     }
     const handleSave = () => {
-        fetch('/backend/constraints', {
-            headers: { 'accept': 'application/json' },
-            method: 'post',
-            body: JSON.stringify(constraints.constraints)
-        }).then(() => {
+        dispatch(actions.saveConstraints(constraints))
             handleClose()
-        })
     }
 
     return (

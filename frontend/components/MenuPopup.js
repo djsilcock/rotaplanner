@@ -1,6 +1,6 @@
 import React from 'react';
 import MenuItem from '@mui/material/MenuItem';
-import { Menu } from '@mui/material';
+import Menu from '@mui/material/Menu';
 import { Hyperlink } from './Hyperlink';
 
 export function MenuPopup({ value='', options, name, onChange }) {

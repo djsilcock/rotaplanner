@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box } from '@mui/system';
+import Box  from '@mui/system/Box';
 
 export const Hyperlink = React.forwardRef(function Hyperlink({ onClick, children }, ref) {
     return <> <Box

@@ -3,28 +3,23 @@ import React from 'react';
 import TableCell from '@mui/material/TableCell';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import useSWR from 'swr'
-import { useSocket } from '../lib/socketContext';
+import { useDispatch, useSelector } from 'react-redux';
+import isEqual from 'lodash/isEqual';
 
-function useFetcher() {
-    const socket=useSocket()
-    return (...params) => {
-        console.log(params)
-        return new Promise(
-            (resolve, reject) => socket
-                .timeout(5000)
-                .emit(...params,
-                    (err, result) => err ? reject(err) : resolve({ result })))
-            .catch(e => console.warn(e))
-    }
+const selectors={
+    getCellData:(date)=>(state)=>state?.duties[date]
 }
 
+const actions={
+    setDuty:(dutyType,shift,name,day)=>({type:'remote/setDuty',dutyType,shift,name,day})
+}
 export const Cell = (function Cell({ name, day, dutyType }) {
-    const fetcher=useFetcher()
-    const { data,mutate } = useSWR(['get_duties',day], fetcher)
+    const dispatch=useDispatch()
+    const getCellDataSelector=React.useMemo(()=>selectors.getCellData(day),[day])
+    const data=useSelector(getCellDataSelector,isEqual)
     if (!data) return <TableCell>...</TableCell>
-    const daytimeValue = data?.result?.DAYTIME?.[name] ?? 'LOADING'
-    const oncallValue = data?.result?.ONCALL?.[name] ?? 'LOADING'
+    const daytimeValue = data?.DAYTIME?.[name] ?? 'LOADING'
+    const oncallValue = data?.ONCALL?.[name] ?? 'LOADING'
     const props1 = {
         ICU: ['blue', <>?&nbsp;ICU</>],
         LOCUM_ICU: ['blue', <>?&nbsp;ICU(£)</>],
@@ -49,17 +44,7 @@ export const Cell = (function Cell({ name, day, dutyType }) {
     }[oncallValue] || ['gray', '-'];
     
     const handleClick = (shift) => () => {
-        console.log({ origdata: data })
-        const newdata = { DAYTIME: { ...data?.result?.DAYTIME }, ONCALL: { ...data?.result?.ONCALL } }
-        newdata[shift][name] = dutyType
-        console.log({optimisticData:newdata})
-        mutate(
-            fetcher('set_duty', dutyType, shift, name, day),
-            {
-                optimisticData: { result: newdata },
-                populateCache: true,
-            }
-        );
+        dispatch(actions.setDuty(dutyType, shift, name, day));
     };
     return <TableCell style={{ border: 'solid 1px' }} title={`${name} ${day}`}>
         <ButtonGroup
