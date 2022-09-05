@@ -28,7 +28,7 @@ function makeRemoteMiddleware(){
 }
 }}
 
-const store = createStore(remoteReducer,{daysArray:[]},applyMiddleware(makeRemoteMiddleware()))
+const store = createStore(remoteReducer,window.initialData ?? {daysArray:[]},applyMiddleware(makeRemoteMiddleware()))
 
 export function ReduxProvider({children}){
   return <Provider store={store}>{children}</Provider>

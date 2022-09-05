@@ -3,7 +3,7 @@
 from datetime import date, datetime, timedelta
 import multiprocessing
 import shelve
-from sre_parse import State
+
 import subprocess
 import sys
 import json
@@ -43,17 +43,15 @@ def launch_solver(pipe, startdate, enddate):
             sys.exit()
 
 
-
 @sio.event
 async def echo(sid, data):
     print('echo')
     await sio.emit('greeting', {'message': data}, to=sid)
 
 
-
 def show_tallies(payload):
     """Generate tallies for staff"""
-    datestring=payload
+    datestring = payload
     tallies = {}
     names = set()
     with shelve.open('datafile') as db:
@@ -87,12 +85,14 @@ def show_tallies(payload):
         targets,
         "\n".join(rows),
         ""])
-    state.setdefault('messagePopup',[])
+    state.setdefault('messagePopup', [])
     state['messagePopup'].append(f"""Tallies for:{datestring} \n\n{message}""")
 
+
 def dismiss_popup():
-    state.setdefault('messagePopup',[])
-    state['messagePopup']=state['messagePopup'][1:]
+    state.setdefault('messagePopup', [])
+    state['messagePopup'] = state['messagePopup'][1:]
+
 
 async def do_recalculate(data, startdate):
     """Run recalculation as background task"""
@@ -143,19 +143,17 @@ async def do_recalculate(data, startdate):
         print('pipe was closed')
     with shelve.open('datafile') as database:
         database.update(d)
-    await sio.emit('reload', {})
+    populate_state(startdate)
     print('sent reload signal')
 
 
-@app.post("backend/recalculate")
-async def recalculate(request):
+def recalculate():
     '''run query'''
-    start_date = request.json.get('startDate', '1970-01-01')
+    start_date = state['daysArray'][0]
     with shelve.open('datafile') as database:
         data = {}
         data.update(database)
-    request.app.add_task(do_recalculate(data, start_date))
-    return sanic.response.json({'status': 'accepted'}, status=202)
+    app.add_task(do_recalculate(data, start_date))
 
 
 @app.get('backend/constraintdefs')
@@ -164,21 +162,19 @@ async def settings(request):
     return sanic.response.json(get_constraint_config())
 
 
-@app.get('backend/constraints')
-async def get_constraints(request):
+
+def get_constraints():
     """return list of current constraints"""
     with open('constraints.json', encoding='utf-8') as constraint_file:
-        constraints = json.load(constraint_file)
-    return sanic.response.json(constraints)
+        return json.load(constraint_file)
 
 
-@app.post('backend/constraints')
-async def save_constraints(request):
+
+def save_constraints(constraints):
     """save the constraints list from the ui"""
-    data = request.json
     with open('constraints.json', 'w', encoding='utf-8') as constraint_file:
-        json.dump(data, constraint_file, indent=2)
-    return sanic.response.json({'status': 'OK'})
+        json.dump(constraints, constraint_file, indent=2)
+    state['config']['constraints']=constraints
 
 
 @sio.event
@@ -188,7 +184,6 @@ async def get_duties(sid, day):
     with shelve.open('datafile') as db:
         day_data = db.get(day, {})
     return day_data
-
 
 
 def set_duty(dutyType, shift, name, day):
@@ -207,66 +202,90 @@ def set_duty(dutyType, shift, name, day):
                     'ICU_MAYBE_LOCUM'] else duty1)
                 for name1, duty1 in shift_allocs.items()})
         shift_allocs[name] = dutyType
-        state['duties'][day]=day_allocs
+        state['duties'][day] = day_allocs
 
 
-days_to_display=16*7
-state={'daysArray':[],'duties':{}}
+days_to_display = 16*7
+state = {'daysArray': [], 'duties': {},'config':{'constraintDefs':get_constraint_config(),'constraints':get_constraints()}}
+
+
 def populate_state(payload):
-    starting_date=date.fromisoformat(payload)
-    state['daysArray']=[(starting_date+timedelta(days=daydelta)).isoformat() for daydelta in range(days_to_display)]
+    starting_date = date.fromisoformat(payload)
+    state['daysArray'] = [(starting_date+timedelta(days=daydelta)).isoformat()
+                          for daydelta in range(days_to_display)]
     with shelve.open('datafile') as db:
-        state['duties']=dict([(day,db.get(day, {})) for day in state['daysArray']])
+        state['duties'] = dict([(day, db.get(day, {}))
+                               for day in state['daysArray']])
+
 
 populate_state(date.today().isoformat())
 
+
 @sio.event
 async def reset_state(sid):
-    print ('reset state')
-    return {'type':'remote/replaceState','newState':state}
+    print('reset state')
+    return {'type': 'remote/replaceState', 'newState': state}
+
 
 @sio.event
-async def dispatch(sid,evt,*args):
+async def dispatch(sid, evt, *args):
     print(evt)
-    evttype=evt.pop('type')
+    evttype = evt.pop('type')
     try:
         {
-            'remote/setDuty':set_duty,
-            'remote/showTallies':show_tallies,
-            'remote/dismissPopup':dismiss_popup,
-            'remote/setStartDate':populate_state
+            'remote/setDuty': set_duty,
+            'remote/showTallies': show_tallies,
+            'remote/dismissPopup': dismiss_popup,
+            'remote/setStartDate': populate_state,
+            'remote/recalculate': recalculate,
+            'remote/saveConstraints':save_constraints
         }[evttype](**evt)
-        return {'type':'remote/replaceState','newState':state}
+        return {'type': 'remote/replaceState', 'newState': state}
     except KeyError:
-        print (f'unknown action type {evttype}')
+        print(f'unknown action type {evttype} {repr(evt)}')
 
-status={1:False}
+status = {1: False}
+
+
 @sio.event
 def connect(*args):
     print(f'hello {args}')
-    status[1]=True
-@sio.event
+    status[1] = True
+
+
+#@sio.event
 async def disconnect(*sid):
-    print ('bye')
-    status[1]=False
+    print('bye')
+    status[1] = False
     await asyncio.sleep(5)
-    if status[1]==False:
+    if status[1] == False:
         app.stop()
 
+
 @app.signal(Event.SERVER_INIT_AFTER)
-def launcher(app,loop):
-    subprocess.Popen('start msedge --app="{}"'.format('http://localhost:8000'),
-        stdout=sys.stdout, stderr=sys.stderr, stdin=subprocess.PIPE, shell=True)
+def launcher(app, loop):
+    try:
+        subprocess.run('start msedge --app="{}"'.format('http://localhost:8000'),
+                     stdout=sys.stdout, stderr=sys.stderr, stdin=subprocess.PIPE, shell=True,check=True)
+    except:
+        webbrowser.open('http://localhost:8000')
+
 
 @app.signal(Event.SERVER_SHUTDOWN_AFTER)
-def shutdown(app,loop):
+def shutdown(app, loop):
     sys.exit(0)
-    
 
-
-app.static('/', os.path.join(os.getcwd(), 'static', 'index.html'))
+@app.get('/')
+def index(request):
+    return sanic.response.html(
+        "<!DOCTYPE html><html><head><title>Rota Solver</title></head>"
+        "<body>"
+        '<div id="target">Loading...</div>'
+        f"<script>window.initialData={json.dumps(state)}</script>"
+        '<script src="/static/script.js"></script>'
+        '</body></html>')
 app.static('/static', os.path.join(os.getcwd(), 'static'))
 
 if __name__ == "__main__":
-    print(os.path.join(os.getcwd(),'static'))
+    print(os.path.join(os.getcwd(), 'static'))
     app.run()

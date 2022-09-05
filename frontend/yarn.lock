@@ -1285,7 +1285,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:^2.2.0, debug@npm:^2.6.9":
+"debug@npm:^2.6.9":
   version: 2.6.9
   resolution: "debug@npm:2.6.9"
   dependencies:
@@ -1994,13 +1994,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"events@npm:^3.3.0":
-  version: 3.3.0
-  resolution: "events@npm:3.3.0"
-  checksum: f6f487ad2198aa41d878fa31452f1a3c00958f46e9019286ff4787c84aac329332ab45c9cdc8c445928fc6d7ded294b9e005a7fce9426488518017831b272780
-  languageName: node
-  linkType: hard
-
 "extend@npm:^3.0.0":
   version: 3.0.2
   resolution: "extend@npm:3.0.2"
@@ -2099,15 +2092,6 @@ __metadata:
   version: 3.2.6
   resolution: "flatted@npm:3.2.6"
   checksum: 33b87aa88dfa40ca6ee31d7df61712bbbad3d3c05c132c23e59b9b61d34631b337a18ff2b8dc5553acdc871ec72b741e485f78969cf006124a3f57174de29a0e
-  languageName: node
-  linkType: hard
-
-"flux-standard-action@npm:^0.6.0":
-  version: 0.6.1
-  resolution: "flux-standard-action@npm:0.6.1"
-  dependencies:
-    lodash.isplainobject: ^3.2.0
-  checksum: 0da4a47182438e6fd7d56396c6a8cc53af6aa33816ea33e9473ca2c1088e61973578c4bf5e56604cf4f79c4d5f9e720c1ce3973376c6a14aa9a15c60d24aab96
   languageName: node
   linkType: hard
 
@@ -2375,15 +2359,6 @@ __metadata:
     has: ^1.0.3
     side-channel: ^1.0.4
   checksum: 1944f92e981e47aebc98a88ff0db579fd90543d937806104d0b96557b10c1f170c51fb777b97740a8b6ddeec585fca8c39ae99fd08a8e058dfc8ab70937238bf
-  languageName: node
-  linkType: hard
-
-"invariant@npm:^2.1.1":
-  version: 2.2.4
-  resolution: "invariant@npm:2.2.4"
-  dependencies:
-    loose-envify: ^1.0.0
-  checksum: cc3182d793aad82a8d1f0af697b462939cb46066ec48bbf1707c150ad5fad6406137e91a262022c269702e01621f35ef60269f6c0d7fd178487959809acdfb14
   languageName: node
   linkType: hard
 
@@ -2685,59 +2660,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash._basefor@npm:^3.0.0":
-  version: 3.0.3
-  resolution: "lodash._basefor@npm:3.0.3"
-  checksum: 8028af9901a33c336eeb18945bfe304f9e2abc1a741f688a5e26e3fa1a1c975688f7a40ec90d8dc3eda3c04160ede0aa5a89c2beb04ac29daf914b5aeb8b6b5a
-  languageName: node
-  linkType: hard
-
-"lodash.isarguments@npm:^3.0.0":
-  version: 3.1.0
-  resolution: "lodash.isarguments@npm:3.1.0"
-  checksum: ae1526f3eb5c61c77944b101b1f655f846ecbedcb9e6b073526eba6890dc0f13f09f72e11ffbf6540b602caee319af9ac363d6cdd6be41f4ee453436f04f13b5
-  languageName: node
-  linkType: hard
-
-"lodash.isarray@npm:^3.0.0":
-  version: 3.0.4
-  resolution: "lodash.isarray@npm:3.0.4"
-  checksum: 3b298fb76ff16981353f7d0695d8680be9451b74d2e76714ddbd903a90fbaa8e1d84979d0ae99325f5a9033776771154b19e05027ab23de83202251c8abe81b5
-  languageName: node
-  linkType: hard
-
-"lodash.isplainobject@npm:^3.2.0":
-  version: 3.2.0
-  resolution: "lodash.isplainobject@npm:3.2.0"
-  dependencies:
-    lodash._basefor: ^3.0.0
-    lodash.isarguments: ^3.0.0
-    lodash.keysin: ^3.0.0
-  checksum: c49ee7642dea4427aeae37ad987fb43b574e15322c0cd5c8e9d6097099394dd68783948da646291e25471b7faa917ce8e18435403a6da89b1652520ea735d9c5
-  languageName: node
-  linkType: hard
-
-"lodash.keysin@npm:^3.0.0":
-  version: 3.0.8
-  resolution: "lodash.keysin@npm:3.0.8"
-  dependencies:
-    lodash.isarguments: ^3.0.0
-    lodash.isarray: ^3.0.0
-  checksum: 7d748df105266a474b6b3b17bef339f16c8625fb3091e3c6cad4a02ad943617c3fd5cb9036fed0dbd4a38e6d02e1f6d4a8cc5399f075d411f2a8f21b2eb8a8e4
-  languageName: node
-  linkType: hard
-
 "lodash.merge@npm:^4.6.2":
   version: 4.6.2
   resolution: "lodash.merge@npm:4.6.2"
   checksum: ad580b4bdbb7ca1f7abf7e1bce63a9a0b98e370cf40194b03380a46b4ed799c9573029599caebc1b14e3f24b111aef72b96674a56cfa105e0f5ac70546cdc005
-  languageName: node
-  linkType: hard
-
-"lodash@npm:^3.10.1":
-  version: 3.10.1
-  resolution: "lodash@npm:3.10.1"
-  checksum: 53065d3712a2fd90b55690c5af19f9625a5bbb2b7876ff76d782ee1dc22618fd4dff191d44a8e165a17b5b81a851c3e884d3b5b25e314422fbe24bb299542685
   languageName: node
   linkType: hard
 
@@ -2755,7 +2681,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loose-envify@npm:^1.0.0, loose-envify@npm:^1.1.0, loose-envify@npm:^1.4.0":
+"loose-envify@npm:^1.1.0, loose-envify@npm:^1.4.0":
   version: 1.4.0
   resolution: "loose-envify@npm:1.4.0"
   dependencies:
@@ -3730,18 +3656,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redux-toolkit@npm:^1.1.2":
-  version: 1.1.2
-  resolution: "redux-toolkit@npm:1.1.2"
-  dependencies:
-    debug: ^2.2.0
-    flux-standard-action: ^0.6.0
-    invariant: ^2.1.1
-    lodash: ^3.10.1
-  checksum: 28d14a820af895db3af8b4da8c54350780354195e9266e236d150fc2e338957ffba4fb02bd50bfb4e0d4ac463137fe88ddd6238c9fd1a7daf6c81ac6548f99d2
-  languageName: node
-  linkType: hard
-
 "redux@npm:^4.2.0":
   version: 4.2.0
   resolution: "redux@npm:4.2.0"
@@ -3914,17 +3828,14 @@ __metadata:
     esbuild: ^0.14.49
     eslint: 8.15.0
     eslint-config-next: 12.1.6
-    events: ^3.3.0
     lodash: ^4.17.21
     react: 18.1.0
     react-dom: 18.1.0
     react-markdown: ^8.0.3
     react-redux: ^8.0.2
     redux: ^4.2.0
-    redux-toolkit: ^1.1.2
     remark-gfm: ^3.0.1
     socket.io-client: ^4.5.1
-    swr: ^1.3.0
   languageName: unknown
   linkType: soft
 
@@ -4177,15 +4088,6 @@ __metadata:
   version: 1.0.0
   resolution: "supports-preserve-symlinks-flag@npm:1.0.0"
   checksum: 53b1e247e68e05db7b3808b99b892bd36fb096e6fba213a06da7fab22045e97597db425c724f2bbd6c99a3c295e1e73f3e4de78592289f38431049e1277ca0ae
-  languageName: node
-  linkType: hard
-
-"swr@npm:^1.3.0":
-  version: 1.3.0
-  resolution: "swr@npm:1.3.0"
-  peerDependencies:
-    react: ^16.11.0 || ^17.0.0 || ^18.0.0
-  checksum: e7a184f0d560e9c8be85c023cc8e65e56a88a6ed46f9394b301b07f838edca23d2e303685319a4fcd620b81d447a7bcb489c7fa0a752c259f91764903c690cdb
   languageName: node
   linkType: hard
 

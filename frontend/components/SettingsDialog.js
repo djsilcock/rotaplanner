@@ -7,7 +7,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import { ConfigForm } from './ConfigForm';
 import { deleteDeep, setDeep, updateDeep } from "../lib/updateDeep";
-import Accordion from '@mui/material';
+import Accordion from '@mui/material/Accordion';
 import AccordionActions from '@mui/material/AccordionActions';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -17,26 +17,27 @@ import isEqual from 'lodash/isEqual';
 
 
 //selectors
-const selectors={
-    formSpec:(state)=>state?.config?.constraintDefs || {},
-    constraints:(state)=>state?.config?.constraints || {}
+const selectors = {
+    formSpec: (state) => state?.config?.constraintDefs || {},
+    constraints: (state) => state?.config?.constraints || {}
 }
-const actions={
-    saveConstraints:(constraints)=>({type:'remote/saveConstraints',constraints})
+const actions = {
+    saveConstraints: (constraints) => ({ type: 'remote/saveConstraints', constraints })
 }
+
 export function SettingsDialog() {
     const [open, setOpen] = React.useState(false);
-    const formSpecs= useSelector(selectors.formSpec,isEqual)
-    const serverConstraints=useSelector(selectors.constraints,isEqual)
-    const dispatch=useDispatch()
+    const formSpecs = useSelector(selectors.formSpec, isEqual)
+    const serverConstraints = useSelector(selectors.constraints, isEqual)
+    const dispatch = useDispatch()
     const [constraints, updateConstraint] = React.useReducer(
         (state, action) => {
             switch (action.type) {
                 case 'reset':
                     return {
-                        ...state, 
-                        constraints: serverConstraints, 
-                        }                    
+                        ...state,
+                        constraints: serverConstraints,
+                    }
                 case 'delete':
                     return deleteDeep(state, ['constraints', action.constraintName, action.id])
                 case 'update':
@@ -46,14 +47,15 @@ export function SettingsDialog() {
                 case 'addAnother':
                     return setDeep(state, ['constraints', action.constraintName, Math.random().toString(36).slice(2)], {})
                 case 'replaceAll':
-                    return { ...state, constraints: action.constraintdefs}
+                    return { ...state, constraints: action.constraintdefs }
                 case 'updateField':
                     return setDeep(state, ['constraints', action.constraintName, action.id, action.name], action.value)
             }
-        }, {constraints: serverConstraints })
-    
+        }, { constraints: serverConstraints })
+    console.log({ formSpecs, serverConstraints, constraints })
+
     const handleClickOpen = () => {
-        updateConstraint({type:'reset'})
+        updateConstraint({ type: 'reset' })
         setOpen(true);
     };
 
@@ -64,8 +66,8 @@ export function SettingsDialog() {
         updateConstraint({ type: 'reset' })
     }
     const handleSave = () => {
-        dispatch(actions.saveConstraints(constraints))
-            handleClose()
+        dispatch(actions.saveConstraints(constraints.constraints))
+        handleClose()
     }
 
     return (
@@ -76,8 +78,7 @@ export function SettingsDialog() {
             <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Settings</DialogTitle>
                 <DialogContent>
-                    {constraints.loadingStatus == 'loading' ? 'loading...' : null}
-                    {Object.entries(constraints.constraints).map(([constraintName, constraintdef],i) =>
+                    {Object.entries(constraints.constraints).map(([constraintName, constraintdef], i) =>
                         (formSpecs[constraintName]?.definition?.length ?? 0) == 0 ? null :
                             <Accordion key={i}>
                                 <AccordionSummary>{formSpecs[constraintName].name}</AccordionSummary>

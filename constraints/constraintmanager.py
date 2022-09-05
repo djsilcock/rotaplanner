@@ -50,6 +50,7 @@ class BaseConstraint():
             weekdays=None,
             **kwargs):
         self.rota: RotaSolver = rota
+        self.model=rota.model
         self.variables={}
         self.startdate = daterange.get(
             'startdate') if daterange is not None else None
@@ -65,9 +66,24 @@ class BaseConstraint():
         """form definition for frontend"""
         yield from []
 
-    def days(self):
+    def days(self,*filters):
         """return iterator of days"""
-        return self.rota.days(self.startdate, self.enddate, self.weekdays, self.exclusions)
+        def filterfunc(day):
+                return all((f(day) for f in filters))
+        return filter(filterfunc,self.rota.days(self.startdate, self.enddate, self.weekdays, self.exclusions))
+
+    def get_duty(self,key):
+        "Retrieve a duty"
+        return self.rota.get_duty_base(key)
+    def create_duty(self,key):
+        "Create a new duty"
+        return self.rota.create_duty_base(key)
+    def get_or_create_duty(self,key):
+        "Create a new duty if no matching duty exists"
+        return self.rota.get_or_create_duty_base(key)
+    def add_rule(self,rule):
+        "Add rule to model"
+        return self.rota.model.Add(rule)
 
     def apply_constraint(self):
         """apply constraint to model"""

@@ -87837,6 +87837,7 @@ See https://mui.com/r/migration-v4/#mui-material-styles for more details.` : (0,
           return setDeep(state, ["constraints", action.constraintName, action.id, action.name], action.value);
       }
     }, { constraints: serverConstraints });
+    console.log({ formSpecs, serverConstraints, constraints });
     const handleClickOpen = () => {
       updateConstraint({ type: "reset" });
       setOpen(true);
@@ -87848,7 +87849,7 @@ See https://mui.com/r/migration-v4/#mui-material-styles for more details.` : (0,
       updateConstraint({ type: "reset" });
     };
     const handleSave = () => {
-      dispatch(actions2.saveConstraints(constraints));
+      dispatch(actions2.saveConstraints(constraints.constraints));
       handleClose();
     };
     return /* @__PURE__ */ import_react26.default.createElement("div", null, /* @__PURE__ */ import_react26.default.createElement(Button_default, {
@@ -87857,7 +87858,7 @@ See https://mui.com/r/migration-v4/#mui-material-styles for more details.` : (0,
     }, "Settings..."), /* @__PURE__ */ import_react26.default.createElement(Dialog_default, {
       open,
       onClose: handleClose
-    }, /* @__PURE__ */ import_react26.default.createElement(DialogTitle_default, null, "Settings"), /* @__PURE__ */ import_react26.default.createElement(DialogContent_default, null, constraints.loadingStatus == "loading" ? "loading..." : null, Object.entries(constraints.constraints).map(([constraintName, constraintdef], i2) => (formSpecs[constraintName]?.definition?.length ?? 0) == 0 ? null : /* @__PURE__ */ import_react26.default.createElement(material_exports.default, {
+    }, /* @__PURE__ */ import_react26.default.createElement(DialogTitle_default, null, "Settings"), /* @__PURE__ */ import_react26.default.createElement(DialogContent_default, null, Object.entries(constraints.constraints).map(([constraintName, constraintdef], i2) => (formSpecs[constraintName]?.definition?.length ?? 0) == 0 ? null : /* @__PURE__ */ import_react26.default.createElement(Accordion_default, {
       key: i2
     }, /* @__PURE__ */ import_react26.default.createElement(AccordionSummary_default, null, formSpecs[constraintName].name), /* @__PURE__ */ import_react26.default.createElement(AccordionDetails_default, null, Object.entries(constraintdef).map(([id, constraint], i3, arr) => /* @__PURE__ */ import_react26.default.createElement(Card_default, {
       key: id,
@@ -100329,7 +100330,7 @@ See https://mui.com/r/migration-v4/#mui-material-styles for more details.` : (0,
       };
     };
   }
-  var store = legacy_createStore(remoteReducer, { daysArray: [] }, applyMiddleware(makeRemoteMiddleware()));
+  var store = legacy_createStore(remoteReducer, window.initialData ?? { daysArray: [] }, applyMiddleware(makeRemoteMiddleware()));
   function ReduxProvider({ children }) {
     return /* @__PURE__ */ import_react30.default.createElement(Provider_default, {
       store

@@ -4,6 +4,8 @@ from calendar import MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUN
 import collections
 from datetime import date, timedelta
 from threading import Timer
+from types import FunctionType
+from typing import Union
 
 import time
 
@@ -67,26 +69,38 @@ class VarArrayAndObjectiveSolutionPrinter(cp_model.CpSolverSolutionCallback):
 class RotaSolver(RSAbstract):
     """Main rotasolver class"""
 
-    def get_duty(self, duty: Duties, day: int, shift: Shifts, staff: Staff):
-        """retrieve the duty atom"""
-        return self.all_duties.get((duty, day, shift, staff), 0)
+    def get_duty_base(self,key):
+        """retrieve duty atom"""
+        return self.all_duties.get(key,0)
 
-    def create_duty(self, duty: Duties, day: int, shift: Shifts, staff: Staff):
+    def get_duty(self, duty: Union[Duties,str], day: int, shift: Shifts, staff: Staff):
+        """retrieve the duty atom"""
+        return self.get_duty_base((duty, day, shift, staff))
+
+    def create_duty_base(self,key):
         """create duty"""
-        if (duty, day, staff) in self.all_duties:
+        if key in self.all_duties:
             raise KeyError(
-                f'{duty.name} {day} {shift.name} {staff.name} exists')
-        newvar = self.model.NewBoolVar(f'{duty}{day}{shift}{staff}')
-        self.all_duties[(duty, day, shift, staff)] = newvar
-        #print(f'created: {duty} {day} {shift} {staff}')
+                f'{repr(key)} exists')
+        newvar = self.model.NewBoolVar(repr(key))
+        self.all_duties[key] = newvar
         return newvar
 
-    def get_or_create_duty(self, duty: Duties, day: int, shift: Shifts, staff: Staff):
+    def create_duty(self, duty: Union[Duties,str], day: int, shift: Shifts, staff: Staff):
+        """create duty"""
+        return self.create_duty_base((duty,day,shift,staff))
+
+    def get_or_create_duty_base(self, key):
         """Retrieve duty or create new if not found"""
         try:
-            return self.all_duties[(duty, day, shift, staff)]
+            return self.all_duties[key]
         except KeyError:
-            return self.create_duty(duty, day, shift, staff)
+            return self.create_duty_base(key)
+
+    
+    def get_or_create_duty(self, duty: Union[Duties,str], day: int, shift: Shifts, staff: Staff):
+        """Retrieve duty or create new if not found"""
+        return self.get_or_create_duty_base((duty, day, shift, staff))
 
     def __init__(self,
                  slots_on_rota: int,
@@ -158,13 +172,9 @@ class RotaSolver(RSAbstract):
             print(self.model, file=modelfile)
         self.model.Minimize(sum(self.minimize_targets))
         solver = cp_model.CpSolver()
-        self.pipe.send(
-            {'type': 'info', 'message': f'number of variables: {len(self.all_duties)}'})
-
         self.pipe.send({'type': 'progress', 'time': 0, 'objective': None})
         solution_printer = VarArrayAndObjectiveSolutionPrinter(self.pipe)
-        status = solver.Solve(
-            self.model, solution_printer)
+        status = solver.Solve(self.model, solution_printer)
         solution_printer.stop_timeout()
         self.pipe.send({'type': 'solveStatus', 'statusName': solver.StatusName(
             status), 'status': status})
