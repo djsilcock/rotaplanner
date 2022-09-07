@@ -4,8 +4,9 @@ from calendar import MONDAY, TUESDAY, WEDNESDAY
 
 
 
-from constants import Shifts, Staff, Duties
+from constants import Shifts, Staff
 from constraints.constraintmanager import BaseConstraint
+from constraints.core_duties import icu
 
 
 class Constraint(BaseConstraint):
@@ -26,8 +27,7 @@ class Constraint(BaseConstraint):
             start_of_week = (day // 7)*7
             for staff in Staff:
                 sum_of_duties = sum(
-                    self.rota.get_duty(Duties.ICU,
-                                       start_of_week+dd, Shifts.ONCALL, staff)
-                    for dd in [0, 1, 2]
-                    if dd+start_of_week in days_to_check)
+                    self.get_duty(icu(Shifts.ONCALL,start_of_week+dd,staff))
+                        for dd in [0, 1, 2]
+                        if dd+start_of_week in days_to_check)
                 self.rota.model.Add(sum_of_duties < 2).OnlyEnforceIf(enforced)

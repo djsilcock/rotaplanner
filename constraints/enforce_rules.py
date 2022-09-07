@@ -17,7 +17,7 @@ class Constraint(BaseConstraint):
     def apply_constraint(self):
         if self.kwargs.get('enforcement') == 'must':
             for constraint in self.rota.constraint_atoms:
-                self.rota.model.Add(constraint == 1)
+                self.model.Add(constraint == 1)
         else:
             self.rota.minimize_targets.extend(atom.Not() for atom in self.rota.constraint_atoms)
 

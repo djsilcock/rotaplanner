@@ -2,8 +2,9 @@
 from calendar import FRIDAY
 
 
-from constants import Shifts, Staff, Duties
+from constants import Shifts, Staff
 from constraints.constraintmanager import BaseConstraint
+from constraints.some_shifts_are_locum import locum_icu
 
 
 class Constraint(BaseConstraint):
@@ -64,11 +65,11 @@ class Constraint(BaseConstraint):
         acceptable_shifts = {
             'WEEKDAY_DAYTIME': lambda d, day: (
                 day % 7 <= FRIDAY
-                and d == Shifts.DAYTIME
+                and d in [Shifts.AM,Shifts.PM]
             ),
             'WEEKEND_DAYTIME': lambda d, day: (
                 day % 7 > FRIDAY
-                and d == Shifts.DAYTIME
+                and d in [Shifts.AM,Shifts.PM]
             ),
             'WEEKDAY_ONCALL': lambda d, day: (
                 day % 7 < FRIDAY
@@ -79,7 +80,7 @@ class Constraint(BaseConstraint):
                 and d == Shifts.ONCALL
             ),
             'ANY_OOH': lambda d, day: (
-                (day % 7 > FRIDAY and d == Shifts.DAYTIME)
+                (day % 7 > FRIDAY and d in [Shifts.AM,Shifts.PM])
                 or d == Shifts.ONCALL),
             'ANY': lambda d, day: True
         }
@@ -90,7 +91,7 @@ class Constraint(BaseConstraint):
         for stafflist in list_of_lists:
             if maximum is not None:
                 self.rota.model.Add(
-                    sum(self.rota.get_duty(Duties.LOCUM_ICU, day, shift, staff)
+                    sum(self.get_duty(locum_icu(shift,day,staff))
                         for day in self.days()
                         for shift in Shifts
                         for staff in stafflist
@@ -100,7 +101,7 @@ class Constraint(BaseConstraint):
                     ) <= maximum).OnlyEnforceIf(enforced)
             if minimum is not None:
                 self.rota.model.Add(
-                    sum(self.rota.get_duty(Duties.LOCUM_ICU, day, shift, staff)
+                    sum(self.get_duty(locum_icu(shift,day,staff))
                         for day in self.days()
                         for shift in Shifts
                         for staff in stafflist

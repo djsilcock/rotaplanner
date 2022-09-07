@@ -2,8 +2,9 @@
 
 
 
-from constants import Shifts, Staff, Duties
+from constants import Shifts, Staff
 from constraints.constraintmanager import BaseConstraint
+from constraints.core_duties import icu, nonclinical, theatre
 
 
 class Constraint(BaseConstraint):
@@ -14,8 +15,7 @@ class Constraint(BaseConstraint):
         for day in self.days():
             for staff in Staff:
                 for shift in Shifts:
-                    dutyset = {Duties.ICU, Duties.THEATRE,
-                               Duties.OFF, Duties.LEAVE,
-                               Duties.TIMEBACK}
-                    self.rota.model.Add(sum(self.rota.get_or_create_duty(duty, day, shift, staff)
-                                            for duty in dutyset) == 1)
+                    duties=(icu,theatre,nonclinical)
+                    self.model.AddBoolXOr(
+                        [self.get_duty(duty(shift,day,staff)) for duty in duties]
+                    )

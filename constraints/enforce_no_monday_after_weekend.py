@@ -2,7 +2,8 @@
 from calendar import MONDAY
 
 
-from constants import Shifts, Staff, Duties
+from constants import Shifts, Staff
+from constraints.core_duties import icu
 from constraints.constraintmanager import BaseConstraint
 
 
@@ -22,23 +23,16 @@ class Constraint(BaseConstraint):
             if day < 7:
                 continue
             for staff in Staff:
-                self.rota.model.Add(self.rota.get_duty(
-                    Duties.ICU, day-2, Shifts.DAYTIME, staff) +
-                    self.rota.get_duty(
-                        Duties.ICU, day, Shifts.ONCALL, staff) < 2
-                ).OnlyEnforceIf(enforced)
-                self.rota.model.Add(self.rota.get_duty(
-                    Duties.ICU, day-2, Shifts.ONCALL,  staff) +
-                    self.rota.get_duty(
-                        Duties.ICU, day, Shifts.ONCALL,  staff) < 2
-                ).OnlyEnforceIf(enforced)
-                self.rota.model.Add(self.rota.get_duty(
-                    Duties.ICU, day-2, Shifts.DAYTIME, staff) +
-                    self.rota.get_duty(
-                        Duties.ICU, day, Shifts.DAYTIME, staff) < 2
-                ).OnlyEnforceIf(enforced)
-                self.rota.model.Add(self.rota.get_duty(
-                    Duties.ICU, day-2,  Shifts.ONCALL, staff) +
-                    self.rota.get_duty(
-                        Duties.ICU, day, Shifts.DAYTIME,  staff) < 2
-                ).OnlyEnforceIf(enforced)
+                sat_daytime = self.get_duty(icu(Shifts.AM, day-2, staff))
+                sat_oncall = self.get_duty(icu(Shifts.ONCALL, day-2, staff))
+                mon_daytime = self.get_duty(icu(Shifts.AM, day, staff))
+                mon_oncall = self.get_duty(icu(Shifts.ONCALL, day, staff))
+
+                prohibited_combinations=[
+                    (sat_daytime,mon_daytime),
+                    (sat_daytime,mon_oncall),
+                    (sat_oncall,mon_daytime),
+                    (sat_oncall,mon_oncall)
+                    ]
+                for left,right in prohibited_combinations:
+                    self.model.AddBoolOr([left.Not(),right.Not()]).OnlyEnforceIf(enforced)

@@ -3,8 +3,35 @@ from calendar import MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUN
 
 from constants import Shifts, Staff, Duties
 from constraints.constraintmanager import BaseConstraint
+from constraints.core_duties import icu, typecheck
 
 
+def locum_icu(shift: Shifts, day: int, staff: Staff):
+    "Locum ICU shift"
+    typecheck(shift, day, staff)
+    return ('LOCUM_ICU', day, shift, staff)
+
+def quota_icu(shift: Shifts, day: int, staff: Staff):
+    "Quota ICU shift"
+    typecheck(shift, day, staff)
+    return ('LOCUM_ICU', day, shift, staff)
+
+def locum(shift:Shifts,day:int):
+    "Is shift a locum"
+    assert isinstance(shift,Shifts)
+    assert isinstance(day,int)
+    weekday=day%7
+    if weekday in [MONDAY,TUESDAY,WEDNESDAY,THURSDAY]:
+        if shift in [Shifts.AM,Shifts.PM]:
+            return ('COTW_LOCUM',day//7)
+        return ('WEEKDAY_ONCALL_LOCUM',day)
+    if weekday in [FRIDAY,SATURDAY,SUNDAY] and shift in [Shifts.AM,Shifts.PM]:
+        return ('WEEKEND_LOCUM',day//7)
+    if weekday == SUNDAY and shift==Shifts.ONCALL:
+        return ('WEEKEND_LOCUM',day//7)
+    if weekday in [FRIDAY,SATURDAY] and shift ==Shifts.ONCALL:
+        return ('WEEKEND_ONCALL_LOCUM',day//7)
+    
 class Constraint(BaseConstraint):
     """Some shifts are marked as locum"""
     name = "Some shifts are Locum"
@@ -14,56 +41,21 @@ class Constraint(BaseConstraint):
         yield 'some shifts will be locum'
 
     def apply_constraint(self):
-        for day in self.days():
-            day_is_locum = self.rota.create_duty(
-                Duties.IS_LOCUM, day, Shifts.DAYTIME, 0)
-            oncall_is_locum = self.rota.create_duty(
-                Duties.IS_LOCUM, day, Shifts.ONCALL, 0)
-            if day % 7 in [MONDAY, TUESDAY, WEDNESDAY, THURSDAY]:
-                cotwl = self.rota.get_or_create_duty(
-                    Duties.ICU_LOCUM_COTW,
-                    day-day%7,
-                    Shifts.DAYTIME,
-                    0)
-            if day % 7 in [FRIDAY, SATURDAY, SUNDAY]:
-                cotwl = self.rota.get_or_create_duty(
-                    Duties.ICU_LOCUM_COTW,
-                    day-day%7+4,
-                    Shifts.DAYTIME,
-                    0)
-            self.rota.model.Add(cotwl == day_is_locum)
-            if day % 7 in [FRIDAY, SATURDAY]:
-                cotwen = self.rota.get_or_create_duty(
-                    Duties.ICU_LOCUM_COTW, day-day%7+4, Shifts.ONCALL, 0)
-                self.rota.model.Add(cotwen == oncall_is_locum)
-
-            if day % 7 == SUNDAY:
-                self.rota.model.Add(cotwl == oncall_is_locum)
-            
+        for day in self.days():            
             for shift in Shifts:
                 for staff in Staff:
-                    locum_session = self.rota.create_duty(
-                        Duties.LOCUM_ICU, day, shift, staff)
-                    quota_session = self.rota.create_duty(
-                        Duties.QUOTA_ICU, day, shift, staff)
-                    any_session = self.rota.get_duty(
-                        Duties.ICU, day, shift, staff)
-                    self.rota.model.Add(
-                        locum_session+quota_session == any_session)
-            self.rota.model.AddAbsEquality(
-                day_is_locum,
-                sum(self.rota.get_duty(
-                    Duties.LOCUM_ICU,
-                    day,
-                    Shifts.DAYTIME, staff)
-                    for staff in Staff))
-            self.rota.model.AddAbsEquality(
-                oncall_is_locum,
-                sum(self.rota.get_duty(
-                    Duties.LOCUM_ICU,
-                    day,
-                    Shifts.ONCALL, staff)
-                    for staff in Staff))
+                    shift_is_locum = self.get_or_create_duty(locum(shift, day))
+                    locum_session = self.get_or_create_duty(locum_icu(shift,day,staff))
+                    quota_session = self.get_or_create_duty(quota_icu(shift,day,staff))
+                    is_icu=self.get_duty(icu(shift,day,staff))
+
+                    self.model.AddImplication(locum_session,shift_is_locum)
+                    self.model.AddImplication(locum_session,is_icu)
+                    self.model.AddImplication(quota_session,shift_is_locum.Not())
+                    self.model.AddImplication(quota_session,is_icu)
+
+                    self.model.AddBoolOr([locum_session,quota_session]).OnlyEnforceIf(is_icu)
+
 
     def process_output(self, solver, pairs):
         for ((staff,shift,day),value) in pairs:

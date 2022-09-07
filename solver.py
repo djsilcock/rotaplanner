@@ -4,7 +4,7 @@ from calendar import MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUN
 import collections
 from datetime import date, timedelta
 from threading import Timer
-from types import FunctionType
+
 from typing import Union
 
 import time
@@ -69,15 +69,15 @@ class VarArrayAndObjectiveSolutionPrinter(cp_model.CpSolverSolutionCallback):
 class RotaSolver(RSAbstract):
     """Main rotasolver class"""
 
-    def get_duty_base(self,key):
+    def get_duty_base(self, key):
         """retrieve duty atom"""
-        return self.all_duties.get(key,0)
+        return self.all_duties.get(key, 0)
 
-    def get_duty(self, duty: Union[Duties,str], day: int, shift: Shifts, staff: Staff):
+    def get_duty(self, duty: Union[Duties, str], day: int, shift: Shifts, staff: Staff):
         """retrieve the duty atom"""
         return self.get_duty_base((duty, day, shift, staff))
 
-    def create_duty_base(self,key):
+    def create_duty_base(self, key):
         """create duty"""
         if key in self.all_duties:
             raise KeyError(
@@ -86,9 +86,9 @@ class RotaSolver(RSAbstract):
         self.all_duties[key] = newvar
         return newvar
 
-    def create_duty(self, duty: Union[Duties,str], day: int, shift: Shifts, staff: Staff):
+    def create_duty(self, duty: Union[Duties, str], day: int, shift: Shifts, staff: Staff):
         """create duty"""
-        return self.create_duty_base((duty,day,shift,staff))
+        return self.create_duty_base((duty, day, shift, staff))
 
     def get_or_create_duty_base(self, key):
         """Retrieve duty or create new if not found"""
@@ -97,16 +97,15 @@ class RotaSolver(RSAbstract):
         except KeyError:
             return self.create_duty_base(key)
 
-    
-    def get_or_create_duty(self, duty: Union[Duties,str], day: int, shift: Shifts, staff: Staff):
+    def get_or_create_duty(self, duty: Union[Duties, str], day: int, shift: Shifts, staff: Staff):
         """Retrieve duty or create new if not found"""
         return self.get_or_create_duty_base((duty, day, shift, staff))
 
     def __init__(self,
                  slots_on_rota: int,
                  people_on_rota: int,
-                 startdate:str,
-                 enddate:str,
+                 startdate: str,
+                 enddate: str,
                  pipe):
         # pylint: disable=super-init-not-called
         self.pipe = pipe
@@ -116,16 +115,16 @@ class RotaSolver(RSAbstract):
         startdate = date.fromisoformat(startdate[0:10])
         enddate = date.fromisoformat(enddate[0:10])
         self.startdate = startdate-timedelta(days=startdate.weekday())
-            #wind back to previous monday
+        # wind back to previous monday
         rota_length = (enddate-startdate).days
-        self.rota_length = rota_length+6-rota_length%7
+        self.rota_length = rota_length+6-rota_length % 7
         self.exclusions = None
         self.model = cp_model.CpModel()
         self.all_duties = {}
         self.constraint_atoms = []
         self.minimize_targets = []
         self.targets = None
-        
+
     def days(self, startdate=None, enddate=None, weekdays=None, exclusions=None):
         """returns iterator of days"""
         weekdays_to_include = weekdays if weekdays is not None else [
@@ -140,9 +139,10 @@ class RotaSolver(RSAbstract):
             exc_start = max(0, (date.fromisoformat(
                 exclusion_range['start'])-self.startdate).days)
             exc_end = min(
-                (date.fromisoformat(exclusion_range['end'])-self.startdate).days+1, self.rota_length)
+                (date.fromisoformat(exclusion_range['end'])-self.startdate).days+1,
+                self.rota_length)
             days_to_exclude.extend(range(exc_start, exc_end))
-           
+
         if startdate is None:
             startingday = 0
         else:

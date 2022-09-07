@@ -1,11 +1,9 @@
 """contains rules to constrain the model"""
 from calendar import SATURDAY
 
-
-
-
-from constants import Shifts, Staff, Duties
+from constants import Shifts, Staff
 from constraints.constraintmanager import BaseConstraint
+from constraints.core_duties import icu
 
 
 class Constraint(BaseConstraint):
@@ -36,8 +34,8 @@ class Constraint(BaseConstraint):
                 continue
             for staff in Staff:
                 self.rota.model.Add(
-                    sum(self.rota.get_duty(Duties.ICU, dd,  Shifts.ONCALL, staff)
+                    sum(self.get_duty(icu(Shifts.ONCALL,dd,staff))
                         for dd in range(day-denominator, day)) +
-                    sum(self.rota.get_duty(Duties.ICU, dd, Shifts.DAYTIME, staff)
+                    sum(self.get_duty(icu(Shifts.AM,dd, staff))
                         for dd in range(day-denominator, day) if dd % 7 == SATURDAY) <= numerator
                 ).OnlyEnforceIf(enforced)

@@ -1,9 +1,8 @@
 """contains rules to constrain the model"""
-from calendar import MONDAY, TUESDAY, WEDNESDAY,FRIDAY, SATURDAY
 
-
-from constants import Shifts, Staff, Duties
+from constants import Shifts, Staff
 from constraints.constraintmanager import BaseConstraint
+from constraints.core_duties import icu, nonclinical
 
 
 class Constraint(BaseConstraint):
@@ -16,15 +15,11 @@ class Constraint(BaseConstraint):
         yield 'consultant should not be oncall before DCC day'
 
     def apply_constraint(self):
-        #self.weekdays = [MONDAY, TUESDAY, WEDNESDAY, FRIDAY, SATURDAY] 
         for day in self.days():
             enforced = self.get_constraint_atom(day=day)
             for staff in Staff:
-                self.rota.model.Add(
-                    sum([
-                        self.rota.get_duty(
-                            Duties.ICU, day+1, Shifts.DAYTIME,  staff),
-                        self.rota.get_duty(
-                            Duties.ICU, day, Shifts.ONCALL, staff),
-                        self.rota.get_duty(Duties.THEATRE, day+1, Shifts.DAYTIME, staff)]) < 2
+                self.model.Add(
+                    self.get_duty(nonclinical(Shifts.AM,day+1,staff))
+                ).OnlyEnforceIf(
+                    self.get_duty(icu(Shifts.ONCALL, day, staff))
                 ).OnlyEnforceIf(enforced)

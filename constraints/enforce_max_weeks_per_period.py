@@ -4,8 +4,9 @@ from calendar import MONDAY
 
 
 
-from constants import Shifts, Staff, Duties
+from constants import Shifts, Staff
 from constraints.constraintmanager import BaseConstraint
+from constraints.core_duties import icu
 
 
 class Constraint(BaseConstraint):
@@ -35,6 +36,6 @@ class Constraint(BaseConstraint):
             if day < (7*denominator):
                 continue
             for staff in Staff:
-                self.rota.model.Add(sum(self.rota.get_duty(Duties.ICU, dd, Shifts.DAYTIME, staff)
+                self.rota.model.Add(sum(self.get_duty(icu(Shifts.AM,dd,staff))
                                         for dd in range(day-(7*denominator), day, 7)) <= numerator
                                     ).OnlyEnforceIf(enforced)

@@ -2,6 +2,53 @@
 
 from constants import Shifts, Staff, Duties
 from constraints.constraintmanager import BaseConstraint
+from constraints.core_duties import leave, nonclinical, theatre, typecheck, icu
+
+
+def icu_timeshift(shift, day, staff):
+    "ICU duty as a timeshifted session"
+    typecheck(shift, day, staff)
+    return ('ICU_TS', shift, day, staff)
+
+
+def icu_jobplanned(shift, day, staff):
+    "ICU duty in jobplanned time"
+    typecheck(shift, day, staff)
+    return ('ICU_JP', shift, day, staff)
+
+
+def time_back(shift, day, staff):
+    "Time back from timeshifted sessions"
+    typecheck(shift, day, staff)
+    return ('TIMEBACK', shift, day, staff)
+
+
+def jobplanned_nonclinical(shift, day, staff):
+    "Jobplanned nonclinical session"
+    typecheck(shift, day, staff)
+    return('JP_NONCLINICAL', shift, day, staff)
+
+
+def jobplanned_dcc(shift, day, staff):
+    "Jobplanned DCC"
+    typecheck(shift, day, staff)
+    return ('JP_DCC', shift, day, staff)
+
+
+def convert_working_days(day_shift_str):
+    "Convert eg 'Monday AM' to (0,Shifts.AM)"
+    try:
+        if isinstance(day_shift_str, str):
+            daystr, shiftstr = day_shift_str.split()
+            day = 'mo tu we th fr sa su'.split().index(
+                daystr.lower()[0:2])
+            shift = Shifts[shiftstr]
+            return (day, shift)
+        else:
+            raise ValueError
+    except (ValueError, KeyError) as exc:
+        raise ValueError(
+            f'Did not recognise {day} in working days list') from exc
 
 
 class Constraint(BaseConstraint):
@@ -18,61 +65,61 @@ class Constraint(BaseConstraint):
         yield {
             'component': 'multiselect',
             'name': 'working_days',
-            'options': 'Monday Tuesday Wednesday Thursday Friday'.split()}
+            'options': [f'{day} {shift}'
+                for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+                for shift in ('AM', 'PM')]
+
+        }
 
     def apply_constraint(self):
         """apply jobplans"""
-        def convert_working_days(day):
-            try:
-                if isinstance(day, int):
-                    if day > 6:
-                        raise ValueError
-                    return day
-                elif isinstance(day, str):
-                    day = day.lower()[0:2]
-                    day = 'mo tu we th fr sa su'.split().index(day)
-                    return day
-                else:
-                    raise ValueError
-            except ValueError as exc:
-                raise ValueError(
-                    f'Did not recognise {day} in working days list') from exc
+
         working_days = list(
             map(convert_working_days, self.kwargs.get('working_days')))
         staff = Staff[self.kwargs.get('staff').upper()]
         for day in self.days():
             self.rota.model.Add(self.rota.get_duty(
                                 Duties.THEATRE, day, Shifts.ONCALL, staff) == 0)
-            for duty in [Duties.ICU_TS,Duties.ICU_JP,Duties.TIMEBACK]:
-                self.rota.get_or_create_duty(
-                    duty, day, Shifts.DAYTIME, staff)
-            if day % 7 in working_days:
-                self.rota.model.Add(self.rota.get_duty(
-                    Duties.OFF, day, Shifts.DAYTIME, staff) == 0)
-                self.rota.model.Add(self.rota.get_duty(
-                    Duties.ICU_TS,day,Shifts.DAYTIME,staff)==0)
-                #self.rota.model.Add(self.rota.get_duty(
-                #    Duties.LEAVE,day,Shifts.DAYTIME,staff)==
-                #    self.rota.get_duty(
-                #    Duties.DROPPED_SESSION, day, Shifts.DAYTIME, staff)
-                #)
-            else:
-                self.rota.model.Add(self.rota.get_duty(
-                    Duties.THEATRE, day, Shifts.DAYTIME, staff) == 0)
-                self.rota.model.Add(self.rota.get_duty(
-                    Duties.ICU_JP, day, Shifts.DAYTIME, staff) == 0)
-                self.rota.model.Add(self.rota.get_duty(
-                    Duties.TIMEBACK, day, Shifts.DAYTIME, staff)==0)
-                #self.rota.model.Add(self.rota.get_duty(
-                #    Duties.DROPPED_SESSION, day, Shifts.DAYTIME, staff) == 0)
+            for shift in (Shifts.AM, Shifts.PM):
+                is_jobplanned = self.get_or_create_duty(
+                    jobplanned_dcc(shift, day, staff))
+                is_icu_timeshift = self.get_or_create_duty(
+                    icu_timeshift(shift, day, staff))
+                is_icu_jobplanned = self.get_or_create_duty(
+                    icu_jobplanned(shift, day, staff))
+                is_time_back = self.get_or_create_duty(
+                    time_back(shift, day, staff))
+                is_icu = self.get_or_create_duty(
+                    icu(shift, day, staff))
+                is_nonclinical = self.get_or_create_duty(
+                    nonclinical(shift, day, staff))
+                is_theatre = self.get_or_create_duty(
+                    theatre(shift, day, staff))
+                is_on_leave = self.get_or_create_duty(
+                    leave(shift, day, staff))
 
-            self.rota.model.Add(self.rota.get_duty(
-                Duties.ICU_TS, day, Shifts.DAYTIME, staff)+
-                self.rota.get_duty(
-                Duties.ICU_JP, day, Shifts.DAYTIME, staff) == self.rota.get_duty(
-                Duties.ICU, day, Shifts.DAYTIME, staff))
+                self.model.Add(is_jobplanned == (
+                    (day % 7, shift) in working_days))
+
+                implications = [
+                    (is_icu_timeshift, is_jobplanned.Not()),
+                    (is_icu_jobplanned, is_jobplanned),
+                    (is_icu_timeshift, is_icu),
+                    (is_icu_jobplanned, is_icu),
+                    (is_time_back, is_jobplanned),
+                    (is_time_back, is_nonclinical)
+                ]
+
+                for if_this, then_that in implications:
+                    self.model.AddImplication(if_this, then_that)
+
+                self.model.AddBoolOr(
+                    [is_icu, is_theatre, is_time_back, is_on_leave]).OnlyEnforceIf(is_jobplanned)
+                self.model.AddBoolOr([is_icu_timeshift, is_on_leave]).OnlyEnforceIf(
+                    is_jobplanned.Not())
+
         self.rota.model.Add(
-            sum(self.rota.get_duty(
-            Duties.ICU_TS, day, Shifts.DAYTIME, staff) for day in self.days()) >=
-            sum(self.rota.get_duty(
-                Duties.TIMEBACK, day, Shifts.DAYTIME, staff) for day in self.days()))
+            sum(self.get_duty(is_icu_timeshift(shift, day, staff))
+                for day in self.days() for shift in (Shifts.AM, Shifts.PM)) >=
+            sum(self.get_duty(is_time_back(shift, day, staff))
+                for day in self.days() for shift in (Shifts.AM, Shifts.PM)))

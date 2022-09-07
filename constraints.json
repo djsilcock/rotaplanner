@@ -94,11 +94,6 @@
       }
     }
   },
-  "balance_tallies": {
-    "11": {
-      "enabled": false
-    }
-  },
   "enforce_no_multiple_weekday_calls": {
     "12": {
       "startenddate": "for all dates",
@@ -232,10 +227,14 @@
     "22": {
       "staff": "RORY",
       "working_days": [
-        "monday",
-        "wednesday",
-        "thursday",
-        "friday"
+        "monday AM",
+        "wednesday AM",
+        "thursday AM",
+        "friday AM",
+        "monday PM",
+        "wednesday PM",
+        "thursday PM",
+        "friday PM"
       ],
       "startenddate": "for all dates",
       "enabled": true
@@ -243,8 +242,10 @@
     "23": {
       "staff": "SANJIV",
       "working_days": [
-        "monday",
-        "friday"
+        "monday AM",
+        "friday AM",
+         "monday PM",
+        "friday PM"
       ],
       "startenddate": "for all dates",
       "enabled": true
@@ -252,8 +253,8 @@
     "24": {
       "staff": "JIM",
       "working_days": [
-        "monday",
-        "thursday"
+        "monday AM","monday PM",
+        "thursday AM","thursday PM"
       ],
       "startenddate": "for all dates",
       "enabled": true
@@ -261,9 +262,9 @@
     "25": {
       "staff": "DAN",
       "working_days": [
-        "tuesday",
-        "thursday",
-        "friday"
+        "tuesday AM","tuesday PM",
+        "thursday AM","thursday PM",
+        "friday AM","friday PM"
       ],
       "startenddate": "for all dates",
       "enabled": true
@@ -271,9 +272,9 @@
     "26": {
       "staff": "CHOITI",
       "working_days": [
-        "tuesday",
-        "wednesday",
-        "friday"
+        "tuesday AM","tuesday PM",
+        "wednesday AM","wednesday PM",
+        "friday AM"
       ],
       "startenddate": "for all dates",
       "enabled": true
@@ -281,8 +282,8 @@
     "27": {
       "staff": "SAM",
       "working_days": [
-        "tuesday",
-        "wednesday"
+        "tuesday AM","tuesday PM",
+        "wednesday AM","wednesday PM"
       ],
       "startenddate": "for all dates",
       "enabled": true
@@ -290,9 +291,9 @@
     "28": {
       "staff": "BARTEK",
       "working_days": [
-        "monday",
-        "wednesday",
-        "friday"
+        "monday AM","monday PM",
+        "wednesday AM","wednesday PM",
+        "friday AM","friday PM"
       ],
       "startenddate": "for all dates",
       "enabled": true,
@@ -305,8 +306,8 @@
     "29": {
       "staff": "SCOTT",
       "working_days": [
-        "Thursday",
-        "Friday"
+        "thursday AM","thursday PM",
+        "friday AM","thursday PM"
       ],
       "startenddate": "for all dates",
       "enabled": true

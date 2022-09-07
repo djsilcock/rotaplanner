@@ -2,8 +2,9 @@
 from calendar import MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
 
 
-from constants import Shifts, Staff, Duties
+from constants import Shifts, Staff
 from constraints.constraintmanager import BaseConstraint
+from constraints.some_shifts_are_locum import quota_icu
 
 
 class Constraint(BaseConstraint):
@@ -36,10 +37,10 @@ class Constraint(BaseConstraint):
         enforced = self.get_constraint_atom()
         (days, shifts) = {
             'weekend oncall': ([FRIDAY, SATURDAY, SUNDAY], [Shifts.ONCALL]),
-            'weekend daytime': ([FRIDAY, SATURDAY, SUNDAY], [Shifts.DAYTIME]),
+            'weekend daytime': ([FRIDAY, SATURDAY, SUNDAY], [Shifts.AM,Shifts.PM]),
             'weekday oncall': ([MONDAY, TUESDAY, WEDNESDAY, THURSDAY], [Shifts.ONCALL]),
-            'weekday daytime': ([MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY], [Shifts.DAYTIME]),
-            'any weekend': ([FRIDAY, SATURDAY, SUNDAY], [Shifts.ONCALL, Shifts.DAYTIME])
+            'weekday daytime': ([MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY], [Shifts.AM,Shifts.PM]),
+            'any weekend': ([FRIDAY, SATURDAY, SUNDAY], [Shifts.ONCALL, Shifts.AM,Shifts.PM])
         }[shift_to_check]
         deviation_soft_limits={}
         self.variables['dsl'] = deviation_soft_limits
@@ -52,7 +53,7 @@ class Constraint(BaseConstraint):
                     f'soft-limit{shift_to_check}{day//period_duration}')
             deviation_soft_limit=deviation_soft_limits[day//period_duration]
             for staff in Staff:
-                duties = [self.rota.get_duty(Duties.QUOTA_ICU, dd, shift, staff) for dd in range(
+                duties = [self.get_duty(quota_icu(shift,dd,staff)) for dd in range(
                     0, day) for shift in Shifts if dd % 7 in days and shift in shifts]
                 tally = self.rota.model.NewIntVar(
                     0,

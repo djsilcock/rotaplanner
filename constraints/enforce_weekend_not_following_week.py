@@ -3,9 +3,9 @@ from calendar import THURSDAY
 
 
 
-from constants import Shifts, Staff, Duties
+from constants import Shifts, Staff
 from constraints.constraintmanager import BaseConstraint
-
+from constraints.core_duties import icu
 
 class Constraint(BaseConstraint):
     """week not followed by weekend"""
@@ -21,13 +21,17 @@ class Constraint(BaseConstraint):
         for day in self.days():
             enforced = self.get_constraint_atom(day=day)
             for staff in Staff:
-                self.rota.model.Add(
-                    self.rota.get_duty(Duties.ICU, day, Shifts.DAYTIME, staff) +
-                    self.rota.get_duty(Duties.ICU, day+1,
-                                       Shifts.DAYTIME, staff) < 2
-                ).OnlyEnforceIf(enforced)
-                self.rota.model.Add(
-                    self.rota.get_duty(Duties.ICU, day, Shifts.DAYTIME, staff) +
-                    self.rota.get_duty(Duties.ICU, day+1,
-                                       Shifts.ONCALL,  staff) < 2
-                ).OnlyEnforceIf(enforced)
+                thursday_am = self.get_duty(icu(Shifts.AM, day, staff))
+                friday_am = self.get_duty(icu(Shifts.AM, day+1, staff))
+                thursday_oc = self.get_duty(icu(Shifts.ONCALL, day, staff))
+                friday_oc = self.get_duty(icu(Shifts.ONCALL, day+1, staff))
+
+                prohibited=[
+                    (thursday_am,friday_am),
+                    (thursday_oc,friday_am),
+                    (thursday_am,friday_oc),
+                    (thursday_oc,friday_oc)
+                ]
+                for left,right in prohibited:
+                    self.model.AddBoolOr([left.Not(),right.Not()]).OnlyEnforceIf(enforced)
+                

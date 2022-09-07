@@ -3,7 +3,8 @@ from enum import Enum,auto
 from calendar import MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY
 
 class Shifts(Enum):
-    DAYTIME=auto()
+    AM=auto()
+    PM=auto()
     ONCALL=auto()
 
 class Duties(Enum):

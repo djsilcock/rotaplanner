@@ -8,23 +8,13 @@ import json
 from importlib import import_module
 import pkgutil
 
+from ortools.sat.python import cp_model
 from abstracttypes import RotaSolver
 import constraints
 
 constraint_store = {}
 
 reg = re.compile(r'(?:^[a-z]+)|(?:[A-Z]+[a-z]+)')
-
-
-class ConstraintMeta(type):
-    """Registering metaclass"""
-    def __new__(cls, name, bases, members):
-        result = type.__new__(cls, name, bases, members)
-        sc_name = '_'.join([s.lower() for s in reg.findall(name)])
-        print(f'Registering: {sc_name}')
-        print(__name__)
-        constraint_store[sc_name] = result
-        return result
 
 
 class BaseConstraint():
@@ -50,8 +40,8 @@ class BaseConstraint():
             weekdays=None,
             **kwargs):
         self.rota: RotaSolver = rota
-        self.model=rota.model
-        self.variables={}
+        self.model: cp_model.CpModel = rota.model
+        self.variables = {}
         self.startdate = daterange.get(
             'startdate') if daterange is not None else None
         self.enddate = daterange.get(
@@ -60,28 +50,33 @@ class BaseConstraint():
         self.exclusions = daterange.get(
             'exclusions') if daterange is not None else None
         self.kwargs = kwargs
-        
+
     @classmethod
     def definition(cls):
         """form definition for frontend"""
         yield from []
 
-    def days(self,*filters):
+    def days(self, *filters):
         """return iterator of days"""
         def filterfunc(day):
-                return all((f(day) for f in filters))
-        return filter(filterfunc,self.rota.days(self.startdate, self.enddate, self.weekdays, self.exclusions))
+            return all((f(day) for f in filters))
+        return filter(
+            filterfunc,
+            self.rota.days(self.startdate, self.enddate, self.weekdays, self.exclusions))
 
-    def get_duty(self,key):
+    def get_duty(self, key):
         "Retrieve a duty"
         return self.rota.get_duty_base(key)
-    def create_duty(self,key):
+
+    def create_duty(self, key):
         "Create a new duty"
         return self.rota.create_duty_base(key)
-    def get_or_create_duty(self,key):
+
+    def get_or_create_duty(self, key):
         "Create a new duty if no matching duty exists"
         return self.rota.get_or_create_duty_base(key)
-    def add_rule(self,rule):
+
+    def add_rule(self, rule):
         "Add rule to model"
         return self.rota.model.Add(rule)
 
@@ -93,11 +88,11 @@ class BaseConstraint():
         """called after solver has completed"""
         yield from (event_stream if event_stream is not None else [])
 
-    def process_output(self,solver,pairs):
+    def process_output(self, solver, pairs):
         """process output"""
         return pairs
 
-    def build_output(self,solver,outputdict):
+    def build_output(self, solver, outputdict):
         """build output dict in format outputdict[date][shift][name]=duty"""
         return outputdict
 
@@ -116,18 +111,19 @@ def apply_constraint(model, **kwargs):
     if (constraint, constraintid) in model.constraints:
         print(f'overwriting {constraintid}')
         del model.constraints[(constraint, constraintid)]
-    model.constraints[(constraint, constraintid)] = import_module(f'constraints.{constraint}').Constraint(
+    model.constraints[(constraint, constraintid)] = import_module(
+        f'constraints.{constraint}').Constraint(
         model, **kwargs)
 
 
 def get_constraint_config():
     """get form definition for settings page"""
-    config={}
+    config = {}
     for mod in pkgutil.iter_modules(constraints.__path__):
-        constraint_module=import_module(f'constraints.{mod.name}')
-        if hasattr(constraint_module,'Constraint'):
-            config[mod.name]={
-                'name':constraint_module.Constraint.name,
-                'definition':list(constraint_module.Constraint.definition())}
-    
+        constraint_module = import_module(f'constraints.{mod.name}')
+        if hasattr(constraint_module, 'Constraint'):
+            config[mod.name] = {
+                'name': constraint_module.Constraint.name,
+                'definition': list(constraint_module.Constraint.definition())}
+
     return config
