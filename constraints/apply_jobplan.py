@@ -1,7 +1,9 @@
 """contains rules to constrain the model"""
 
+from collections import namedtuple
+import re
 from constants import Shifts, Staff, Duties
-from constraints.constraintmanager import BaseConstraint
+from constraints.constraintmanager import BaseConstraint,BaseConfig
 from constraints.core_duties import leave, nonclinical, theatre, typecheck, icu
 
 
@@ -50,26 +52,63 @@ def convert_working_days(day_shift_str):
         raise ValueError(
             f'Did not recognise {day} in working days list') from exc
 
+Config = namedtuple(
+            'Config',
+            'staff,working_days,repeat,parsed_repeat',
+            defaults=[None,None,None,None])
+
+class JobPlanConfig(BaseConfig):
+    "Configuration values"
+    def get_defaults(self) -> dict:
+        defaults=super().get_defaults()
+        defaults.update(dict(
+            staff=[],
+            working_days=None,
+            repeat=None,
+            parsed_repeat=None
+        ))
+        return defaults
 
 class Constraint(BaseConstraint):
     """Apply jobplan to staffmember"""
     name = "Apply jobplans"
 
     @classmethod
-    def definition(cls):
+    def validate_config(cls,config):
+        config=Config(**config)   
+        repeatstrs=re.findall(r'\d+/\d+',config.repeat)
+        repeats=[(num,denom) for r in repeatstrs for num,denom in r.split('/')]
+        for num,denom in repeats:
+            if denom<num:
+                raise ValueError(f'{num}/{denom} not a valid repeat')
+        config=config._replace(repeat=','.join(repeatstrs),parsed_repeat=repeats)
+        return config
+
+
+    @classmethod
+    def get_config_interface(cls,config):
+        config=cls.validate_config(config)
         yield {
             'component': 'select',
             'name': 'staff',
-            'options': [s.name for s in Staff]}
-        yield 'has jobplanned DCC on'
+            'options': [s.name for s in Staff],
+            'value':config.staff}
+        yield 'has jobplanned DCC every'
+        yield {
+            'component': 'text',
+            'name': 'repeat',
+            'value': config.repeat
+        }
         yield {
             'component': 'multiselect',
             'name': 'working_days',
             'options': [f'{day} {shift}'
-                for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-                for shift in ('AM', 'PM')]
-
+                        for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+                        for shift in ('AM', 'PM')],
+            'value':config.working_days
         }
+        
+        
 
     def apply_constraint(self):
         """apply jobplans"""

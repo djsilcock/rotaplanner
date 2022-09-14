@@ -18,9 +18,11 @@ export const Cell = (function Cell({ name, day, dutyType }) {
     const getCellDataSelector=React.useMemo(()=>selectors.getCellData(day),[day])
     const data=useSelector(getCellDataSelector,isEqual)
     if (!data) return <TableCell>...</TableCell>
-    const daytimeValue = data?.DAYTIME?.[name] ?? 'LOADING'
+    const morningValue = data?.AM?.[name] ?? 'LOADING'
+    const afternoonValue = data?.PM?.[name] ??'LOADING'
     const oncallValue = data?.ONCALL?.[name] ?? 'LOADING'
-    const props1 = {
+    
+    const daytimeProps={
         ICU: ['blue', <>?&nbsp;ICU</>],
         LOCUM_ICU: ['blue', <>?&nbsp;ICU(£)</>],
         DEFINITE_ICU: ['green', 'ICU'],
@@ -31,7 +33,9 @@ export const Cell = (function Cell({ name, day, dutyType }) {
         NOC: ['orange', 'NOC'],
         TIMEBACK:['gray','TS'],
         LOADING:['gray','...']
-    }[daytimeValue] || ['gray', '-'];
+    }
+    const props1a = daytimeProps[morningValue] || ["gray", "-"];
+    const props1b = daytimeProps[afternoonValue] || ["gray", "-"];
     const props2 = {
         ICU: ['navy', <>?&nbsp;ICU</>],
         LOCUM_ICU: ['navy', <>?&nbsp;ICU(£)</>],
@@ -46,12 +50,48 @@ export const Cell = (function Cell({ name, day, dutyType }) {
     const handleClick = (shift) => () => {
         dispatch(actions.setDuty(dutyType, shift, name, day));
     };
-    return <TableCell style={{ border: 'solid 1px' }} title={`${name} ${day}`}>
+    return (
+      <TableCell style={{ border: "solid 1px" }} title={`${name} ${day}`}>
         <ButtonGroup
-            orientation="vertical"
-            aria-label="vertical outlined button group"
-            size='small'
-        ><Button style={{ border: 'none', width: '100%', height: '100%', color: props1[0] }} onClick={handleClick('DAYTIME')}>{props1[1]}</Button>
-            <Button style={{ border: 'none', width: '100%', height: '100%', color: props2[0] }} onClick={handleClick('ONCALL')}>{props2[1]}</Button></ButtonGroup>
-    </TableCell>;
+          orientation="horizontal"
+          aria-label="vertical outlined button group"
+          size="small"
+        >
+          <Button
+            style={{
+              border: "none",
+              width: "100%",
+              height: "100%",
+              color: props1a[0],
+            }}
+            onClick={handleClick("AM")}
+          >
+            {props1a[1]}
+          </Button>
+          <Button
+            style={{
+              border: "none",
+              width: "100%",
+              height: "100%",
+              color: props1b[0],
+            }}
+            onClick={handleClick("PM")}
+          >
+            {props1b[1]}
+          </Button>
+            </ButtonGroup>
+          <Button
+            style={{
+              border: "none",
+              width: "100%",
+              height: "100%",
+              color: props2[0],
+            }}
+            onClick={handleClick("ONCALL")}
+          >
+            {props2[1]}
+          </Button>
+        
+      </TableCell>
+    );
 })

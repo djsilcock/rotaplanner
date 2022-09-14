@@ -1,5 +1,6 @@
 """contains rules to constrain the model"""
 from calendar import MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
+from collections import namedtuple
 
 
 from constants import Shifts, Staff
@@ -11,13 +12,17 @@ class Constraint(BaseConstraint):
     """Maximum deviation from target number of shifts of any given type (excluding locums)"""
     name = "Minimise deviation from average"
 
-    @classmethod
-    def definition(cls):
+    
 
+    @classmethod
+    def get_config_interface(cls,config):
+        config=namedtuple('Config',['deviation','shift'])(**config)
         yield 'same consultant should not be more than'
         yield {
             'name': 'deviation',
-            'component': 'number'}
+            'component': 'number',
+            'value':config.deviation
+            }
         yield {
             'name': 'shift',
             'component': 'select',
@@ -26,8 +31,10 @@ class Constraint(BaseConstraint):
                 'Weekend daytime',
                 'Weekday oncall',
                 'Weekday daytime',
-                'Any weekend']}
+                'Any weekend'],
+            'value':config.shift}
         yield 'shifts above or below target'
+
 
     def apply_constraint(self):
         kwargs = dict(**self.kwargs)

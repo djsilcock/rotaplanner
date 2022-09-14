@@ -19,3 +19,4 @@ class Constraint(BaseConstraint):
                     self.model.AddBoolXOr(
                         [self.get_duty(duty(shift,day,staff)) for duty in duties]
                     )
+                    

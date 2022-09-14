@@ -18,16 +18,19 @@ import isEqual from 'lodash/isEqual';
 
 //selectors
 const selectors = {
-    formSpec: (state) => state?.config?.constraintDefs || {},
     constraints: (state) => state?.config?.constraints || {}
 }
 const actions = {
-    saveConstraints: (constraints) => ({ type: 'remote/saveConstraints', constraints })
+    saveConstraints: () => ({ type: 'remote/saveConstraints'})
 }
 
+
+/*expected shape of state:
+ state.config.constraints=
+ []
+ */
 export function SettingsDialog() {
     const [open, setOpen] = React.useState(false);
-    const formSpecs = useSelector(selectors.formSpec, isEqual)
     const serverConstraints = useSelector(selectors.constraints, isEqual)
     const dispatch = useDispatch()
     const [constraints, updateConstraint] = React.useReducer(
@@ -69,7 +72,7 @@ export function SettingsDialog() {
         dispatch(actions.saveConstraints(constraints.constraints))
         handleClose()
     }
-
+    
     return (
         <div>
             <Button variant="outlined" onClick={handleClickOpen}>
@@ -78,23 +81,22 @@ export function SettingsDialog() {
             <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Settings</DialogTitle>
                 <DialogContent>
-                    {Object.entries(constraints.constraints).map(([constraintName, constraintdef], i) =>
-                        (formSpecs[constraintName]?.definition?.length ?? 0) == 0 ? null :
-                            <Accordion key={i}>
-                                <AccordionSummary>{formSpecs[constraintName].name}</AccordionSummary>
+                    {constraints.constraints.map(({id:constraintType,title, forms,addButton}) =>
+                            <Accordion key={constraintType}>
+                                <AccordionSummary>{title}</AccordionSummary>
                                 <AccordionDetails>
-                                    {Object.entries(constraintdef).map(([id, constraint], i, arr) =>
+                                {forms.map(({ id, form, values }, i, arr) =>
                                     ((
                                         <Card key={id} sx={{ padding: 1, margin: 1 }}>
-                                            <ConfigForm id={id} constraintName={constraintName} formSpec={formSpecs[constraintName].definition}
-                                                values={constraint} update={updateConstraint} lastOne={arr.length == 1}
+                                            <ConfigForm id={id} constraintName={constraintType} 
+                                            form={form} values={values} update={updateConstraint} lastOne={arr.length == 1}
                                             />
                                         </Card>)))}</AccordionDetails>
                                 <AccordionActions>
-                                    {(formSpecs[constraintName].definition.length > 1) ? <Button sx={{ margin: 1 }}
+                                    {addButton ? <Button sx={{ margin: 1 }}
                                         variant='outlined'
                                         size='small'
-                                        onClick={() => updateConstraint({ type: 'addAnother', constraintName })}>
+                                        onClick={() => updateConstraint({ type: 'addAnother', constraintType })}>
                                         Add another
                                     </Button> : null}</AccordionActions>
                             </Accordion>)}

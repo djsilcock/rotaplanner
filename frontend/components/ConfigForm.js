@@ -1,16 +1,22 @@
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox"
 import React from "react";
+import { useDispatch } from "react-redux";
 import { DateRangeDialog } from "./DateRangeDialog";
 import { GenericComponent } from "./GenericComponent";
 
 
-export function ConfigForm({ formSpec, id, values, constraintName,update,lastOne }) {
-  const dispatch = ({ name, value }) => {
-    update({ type: "updateField", constraintName,id, name, value });
+const actions = {
+  updateConstraintField:({constraintName,id,name,value})=>({type:'remote/updateConstraintField',constraintName,id,name,value})
+}
+
+export function ConfigForm({ formSpec, id, values, constraintName, update, lastOne }) {
+  const dispatch=useDispatch()
+  const updateField = ({ name, value }) => {
+    dispatch(actions.updateConstraintField({constraintName,id, name, value }));
   };
   if (!formSpec) return <div>no formspec</div>;
-  return <><Checkbox checked={values.enabled} onClick={(e) => dispatch({ name: 'enabled', value: e.target.checked })}/>
+  return <><Checkbox checked={values.enabled} onClick={(e) => updateField({ name: 'enabled', value: e.target.checked })}/>
     {formSpec.map((spec, i) => {
       if (typeof spec == "string") {
         return <span key={i}>{spec}</span>;
@@ -18,9 +24,7 @@ export function ConfigForm({ formSpec, id, values, constraintName,update,lastOne
       return (
         <GenericComponent
           key={i}
-          allValues={values}
-          value={values[spec.name]}
-          dispatch={dispatch}
+          dispatch={updateField}
           {...spec}
         />
       );

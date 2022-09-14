@@ -12,7 +12,7 @@ class Constraint(COTWConstraint):
     cotw_key='COTWEN'
 
     @classmethod
-    def definition(cls):
+    def get_config_interface(cls,config):
         yield 'consultant of the weekend nights  should do Fri and Sat oncall'
 
     

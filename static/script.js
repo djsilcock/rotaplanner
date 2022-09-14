@@ -87046,9 +87046,10 @@ See https://mui.com/r/migration-v4/#mui-material-styles for more details.` : (0,
     const data = useSelector(getCellDataSelector, import_isEqual2.default);
     if (!data)
       return /* @__PURE__ */ import_react16.default.createElement(TableCell_default, null, "...");
-    const daytimeValue = data?.DAYTIME?.[name] ?? "LOADING";
+    const morningValue = data?.AM?.[name] ?? "LOADING";
+    const afternoonValue = data?.PM?.[name] ?? "LOADING";
     const oncallValue = data?.ONCALL?.[name] ?? "LOADING";
-    const props1 = {
+    const daytimeProps = {
       ICU: ["blue", /* @__PURE__ */ import_react16.default.createElement(import_react16.default.Fragment, null, "?\xA0ICU")],
       LOCUM_ICU: ["blue", /* @__PURE__ */ import_react16.default.createElement(import_react16.default.Fragment, null, "?\xA0ICU(\xA3)")],
       DEFINITE_ICU: ["green", "ICU"],
@@ -87059,7 +87060,9 @@ See https://mui.com/r/migration-v4/#mui-material-styles for more details.` : (0,
       NOC: ["orange", "NOC"],
       TIMEBACK: ["gray", "TS"],
       LOADING: ["gray", "..."]
-    }[daytimeValue] || ["gray", "-"];
+    };
+    const props1a = daytimeProps[morningValue] || ["gray", "-"];
+    const props1b = daytimeProps[afternoonValue] || ["gray", "-"];
     const props2 = {
       ICU: ["navy", /* @__PURE__ */ import_react16.default.createElement(import_react16.default.Fragment, null, "?\xA0ICU")],
       LOCUM_ICU: ["navy", /* @__PURE__ */ import_react16.default.createElement(import_react16.default.Fragment, null, "?\xA0ICU(\xA3)")],
@@ -87077,16 +87080,34 @@ See https://mui.com/r/migration-v4/#mui-material-styles for more details.` : (0,
       style: { border: "solid 1px" },
       title: `${name} ${day}`
     }, /* @__PURE__ */ import_react16.default.createElement(ButtonGroup_default, {
-      orientation: "vertical",
+      orientation: "horizontal",
       "aria-label": "vertical outlined button group",
       size: "small"
     }, /* @__PURE__ */ import_react16.default.createElement(Button_default, {
-      style: { border: "none", width: "100%", height: "100%", color: props1[0] },
-      onClick: handleClick("DAYTIME")
-    }, props1[1]), /* @__PURE__ */ import_react16.default.createElement(Button_default, {
-      style: { border: "none", width: "100%", height: "100%", color: props2[0] },
+      style: {
+        border: "none",
+        width: "100%",
+        height: "100%",
+        color: props1a[0]
+      },
+      onClick: handleClick("AM")
+    }, props1a[1]), /* @__PURE__ */ import_react16.default.createElement(Button_default, {
+      style: {
+        border: "none",
+        width: "100%",
+        height: "100%",
+        color: props1b[0]
+      },
+      onClick: handleClick("PM")
+    }, props1b[1])), /* @__PURE__ */ import_react16.default.createElement(Button_default, {
+      style: {
+        border: "none",
+        width: "100%",
+        height: "100%",
+        color: props2[0]
+      },
       onClick: handleClick("ONCALL")
-    }, props2[1])));
+    }, props2[1]));
   };
 
   // components/SettingsDialog.js
@@ -87687,7 +87708,7 @@ See https://mui.com/r/migration-v4/#mui-material-styles for more details.` : (0,
   }
 
   // components/GenericComponent.js
-  function GenericComponent({ component, allValues, value: value2, displayif, dispatch, ...spec }) {
+  function GenericComponent({ component, value: value2, dispatch, ...spec }) {
     const Component2 = {
       text: TextNode,
       multiselect: MultiSelectPopup,
@@ -87696,15 +87717,6 @@ See https://mui.com/r/migration-v4/#mui-material-styles for more details.` : (0,
       number: NumberPopup,
       daterange: DateRangeDialog
     }[component];
-    if (displayif) {
-      try {
-        const fxn = new Function("values", "return " + displayif);
-        if (!fxn(allValues))
-          return " ";
-      } catch (e) {
-        console.warn("uncaught error", e);
-      }
-    }
     return /* @__PURE__ */ import_react24.default.createElement(Component2, {
       value: value2,
       onChange: dispatch,
@@ -87714,14 +87726,15 @@ See https://mui.com/r/migration-v4/#mui-material-styles for more details.` : (0,
 
   // components/ConfigForm.js
   function ConfigForm({ formSpec, id, values: values2, constraintName, update, lastOne }) {
-    const dispatch = ({ name, value: value2 }) => {
-      update({ type: "updateField", constraintName, id, name, value: value2 });
+    const dispatch = useDispatch();
+    const updateField = ({ name, value: value2 }) => {
+      dispatch({ type: "remote/updateConstraintField", constraintName, id, name, value: value2 });
     };
     if (!formSpec)
       return /* @__PURE__ */ import_react25.default.createElement("div", null, "no formspec");
     return /* @__PURE__ */ import_react25.default.createElement(import_react25.default.Fragment, null, /* @__PURE__ */ import_react25.default.createElement(Checkbox_default, {
       checked: values2.enabled,
-      onClick: (e) => dispatch({ name: "enabled", value: e.target.checked })
+      onClick: (e) => updateField({ name: "enabled", value: e.target.checked })
     }), formSpec.map((spec, i2) => {
       if (typeof spec == "string") {
         return /* @__PURE__ */ import_react25.default.createElement("span", {
@@ -87730,9 +87743,7 @@ See https://mui.com/r/migration-v4/#mui-material-styles for more details.` : (0,
       }
       return /* @__PURE__ */ import_react25.default.createElement(GenericComponent, {
         key: i2,
-        allValues: values2,
-        value: values2[spec.name],
-        dispatch,
+        dispatch: updateField,
         ...spec
       });
     }), /* @__PURE__ */ import_react25.default.createElement("br", null), /* @__PURE__ */ import_react25.default.createElement(DateRangeDialog, {
@@ -87807,15 +87818,13 @@ See https://mui.com/r/migration-v4/#mui-material-styles for more details.` : (0,
   // components/SettingsDialog.js
   var import_isEqual3 = __toESM(require_isEqual());
   var selectors2 = {
-    formSpec: (state) => state?.config?.constraintDefs || {},
     constraints: (state) => state?.config?.constraints || {}
   };
   var actions2 = {
-    saveConstraints: (constraints) => ({ type: "remote/saveConstraints", constraints })
+    saveConstraints: () => ({ type: "remote/saveConstraints" })
   };
   function SettingsDialog() {
     const [open, setOpen] = import_react26.default.useState(false);
-    const formSpecs = useSelector(selectors2.formSpec, import_isEqual3.default);
     const serverConstraints = useSelector(selectors2.constraints, import_isEqual3.default);
     const dispatch = useDispatch();
     const [constraints, updateConstraint] = import_react26.default.useReducer((state, action) => {
@@ -87858,23 +87867,23 @@ See https://mui.com/r/migration-v4/#mui-material-styles for more details.` : (0,
     }, "Settings..."), /* @__PURE__ */ import_react26.default.createElement(Dialog_default, {
       open,
       onClose: handleClose
-    }, /* @__PURE__ */ import_react26.default.createElement(DialogTitle_default, null, "Settings"), /* @__PURE__ */ import_react26.default.createElement(DialogContent_default, null, Object.entries(constraints.constraints).map(([constraintName, constraintdef], i2) => (formSpecs[constraintName]?.definition?.length ?? 0) == 0 ? null : /* @__PURE__ */ import_react26.default.createElement(Accordion_default, {
-      key: i2
-    }, /* @__PURE__ */ import_react26.default.createElement(AccordionSummary_default, null, formSpecs[constraintName].name), /* @__PURE__ */ import_react26.default.createElement(AccordionDetails_default, null, Object.entries(constraintdef).map(([id, constraint], i3, arr) => /* @__PURE__ */ import_react26.default.createElement(Card_default, {
+    }, /* @__PURE__ */ import_react26.default.createElement(DialogTitle_default, null, "Settings"), /* @__PURE__ */ import_react26.default.createElement(DialogContent_default, null, constraints.constraints.map(({ id: constraintType, title, forms, addButton }) => /* @__PURE__ */ import_react26.default.createElement(Accordion_default, {
+      key: constraintType
+    }, /* @__PURE__ */ import_react26.default.createElement(AccordionSummary_default, null, title), /* @__PURE__ */ import_react26.default.createElement(AccordionDetails_default, null, forms.map(({ id, form, values: values2 }, i2, arr) => /* @__PURE__ */ import_react26.default.createElement(Card_default, {
       key: id,
       sx: { padding: 1, margin: 1 }
     }, /* @__PURE__ */ import_react26.default.createElement(ConfigForm, {
       id,
-      constraintName,
-      formSpec: formSpecs[constraintName].definition,
-      values: constraint,
+      constraintName: constraintType,
+      form,
+      values: values2,
       update: updateConstraint,
       lastOne: arr.length == 1
-    })))), /* @__PURE__ */ import_react26.default.createElement(AccordionActions_default, null, formSpecs[constraintName].definition.length > 1 ? /* @__PURE__ */ import_react26.default.createElement(Button_default, {
+    })))), /* @__PURE__ */ import_react26.default.createElement(AccordionActions_default, null, addButton ? /* @__PURE__ */ import_react26.default.createElement(Button_default, {
       sx: { margin: 1 },
       variant: "outlined",
       size: "small",
-      onClick: () => updateConstraint({ type: "addAnother", constraintName })
+      onClick: () => updateConstraint({ type: "addAnother", constraintType })
     }, "Add another") : null)))), /* @__PURE__ */ import_react26.default.createElement(DialogActions_default, null, /* @__PURE__ */ import_react26.default.createElement(Button_default, {
       onClick: handleClose
     }, "Cancel"), /* @__PURE__ */ import_react26.default.createElement(Button_default, {

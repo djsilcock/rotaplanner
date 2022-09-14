@@ -238,7 +238,11 @@ async def dispatch(sid, evt, *args):
             'remote/dismissPopup': dismiss_popup,
             'remote/setStartDate': populate_state,
             'remote/recalculate': recalculate,
-            'remote/saveConstraints':save_constraints
+            'remote/saveConstraints':save_constraints,
+            #'remote/updateConstraintField':
+            #'remote/resetConstraintForm'
+            #'remote/openConstraintSettings'
+            #'remote/cancelConstraintSettingsForm'
         }[evttype](**evt)
         return {'type': 'remote/replaceState', 'newState': state}
     except KeyError:
@@ -277,6 +281,7 @@ def shutdown(app, loop):
 
 @app.get('/')
 def index(request):
+    "returns html skeleton page"
     return sanic.response.html(
         "<!DOCTYPE html><html><head><title>Rota Solver</title></head>"
         "<body>"

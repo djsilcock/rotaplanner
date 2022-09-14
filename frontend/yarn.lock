@@ -589,6 +589,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@reduxjs/toolkit@npm:^1.8.5":
+  version: 1.8.5
+  resolution: "@reduxjs/toolkit@npm:1.8.5"
+  dependencies:
+    immer: ^9.0.7
+    redux: ^4.1.2
+    redux-thunk: ^2.4.1
+    reselect: ^4.1.5
+  peerDependencies:
+    react: ^16.9.0 || ^17.0.0 || ^18
+    react-redux: ^7.2.1 || ^8.0.2
+  peerDependenciesMeta:
+    react:
+      optional: true
+    react-redux:
+      optional: true
+  checksum: 831b5c74779262351d20efa0f4c06f794702bd55b14bd8f69362e29f82f7ad43aee66f39518914345ad9e9c6c93611acdeb576a70deda260733c3f098875aaca
+  languageName: node
+  linkType: hard
+
 "@rushstack/eslint-patch@npm:^1.1.3":
   version: 1.1.4
   resolution: "@rushstack/eslint-patch@npm:1.1.4"
@@ -2303,6 +2323,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"immer@npm:^9.0.7":
+  version: 9.0.15
+  resolution: "immer@npm:9.0.15"
+  checksum: 92e3d63e810e3c3c2bb61b70c45443e37ef983ad12924e3edaf03725ae5979618f5b473439bb3bb4a8c4769f25132f18dec10ea15c40f0b20da5691ff96ff611
+  languageName: node
+  linkType: hard
+
+"immutable-json-patch@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "immutable-json-patch@npm:5.0.0"
+  checksum: af29bc988fb1ca736b992713b3b9b1babea9ece6140f2fc00d922693422030c68f7dc277ee4431ab034f9e25a30184fcbddc8b5c4e35bac375925c603cf2ad6e
+  languageName: node
+  linkType: hard
+
 "import-fresh@npm:^3.0.0, import-fresh@npm:^3.1.0, import-fresh@npm:^3.2.1":
   version: 3.3.0
   resolution: "import-fresh@npm:3.3.0"
@@ -2667,7 +2701,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:^4.17.15, lodash@npm:^4.17.21":
+"lodash@npm:^4.17.15, lodash@npm:^4.17.21, lodash@npm:^4.17.4":
   version: 4.17.21
   resolution: "lodash@npm:4.17.21"
   checksum: eb835a2e51d381e561e508ce932ea50a8e5a68f4ebdd771ea240d3048244a8d13658acbd502cd4829768c56f2e16bdd4340b9ea141297d472517b83868e677f7
@@ -3656,7 +3690,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redux@npm:^4.2.0":
+"redux-thunk@npm:^2.4.1":
+  version: 2.4.1
+  resolution: "redux-thunk@npm:2.4.1"
+  peerDependencies:
+    redux: ^4
+  checksum: af5abb425fb9dccda02e5f387d6f3003997f62d906542a3d35fc9420088f550dc1a018bdc246c7d23ee852b4d4ab8b5c64c5be426e45a328d791c4586a3c6b6e
+  languageName: node
+  linkType: hard
+
+"redux@npm:^4.1.2, redux@npm:^4.2.0":
   version: 4.2.0
   resolution: "redux@npm:4.2.0"
   dependencies:
@@ -3722,6 +3765,22 @@ __metadata:
     mdast-util-to-hast: ^12.1.0
     unified: ^10.0.0
   checksum: b9ac8acff3383b204dfdc2599d0bdf86e6ca7e837033209584af2e6aaa6a9013e519a379afa3201299798cab7298c8f4b388de118c312c67234c133318aec084
+  languageName: node
+  linkType: hard
+
+"remote-redux@npm:^0.0.7":
+  version: 0.0.7
+  resolution: "remote-redux@npm:0.0.7"
+  dependencies:
+    lodash: ^4.17.4
+  checksum: fa6adf7ca156dd60b2db66823ffb25bb8c619e361ef5d9eac0b10f15332792940b91b6ef8e5a2f673bad645d03b707c3e75d8b9d5bc34d7441a3909361fee5b3
+  languageName: node
+  linkType: hard
+
+"reselect@npm:^4.1.5":
+  version: 4.1.6
+  resolution: "reselect@npm:4.1.6"
+  checksum: 3ea1058422904063ec93c8f4693fe33dcb2178bbf417ace8db5b2c797a5875cf357d9308d11ed3942ee22507dd34ecfbf1f3a21340a4f31c206cab1d36ceef31
   languageName: node
   linkType: hard
 
@@ -3821,6 +3880,7 @@ __metadata:
     "@mui/icons-material": ^5.8.0
     "@mui/material": ^5.6.2
     "@mui/x-date-pickers": ^5.0.0-alpha.1
+    "@reduxjs/toolkit": ^1.8.5
     "@testing-library/jest-dom": ^5.14.1
     "@testing-library/react": ^13.0.0
     "@testing-library/user-event": ^13.2.1
@@ -3828,6 +3888,7 @@ __metadata:
     esbuild: ^0.14.49
     eslint: 8.15.0
     eslint-config-next: 12.1.6
+    immutable-json-patch: ^5.0.0
     lodash: ^4.17.21
     react: 18.1.0
     react-dom: 18.1.0
@@ -3835,6 +3896,7 @@ __metadata:
     react-redux: ^8.0.2
     redux: ^4.2.0
     remark-gfm: ^3.0.1
+    remote-redux: ^0.0.7
     socket.io-client: ^4.5.1
   languageName: unknown
   linkType: soft

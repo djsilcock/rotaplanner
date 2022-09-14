@@ -1,5 +1,6 @@
 """contains rules to constrain the model"""
 from calendar import FRIDAY
+from collections import namedtuple
 
 
 from constants import Shifts, Staff
@@ -10,6 +11,47 @@ from constraints.some_shifts_are_locum import locum_icu
 class Constraint(BaseConstraint):
     """limit locum shifts for which filter is true"""
     name = "Limit Locum shifts"
+
+    @classmethod
+    def validate_config(cls, config):
+        config=namedtuple(
+            'Config',
+            'staff collectively moreless maximum minimum shift_type'
+            )(**config)
+        return config
+
+    @classmethod
+    def get_config_interface(cls, config):
+        config=cls.validate_config(config)
+        names = [s.name.title() for s in Staff]
+        return [
+            dict(component='multiselect', name='staff', options=names),
+            'should',
+            dict(
+                component='select',
+                name='collectively',
+                options=['individually', 'collectively']) if len(config.staff)>1 else None,
+            'do',
+            dict(
+                component='select',
+                name='moreless',
+                options=['at least', 'at most', 'between']),
+            dict(
+                component='number',
+                name='minimum') if config.moreless in ['at least','between'] else None,
+            'and' if config.moreless=='between' else None,
+            dict(
+                component='number',
+                name='maximum') if config.moreless in ["at most","between"] else None,
+            dict(
+                component='multiselect',
+                name='shift_type',
+                options=[
+                    'weekday daytime',
+                    'weekend daytime',
+                    'weekend oncall',
+                    'weekday oncall']),
+            'locum shifts']
 
     @classmethod
     def definition(cls):
