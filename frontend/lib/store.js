@@ -4,14 +4,10 @@ import {immutableJSONPatch} from 'immutable-json-patch'
 import React from 'react'
 import { io } from 'socket.io-client'
 import {Provider} from 'react-redux'
-
-function reducer(state = { value: 0 }, action) {
-  if (typeof action=='undefined') return {}
-  return state
-}
+import { constraintsReducer } from '../components/settingsRedux'
 
 const reducer = combineReducers({
-  config:combineReducers({})
+  config:combineReducers({constraints:constraintsReducer})
 })
 
 const isRemoteAction = (action) => {
