@@ -63,31 +63,23 @@ class JobPlanConfig(BaseConfig):
         defaults=super().get_defaults()
         defaults.update(dict(
             staff=[],
-            working_days=None,
-            repeat=None,
-            parsed_repeat=None
+            working_days=[],
+            repeat="",
         ))
         return defaults
 
-class Constraint(BaseConstraint):
-    """Apply jobplan to staffmember"""
-    name = "Apply jobplans"
+    def parse_repeat(self,value):
+        repeatstrs=re.findall(r'\d+/\d+',value)
+        return [(int(num),int(denom)) for r in repeatstrs for num,denom in r.split('/')]
 
-    @classmethod
-    def validate_config(cls,config):
-        config=Config(**config)   
-        repeatstrs=re.findall(r'\d+/\d+',config.repeat)
-        repeats=[(num,denom) for r in repeatstrs for num,denom in r.split('/')]
+    def validate_repeat(self,repeats):
         for num,denom in repeats:
             if denom<num:
-                raise ValueError(f'{num}/{denom} not a valid repeat')
-        config=config._replace(repeat=','.join(repeatstrs),parsed_repeat=repeats)
-        return config
+                return f'{num}/{denom} not a valid repeat'
+        return
 
-
-    @classmethod
-    def get_config_interface(cls,config):
-        config=cls.validate_config(config)
+    def get_config_interface(self):
+        config=self.values()
         yield {
             'component': 'select',
             'name': 'staff',
@@ -97,7 +89,7 @@ class Constraint(BaseConstraint):
         yield {
             'component': 'text',
             'name': 'repeat',
-            'value': config.repeat
+            'value': ','.join([f'{num}/{denom}' for (num,denom) in config.repeat])
         }
         yield {
             'component': 'multiselect',
@@ -106,9 +98,11 @@ class Constraint(BaseConstraint):
                         for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
                         for shift in ('AM', 'PM')],
             'value':config.working_days
-        }
-        
-        
+        } 
+
+class Constraint(BaseConstraint):
+    """Apply jobplan to staffmember"""
+    name = "Apply jobplans"
 
     def apply_constraint(self):
         """apply jobplans"""

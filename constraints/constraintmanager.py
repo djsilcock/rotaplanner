@@ -25,10 +25,11 @@ class BaseConfig():
     "holds configuration values for constraint"
 
     def __init__(self, config: dict):
-        self._values = self.get_defaults()
-        updates = {k: v for k, v in config.items() if k in self._values}
-        self._values.update(updates)
+        self._values = self.get_defaults()       
         self._validators={k:getattr(self,f"validate_{k}",lambda x:False) for k in self._values}
+        self._parsers={k:getattr(self,f"parse_{k}",lambda x:x) for k in self._values}
+        updates = {k: self._parsers[k](v) for k, v in config.items() if k in self._values}
+        self._values.update(updates)
 
     def get_defaults(self) -> dict:
         "returns default values for object"
@@ -41,7 +42,7 @@ class BaseConfig():
 
     def errors(self) -> Optional[dict]:
         "return dict of errors, or None if validates"
-        errors = {k: validator(v, self._values) for k, validator in self._validators.items()}
+        errors = {k: self._validators[k](v, self._values) for k, v in self._values.items()}
         return {f: errors[f] for f in errors if errors[f]} if any(errors.values()) else None
 
     def validate_startdate(self, value) -> ValidationResult:
@@ -89,8 +90,7 @@ class BaseConfig():
 
     def set(self, key, value):
         "set a value"
-        self._values[key] = getattr(
-            self, f'sanitize_{key}', lambda x: x)(value)
+        self._values[key] = self._parsers[key](value)
 
     def get(self, key, default=None):
         "retrieve a value"
@@ -99,6 +99,9 @@ class BaseConfig():
     def values(self):
         "return all values"
         return {**self._values}
+
+    def get_config_interface():
+        return []
 
 
 class BaseConstraint():
@@ -206,7 +209,7 @@ def get_constraint_config(constraintspec: dict):
             ruleid, rule_spec = entry
             return {
                 "id": ruleid,
-                "form": constraint_class.get_config_interface(rule_spec),
+                "form": constraint_class.config_class(rule_spec).get_config_interface(),
                 "values": rule_spec
             }
         return {

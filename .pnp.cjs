@@ -48,6 +48,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["esbuild", "npm:0.15.7"],\
             ["eslint", "npm:8.23.1"],\
             ["eslint-plugin-react", "virtual:4e68e6950d8363f3e5e3b4ebf821adf9458e263729c410ee725795dfc1c6414fa6e897b07bbb69e33c934a4fbf4edd34ea6f64ece0130661080012becfc83908#npm:7.31.8"],\
+            ["immer", "npm:9.0.15"],\
             ["immutable-json-patch", "npm:5.0.0"],\
             ["lodash", "npm:4.17.21"],\
             ["react", "npm:18.1.0"],\
@@ -4497,6 +4498,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["esbuild", "npm:0.15.7"],\
             ["eslint", "npm:8.23.1"],\
             ["eslint-plugin-react", "virtual:4e68e6950d8363f3e5e3b4ebf821adf9458e263729c410ee725795dfc1c6414fa6e897b07bbb69e33c934a4fbf4edd34ea6f64ece0130661080012becfc83908#npm:7.31.8"],\
+            ["immer", "npm:9.0.15"],\
             ["immutable-json-patch", "npm:5.0.0"],\
             ["lodash", "npm:4.17.21"],\
             ["react", "npm:18.1.0"],\
