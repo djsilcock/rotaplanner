@@ -1,5 +1,6 @@
 """Webserver module"""
 
+from calendar import c
 from datetime import date, datetime, timedelta
 import multiprocessing
 import shelve
@@ -14,6 +15,7 @@ import socketio
 
 import sanic
 from sanic.signals import Event
+from constants import Duties, Shifts, Staff
 from solver import RotaSolver
 from constraints.constraintmanager import get_constraint_config
 
@@ -85,13 +87,8 @@ def show_tallies(payload):
         targets,
         "\n".join(rows),
         ""])
-    state.setdefault('messagePopup', [])
-    state['messagePopup'].append(f"""Tallies for:{datestring} \n\n{message}""")
+    return f"Tallies for:{datestring} \n\n{message}"
 
-
-def dismiss_popup():
-    state.setdefault('messagePopup', [])
-    state['messagePopup'] = state['messagePopup'][1:]
 
 
 async def do_recalculate(data, startdate):
@@ -143,8 +140,6 @@ async def do_recalculate(data, startdate):
         print('pipe was closed')
     with shelve.open('datafile') as database:
         database.update(d)
-    populate_state(startdate)
-    print('sent reload signal')
 
 
 def recalculate():
@@ -163,20 +158,6 @@ async def settings(request):
 
 
 
-def get_constraints():
-    """return list of current constraints"""
-    with open('constraints.json', encoding='utf-8') as constraint_file:
-        return json.load(constraint_file)
-
-
-
-def save_constraints(constraints):
-    """save the constraints list from the ui"""
-    with open('constraints.json', 'w', encoding='utf-8') as constraint_file:
-        json.dump(constraints, constraint_file, indent=2)
-    state['config']['constraints']=constraints
-
-
 @sio.event
 async def get_duties(sid, day):
     """Get duties for day"""
@@ -186,67 +167,7 @@ async def get_duties(sid, day):
     return day_data
 
 
-def set_duty(dutyType, shift, name, day):
-    """Update duty for shift"""
-    print(f'set duty: {dutyType},{shift},{name},{day}')
-    with shelve.open('datafile', writeback=True) as database:
-        day_allocs = database.setdefault(day, {})
-        shift_allocs = day_allocs.setdefault(shift, {})
-        if dutyType in ['DEFINITE_ICU', 'DEFINITE_LOCUM_ICU', 'ICU_MAYBE_LOCUM']:
-            shift_allocs.update({
-                name1: (None if duty1 in [
-                    'ICU',
-                    'LOCUM_ICU',
-                    'DEFINITE_ICU',
-                    'DEFINITE_LOCUM_ICU',
-                    'ICU_MAYBE_LOCUM'] else duty1)
-                for name1, duty1 in shift_allocs.items()})
-        shift_allocs[name] = dutyType
-        state['duties'][day] = day_allocs
 
-
-days_to_display = 16*7
-state = {'daysArray': [], 'duties': {},'config':{'constraintDefs':get_constraint_config(),'constraints':get_constraints()}}
-
-
-def populate_state(payload):
-    starting_date = date.fromisoformat(payload)
-    state['daysArray'] = [(starting_date+timedelta(days=daydelta)).isoformat()
-                          for daydelta in range(days_to_display)]
-    with shelve.open('datafile') as db:
-        state['duties'] = dict([(day, db.get(day, {}))
-                               for day in state['daysArray']])
-
-
-populate_state(date.today().isoformat())
-
-
-@sio.event
-async def reset_state(sid):
-    print('reset state')
-    return {'type': 'remote/replaceState', 'newState': state}
-
-
-@sio.event
-async def dispatch(sid, evt, *args):
-    print(evt)
-    evttype = evt.pop('type')
-    try:
-        {
-            'remote/setDuty': set_duty,
-            'remote/showTallies': show_tallies,
-            'remote/dismissPopup': dismiss_popup,
-            'remote/setStartDate': populate_state,
-            'remote/recalculate': recalculate,
-            'remote/saveConstraints':save_constraints,
-            #'remote/updateConstraintField':
-            #'remote/resetConstraintForm'
-            #'remote/openConstraintSettings'
-            #'remote/cancelConstraintSettingsForm'
-        }[evttype](**evt)
-        return {'type': 'remote/replaceState', 'newState': state}
-    except KeyError:
-        print(f'unknown action type {evttype} {repr(evt)}')
 
 status = {1: False}
 
@@ -290,6 +211,88 @@ def index(request):
         '<script src="/static/script.js"></script>'
         '</body></html>')
 app.static('/static', os.path.join(os.getcwd(), 'static'))
+
+@app.get('/statusmessage')
+def statusmessage(request):
+    return sanic.response.json({})
+
+@app.get('/duties/<startdate:ymd>')
+def get_duties(request,startdate):
+    days_to_display=request.args.get('days',16*7)
+    starting_date = date.fromisoformat(startdate)
+    days_array = [(starting_date+timedelta(days=daydelta)).isoformat()
+                          for daydelta in range(days_to_display)]
+    with shelve.open('datafile') as db:
+        duties = dict([(day, db.get(day, {}))
+                               for day in days_array])
+    return sanic.response.json(duties)
+
+@app.post('/setduty')
+def set_duty(request):
+    """Update duty for shift"""
+    args=request.json
+    try:
+        duty=args['duty']    
+        shift=args['shift']
+        staff=args['staff']
+        day=args['date']
+    except KeyError as err:
+        raise sanic.exceptions.BadRequest(f'Missing value:{err.args}')
+    try:
+        Duties[duty]
+        Staff[staff]
+        Shifts[shift]
+        date.fromisoformat(day)
+    except (ValueError,KeyError) as err:
+        raise sanic.exceptions.BadRequest(f'Invalid value:{err.args}')
+
+    print(f'set duty: {duty},{shift},{staff},{day}')
+    with shelve.open('datafile', writeback=True) as database:
+        day_allocs = database.setdefault(day, {})
+        shift_allocs = day_allocs.setdefault(shift, {})
+        if duty in ['DEFINITE_ICU', 'DEFINITE_LOCUM_ICU', 'ICU_MAYBE_LOCUM']:
+            shift_allocs.update({
+                name1: (None if duty1 in [
+                    'ICU',
+                    'LOCUM_ICU',
+                    'DEFINITE_ICU',
+                    'DEFINITE_LOCUM_ICU',
+                    'ICU_MAYBE_LOCUM'] else duty1)
+                for name1, duty1 in shift_allocs.items()})
+        shift_allocs[staff] = duty
+    return sanic.response.empty()
+
+@app.get('/getconstraints')
+def get_constraints(request):
+    """return list of current constraints"""
+    with open('constraints.json', encoding='utf-8') as constraint_file:
+        return sanic.response.json(json.load(constraint_file))
+
+
+def do_validate_constraint(constraint):
+    return constraint
+
+@app.post('/validateconstraint')
+def validate_constraint(request):
+    constraint=request.json
+    validated=do_validate_constraint(constraint)
+    return sanic.response.json(validated)
+
+@app.post('/saveconstraints')
+def save_constraints(request):
+    all_constraints=request.json
+    has_error=False
+    validated_constraints={}
+    for (constraint_type,constraints_by_type) in all_constraints.items():
+        validated_constraints[constraint_type]={}     
+        for (constraint_id,constraint) in constraints_by_type.items():
+            validated_constraints[constraint_type][constraint_id]=do_validate_constraint(constraint)
+            if validated_constraints[constraint_type][constraint_id].get('error',None): has_error=True
+    if not has_error:
+        with open('constraints.json', 'w', encoding='utf-8') as constraint_file:
+            json.dump(validated_constraints, constraint_file, indent=2)
+            return sanic.response.json({'status':'ok'})
+    return sanic.response.json({'status':'error','constraints':validated_constraints})
 
 if __name__ == "__main__":
     print(os.path.join(os.getcwd(), 'static'))
