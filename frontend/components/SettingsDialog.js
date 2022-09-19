@@ -11,25 +11,25 @@ import AccordionActions from '@mui/material/AccordionActions';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 
-import { useDispatch, useSelector } from 'react-redux';
-import isEqual from 'lodash/isEqual';
+import { useDispatch} from 'react-redux';
 
 import { actions } from './settingsRedux';
+import { api } from '../lib/store';
 
-//selectors
-const selectors = {
-    constraints: (state) => state?.config?.constraints || {}
-}
-
-
+const {
+    useGetConstraintConfigQuery,
+    useResetConstraintConfigMutation,
+    useSaveConstraintsMutation } = api
 
 export function SettingsDialog() {
     const [open, setOpen] = React.useState(false);
-    const constraints = useSelector(selectors.constraints, isEqual)
+    //const constraints = useSelector(selectors.constraints, isEqual)
+    const {data:constraints} = useGetConstraintConfigQuery()
+    const [resetConstraints] = useResetConstraintConfigMutation()
+    const [saveConstraints]=useSaveConstraintsMutation()
     const dispatch = useDispatch()
-
     const handleClickOpen = () => {
-        dispatch(actions.resetConstraints())
+        resetConstraints()
         setOpen(true);
     };
 
@@ -37,10 +37,10 @@ export function SettingsDialog() {
         setOpen(false);
     };
     const handleReset = () => {
-        dispatch(actions.resetConstraints())
+        resetConstraints()
     }
     const handleSave = () => {
-        dispatch(actions.saveConstraints())
+        saveConstraints()
         handleClose()
     }
     
@@ -52,22 +52,22 @@ export function SettingsDialog() {
             <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Settings</DialogTitle>
                 <DialogContent>
-                    {constraints.constraints.map(({id:constraintType,title, forms,addButton}) =>
-                            <Accordion key={constraintType}>
+                    {constraints.constraints.map(({type,title,rules,addButton}) =>
+                            <Accordion key={type}>
                                 <AccordionSummary>{title}</AccordionSummary>
                                 <AccordionDetails>
-                                {forms.map(({ id, form, values }, i, arr) =>
+                                {rules.map(({ id, ...values }, i, arr) =>
                                     ((
                                         <Card key={id} sx={{ padding: 1, margin: 1 }}>
-                                            <ConfigForm id={id} constraintName={constraintType} 
-                                            form={form} values={values} lastOne={arr.length == 1}
+                                            <ConfigForm id={id} constraintName={type} 
+                                            values={values} lastOne={arr.length == 1}
                                             />
                                         </Card>)))}</AccordionDetails>
                                 <AccordionActions>
                                     {addButton ? <Button sx={{ margin: 1 }}
                                         variant='outlined'
                                         size='small'
-                                        onClick={() => dispatch(actions.addAnother(constraintType))}>
+                                        onClick={() => dispatch(actions.addAnother(type))}>
                                         Add another
                                     </Button> : null}</AccordionActions>
                             </Accordion>)}

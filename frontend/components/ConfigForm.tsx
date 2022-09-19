@@ -11,14 +11,16 @@ import { GenericComponent } from "./GenericComponent";
 const actions = {
   updateConstraintField:({constraintName,id,name,value})=>({type:'remote/updateConstraintField',constraintName,id,name,value})
 }
+const { useUpdateConstraintConfigValueMutation,useGetConstraintInterfaceQuery,useRemoveConstraintRuleMutation } = api
 
-export function ConfigForm({ formSpec, id, values, constraintName, update, lastOne }) {
-  const dispatch=useDispatch()
-
+export function ConfigForm({id, values, type, lastOne }) {
+  const [updater] = useUpdateConstraintConfigValueMutation()
+  const [deleteRule] = useRemoveConstraintRuleMutation()
+  const {data:formSpec}=useGetConstraintInterfaceQuery({id,type,...values})
   const updateField = ({ name, value }) => {
-    dispatch(actions.updateConstraintField({constraintName,id, name, value }));
+    updater({type,id,name,value });
   };
-  if (!formSpec) return <div>no formspec</div>;
+  if (!formSpec) return <div>...</div>;
   return <><Checkbox checked={values.enabled} onClick={(e) => updateField({ name: 'enabled', value: e.target.checked })}/>
     {formSpec.map((spec, i) => {
       if (typeof spec == "string") {
@@ -34,7 +36,7 @@ export function ConfigForm({ formSpec, id, values, constraintName, update, lastO
     })
     }
     <br />
-    <DateRangeDialog name='daterange' value={values.daterange} onChange={dispatch} />
-    {lastOne ? null : <Button sx={{ margin: 1 }} variant='outlined' size='small' onClick={() => update({ type: 'delete', constraintName, id })}>Remove</Button>}
+    <DateRangeDialog name='daterange' value={values.daterange} onChange={updateField} />
+    {lastOne ? null : <Button sx={{ margin: 1 }} variant='outlined' size='small' onClick={() => deleteRule({ type, id })}>Remove</Button>}
      </>
 }

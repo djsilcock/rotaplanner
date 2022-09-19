@@ -3,21 +3,16 @@ import React from 'react';
 import TableCell from '@mui/material/TableCell';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import { useDispatch, useSelector } from 'react-redux';
-import isEqual from 'lodash/isEqual';
+import {useSelector } from 'react-redux';
+import { api } from '../lib/store';
 
-const selectors={
-    getCellData:(date)=>(state)=>state?.duties[date]
-}
 
-const actions={
-    setDuty:(dutyType,shift,name,day)=>({type:'remote/setDuty',dutyType,shift,name,day})
-}
-export const Cell = (function Cell({ name, day, dutyType }) {
-    const dispatch=useDispatch()
-    const getCellDataSelector=React.useMemo(()=>selectors.getCellData(day),[day])
-    const data=useSelector(getCellDataSelector,isEqual)
-    if (!data) return <TableCell>...</TableCell>
+export const Cell = (function Cell({ name, day, dutyType }) { 
+  const startDate = useSelector(state => state.config.startDate)
+  const numDays = useSelector(state => state.config.numDays)
+  const { data } =api.useGetDutiesQuery({startDate,numDays},{selectFromResult:(state=>state[day])})
+  const [setDuty]=api.useSetDutyMutation()
+  if (!data) return <TableCell>...</TableCell>
     const morningValue = data?.AM?.[name] ?? 'LOADING'
     const afternoonValue = data?.PM?.[name] ??'LOADING'
     const oncallValue = data?.ONCALL?.[name] ?? 'LOADING'
@@ -48,7 +43,7 @@ export const Cell = (function Cell({ name, day, dutyType }) {
     }[oncallValue] || ['gray', '-'];
     
     const handleClick = (shift) => () => {
-        dispatch(actions.setDuty(dutyType, shift, name, day));
+      setDuty({ duty: dutyType, shift, staff:name, date:day });
     };
     return (
       <TableCell style={{ border: "solid 1px" }} title={`${name} ${day}`}>
