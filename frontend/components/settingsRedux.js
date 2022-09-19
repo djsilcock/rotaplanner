@@ -2,10 +2,10 @@ import { deleteDeep, setDeep, updateDeep } from "../lib/updateDeep";
 import {createAction, createReducer} from '@reduxjs/toolkit'
 
 export const actions={
-    delete:createAction('settings/delete'),
-    updateField:createAction('settings/update'),
-    addAnother:createAction('remote/newConstraint'),
-    resetConstraintSettings:createAction('remote/resetConstraints')
+    delete:createAction('constraints/delete'),
+    updateField:createAction('constraints/update'),
+    addAnother:createAction('constraints/newConstraint'),
+    resetConstraintSettings:createAction('constraints/reset')
 }
 
 export const constraintsReducer=createReducer({},(builder)=>{

@@ -141,10 +141,14 @@ async def do_recalculate(data, startdate):
     with shelve.open('datafile') as database:
         database.update(d)
 
-
-def recalculate():
+@app.post('/recalculate')
+def recalculate(request):
     '''run query'''
-    start_date = state['daysArray'][0]
+    try:
+        start_date=request.json.get('start_date')
+        date.fromisoformat(start_date)
+    except ValueError:
+        return sanic.response.json({'error':'start date is invalid'},status=400)
     with shelve.open('datafile') as database:
         data = {}
         data.update(database)
@@ -207,7 +211,7 @@ def index(request):
         "<!DOCTYPE html><html><head><title>Rota Solver</title></head>"
         "<body>"
         '<div id="target">Loading...</div>'
-        f"<script>window.initialData={json.dumps(state)}</script>"
+        f"<script>window.initialData={json.dumps({})}</script>"
         '<script src="/static/script.js"></script>'
         '</body></html>')
 app.static('/static', os.path.join(os.getcwd(), 'static'))
@@ -223,8 +227,8 @@ def get_duties(request,startdate):
     days_array = [(starting_date+timedelta(days=daydelta)).isoformat()
                           for daydelta in range(days_to_display)]
     with shelve.open('datafile') as db:
-        duties = dict([(day, db.get(day, {}))
-                               for day in days_array])
+        duties = dict([(day, db.get(day))
+                               for day in days_array if day in db])
     return sanic.response.json(duties)
 
 @app.post('/setduty')
@@ -270,13 +274,15 @@ def get_constraints(request):
 
 
 def do_validate_constraint(constraint):
-    return constraint
+    return None
 
 @app.post('/validateconstraint')
 def validate_constraint(request):
     constraint=request.json
     validated=do_validate_constraint(constraint)
-    return sanic.response.json(validated)
+    if validated:
+        return sanic.response.json({'status':'error','errors':validated})
+    return sanic.response.json({'status':'ok'})
 
 @app.post('/saveconstraints')
 def save_constraints(request):

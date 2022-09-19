@@ -1,15 +1,12 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import React from 'react'
-import { io } from 'socket.io-client'
 import { Provider } from 'react-redux'
-import { constraintsReducer } from '../components/settingsRedux'
-import { createApi } from '@reduxjs/toolkit/query/react'
 import { set } from 'lodash'
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 
 // Define a service using a base URL and expected endpoints
-export const dutiesApi = createApi({
+export const api = createApi({
   reducerPath: 'remote',
   baseQuery: fetchBaseQuery({ baseUrl: '/' }),
   endpoints: (builder) => ({
@@ -26,7 +23,8 @@ export const dutiesApi = createApi({
         method: 'POST',
         body: { date, shift, staff, duty }
       }),
-      async onQueryStarted({ date, shift, staff, duty }, { dispatch, getState, queryFulfilled }) {
+      invalidatesTags:['Duties'],
+      async onQueryStarted({ date, shift, staff, duty }, { dispatch, getState}) {
         const state = getState()
         const startdate = state.config.startdate
         const days = state.config.daysToShow
@@ -35,35 +33,23 @@ export const dutiesApi = createApi({
             set(draft, [date, shift, staff], duty)
           })
         )
-        try {
-          await queryFulfilled
-        } catch { }
-        api.util.invalidateTags(['Duties'])
       }
     }),
     getConstraintConfig:builder.query({
       query:()=>'getconstraints',
       providesTags:['Constraints']
     }),
+    getConstraintInterface:builder.query({
+      query:(config)=>(
+        {url:'getconstraintinterface',
+        method:'POST',
+        body:config
+    }),
     resetConstraintConfig:builder.mutation({
       queryFn:()=>({data:null}),
       invalidatesTags:['Constraints']
     }),
-    validateConstraint:builder.mutation({
-      query:(data)=>({
-        url:'validateconstraint',
-        method:'POST',
-        body:data
-      }),
-      async onQueryStarted (_,{queryFulfilled}){
-        try{
-          const {data:{constraintType,constraintId,...data}}=await queryFulfilled
-          api.util.updateQueryData('getConstraintConfig',undefined,(config)=>{
-            set(config,[constraintType,constraintId],data)
-          })
-        }catch{}
-      }
-    }),
+    
     saveConstraints:builder.mutation({
       query:(constraints)=>({
         url:'saveconstraints',
@@ -73,23 +59,19 @@ export const dutiesApi = createApi({
     })
   }),
 })
-
+})
 // Export hooks for usage in functional components, which are
 // auto-generated based on the defined endpoints
-export const { useGetDutiesQuery } = dutiesApi
-const socket = io()
+
 const store = configureStore({
   reducer: combineReducers(
     {
-      config: combineReducers({ constraints: constraintsReducer }),
-      [dutiesApi.reducerPath]: dutiesApi.reducer
+      [api.reducerPath]: api.reducer
     }),
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(pokemonApi.middleware),
+    getDefaultMiddleware().concat(api.middleware),
   preloadedState: window.initialData
 })
-socket.on("connect", () => socket.emit("reset_state", decodeAndDispatch));
-socket.on("dispatch", store.dispatch);
 
 export function ReduxProvider({ children }) {
   return <Provider store={store}>{children}</Provider>
