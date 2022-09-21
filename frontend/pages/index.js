@@ -24,15 +24,19 @@ import { SettingsDialog } from '../components/SettingsDialog';
 import { MessageDialog } from '../components/MessageDialog';
 import { DateRangeDialog } from '../components/DateRangeDialog';
 import { useDispatch, useSelector } from 'react-redux';
-import { ReduxProvider } from '../lib/store';
+import { api, ReduxProvider } from '../lib/store';
+
 
 const rotaEpoch = new Date(2020, 10, 2)
+
+const { useGetDutiesQuery }=api
 
 //Selectors
 const selectors={
   getMessage:(state=>state?.statusMessage),
-  getDaysArray:state=>state.daysArray
-
+  getDaysArray: state => state.config.daysArray,
+  getStartDate: state => state.config.startDate,
+  getStartDateAndNumDays: state => state.config
 }
 
 //Actions
@@ -71,8 +75,10 @@ function App(){
 function InnerApp() {
   const [dutyType, setDutyType] = React.useState('DEFINITE_ICU')
   
-  const days=useSelector(selectors.getDaysArray,isEqual)
-  const dispatch=useDispatch()
+  const config = useSelector(selectors.getStartDateAndNumDays)
+  const { data:dutiesData }=useGetDutiesQuery(config)
+  const dispatch = useDispatch()
+  
 
   const handleChange = React.useCallback((evt, newValue) => {
     if (newValue !== null) {
@@ -80,7 +86,8 @@ function InnerApp() {
     }
   }, [setDutyType])
 
-   
+  if (!dutiesData) return null
+  
   return (
     <div className="App">
   
@@ -104,7 +111,7 @@ function InnerApp() {
           </ToggleButtonGroup>
 
           <DatePicker
-            value={parseISO(days[0])}
+            value={parseISO(config.startDate)}
             onChange={(newValue) => {
               dispatch(actions.setStartDate(newValue));
             }}
@@ -131,7 +138,7 @@ function InnerApp() {
                   borderRight: "2px solid black",
                   zIndex:1000
                 }}></TableCell>
-                {days.map((day,i) => (
+                {dutiesData.days.map((day,i) => (
                   <TableCell key={i}>
                     <DateLink date={day}/>
                     </TableCell>
@@ -139,7 +146,7 @@ function InnerApp() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {names.map((name, i) => (
+              {dutiesData.names.map((name, i) => (
                 <>
                   <TableRow
                     key={i}
@@ -152,7 +159,7 @@ function InnerApp() {
                       borderRight: "2px solid black",
                       zIndex:1000
                     }}>{name}</TableCell>
-                    {days.map((day) => (
+                    {dutiesData.days.map((day) => (
                       <Cell
                         key={day}
                         dutyType={dutyType}

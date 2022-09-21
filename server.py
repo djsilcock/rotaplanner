@@ -1,7 +1,8 @@
 """Webserver module"""
 
-from calendar import c
-from datetime import date, datetime, timedelta
+
+from datetime import date,timedelta
+from importlib import import_module
 import multiprocessing
 import shelve
 
@@ -17,7 +18,6 @@ import sanic
 from sanic.signals import Event
 from constants import Duties, Shifts, Staff
 from solver import RotaSolver
-from constraints.constraintmanager import get_constraint_config
 
 
 app = sanic.Sanic('RotaSolver')
@@ -43,12 +43,6 @@ def launch_solver(pipe, startdate, enddate):
             rota.solve()
         if messagetype == 'exit':
             sys.exit()
-
-
-@sio.event
-async def echo(sid, data):
-    print('echo')
-    await sio.emit('greeting', {'message': data}, to=sid)
 
 
 def show_tallies(payload):
@@ -88,7 +82,6 @@ def show_tallies(payload):
         "\n".join(rows),
         ""])
     return f"Tallies for:{datestring} \n\n{message}"
-
 
 
 async def do_recalculate(data, startdate):
@@ -141,35 +134,19 @@ async def do_recalculate(data, startdate):
     with shelve.open('datafile') as database:
         database.update(d)
 
+
 @app.post('/recalculate')
 def recalculate(request):
     '''run query'''
     try:
-        start_date=request.json.get('start_date')
+        start_date = request.json.get('start_date')
         date.fromisoformat(start_date)
     except ValueError:
-        return sanic.response.json({'error':'start date is invalid'},status=400)
+        return sanic.response.json({'error': 'start date is invalid'}, status=400)
     with shelve.open('datafile') as database:
         data = {}
         data.update(database)
     app.add_task(do_recalculate(data, start_date))
-
-
-@app.get('backend/constraintdefs')
-async def settings(request):
-    """returns constraint definitions for form"""
-    return sanic.response.json(get_constraint_config())
-
-
-
-@sio.event
-async def get_duties(sid, day):
-    """Get duties for day"""
-    print(f'get duty: {day}')
-    with shelve.open('datafile') as db:
-        day_data = db.get(day, {})
-    return day_data
-
 
 
 
@@ -182,7 +159,7 @@ def connect(*args):
     status[1] = True
 
 
-#@sio.event
+# @sio.event
 async def disconnect(*sid):
     print('bye')
     status[1] = False
@@ -195,7 +172,7 @@ async def disconnect(*sid):
 def launcher(app, loop):
     try:
         subprocess.run('start msedge --app="{}"'.format('http://localhost:8000'),
-                     stdout=sys.stdout, stderr=sys.stderr, stdin=subprocess.PIPE, shell=True,check=True)
+                       stdout=sys.stdout, stderr=sys.stderr, stdin=subprocess.PIPE, shell=True, check=True)
     except:
         webbrowser.open('http://localhost:8000')
 
@@ -203,6 +180,7 @@ def launcher(app, loop):
 @app.signal(Event.SERVER_SHUTDOWN_AFTER)
 def shutdown(app, loop):
     sys.exit(0)
+
 
 @app.get('/')
 def index(request):
@@ -214,41 +192,54 @@ def index(request):
         f"<script>window.initialData={json.dumps({})}</script>"
         '<script src="/static/script.js"></script>'
         '</body></html>')
+
+
 app.static('/static', os.path.join(os.getcwd(), 'static'))
+
 
 @app.get('/statusmessage')
 def statusmessage(request):
     return sanic.response.json({})
 
+
 @app.get('/duties/<startdate:ymd>')
-def get_duties(request,startdate):
-    days_to_display=request.args.get('days',16*7)
-    starting_date = date.fromisoformat(startdate)
-    days_array = [(starting_date+timedelta(days=daydelta)).isoformat()
-                          for daydelta in range(days_to_display)]
+def get_duties(request, startdate):
+    "return duties for date range"
+    days_to_display = int(request.args.get('days', 16*7))
+    print(type(startdate))
+
+    days_array = [(startdate+timedelta(days=daydelta)).isoformat()
+                  for daydelta in range(days_to_display)]
+    staff=sorted([e.name for e in Staff])
     with shelve.open('datafile') as db:
         duties = dict([(day, db.get(day))
-                               for day in days_array if day in db])
-    return sanic.response.json(duties)
+                       for day in days_array if day in db])
+        
+    return sanic.response.json({'days': days_array, 'names': staff, 'duties': duties})
+
 
 @app.post('/setduty')
 def set_duty(request):
     """Update duty for shift"""
-    args=request.json
+    args = request.json
     try:
-        duty=args['duty']    
-        shift=args['shift']
-        staff=args['staff']
-        day=args['date']
+        duty = args['duty']
+        shift = args['shift']
+        staff = args['staff']
+        day = args['date']
     except KeyError as err:
-        raise sanic.exceptions.BadRequest(f'Missing value:{err.args}')
+        return sanic.response.json({
+            'status':'error',
+            'message':f'Missing value:{err.args}'},status=400)
     try:
         Duties[duty]
         Staff[staff]
         Shifts[shift]
         date.fromisoformat(day)
-    except (ValueError,KeyError) as err:
-        raise sanic.exceptions.BadRequest(f'Invalid value:{err.args}')
+    except (ValueError, KeyError) as err:
+        return sanic.response.json({
+            'status': 'error',
+            'message': f'Missing value:{err.args}'}, status=400)
 
     print(f'set duty: {duty},{shift},{staff},{day}')
     with shelve.open('datafile', writeback=True) as database:
@@ -266,40 +257,56 @@ def set_duty(request):
         shift_allocs[staff] = duty
     return sanic.response.empty()
 
+
 @app.get('/getconstraints')
 def get_constraints(request):
     """return list of current constraints"""
     with open('constraints.json', encoding='utf-8') as constraint_file:
-        return sanic.response.json(json.load(constraint_file))
+        constraints = json.load(constraint_file)
+    constraint_config = []
+    for constraint_type, constraint_rules in constraints.items():
+        constraint_class = import_module(
+            f'constraints.{constraint_type}').Constraint
+        constraint_config.append(
+            {'title': constraint_class.name,
+             'rules': constraint_rules,
+             'addButton': constraint_class.is_configurable})
+
+        return sanic.response.json(constraint_config)
 
 
 def do_validate_constraint(constraint):
     return None
 
+
 @app.post('/validateconstraint')
 def validate_constraint(request):
-    constraint=request.json
-    validated=do_validate_constraint(constraint)
+    constraint = request.json
+    validated = do_validate_constraint(constraint)
     if validated:
-        return sanic.response.json({'status':'error','errors':validated})
-    return sanic.response.json({'status':'ok'})
+        return sanic.response.json({'status': 'error', 'errors': validated})
+    return sanic.response.json({'status': 'ok'})
+
 
 @app.post('/saveconstraints')
 def save_constraints(request):
-    all_constraints=request.json
-    has_error=False
-    validated_constraints={}
-    for (constraint_type,constraints_by_type) in all_constraints.items():
-        validated_constraints[constraint_type]={}     
-        for (constraint_id,constraint) in constraints_by_type.items():
-            validated_constraints[constraint_type][constraint_id]=do_validate_constraint(constraint)
-            if validated_constraints[constraint_type][constraint_id].get('error',None): has_error=True
+    all_constraints = request.json
+    has_error = False
+    validated_constraints = {}
+    for (constraint_type, constraints_by_type) in all_constraints.items():
+        validated_constraints[constraint_type] = {}
+        for (constraint_id, constraint) in constraints_by_type.items():
+            validated_constraints[constraint_type][constraint_id] = do_validate_constraint(
+                constraint)
+            if validated_constraints[constraint_type][constraint_id].get('error', None):
+                has_error = True
     if not has_error:
         with open('constraints.json', 'w', encoding='utf-8') as constraint_file:
             json.dump(validated_constraints, constraint_file, indent=2)
-            return sanic.response.json({'status':'ok'})
-    return sanic.response.json({'status':'error','constraints':validated_constraints})
+            return sanic.response.json({'status': 'ok'})
+    return sanic.response.json({'status': 'error', 'constraints': validated_constraints})
+
 
 if __name__ == "__main__":
     print(os.path.join(os.getcwd(), 'static'))
-    app.run()
+    app.run(dev=True)

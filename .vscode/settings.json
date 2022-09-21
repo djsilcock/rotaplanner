@@ -3,5 +3,8 @@
     "**/.yarn": true,
     "**/.pnp.*": true
   },
-  "eslint.nodePath": ".yarn/sdks"
+  "eslint.nodePath": ".yarn/sdks",
+  "python.linting.pylintEnabled": true,
+  "python.linting.pylamaEnabled": false,
+  "python.linting.enabled": true
 }

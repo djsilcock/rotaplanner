@@ -1,7 +1,10 @@
 import React from 'react';
 import Box  from '@mui/system/Box';
-
-export const Hyperlink = React.forwardRef(function Hyperlink({ onClick, children }, ref) {
+interface HyperlinkProps{
+    onClick: (any) => void;
+    children:any
+}
+export const Hyperlink = React.forwardRef(function Hyperlink({ onClick, children }:HyperlinkProps, ref) {
     return <> <Box
         component='span'
         sx={{

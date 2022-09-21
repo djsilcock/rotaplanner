@@ -4,13 +4,24 @@ import TableCell from '@mui/material/TableCell';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import {useSelector } from 'react-redux';
-import { api } from '../lib/store';
+import { api,StateShape,DayData,GetDutiesResult } from '../lib/store';
 
+interface CellProps{
+  name: string,
+  day: string,
+  dutyType: string
+}
 
-export const Cell = (function Cell({ name, day, dutyType }) { 
-  const startDate = useSelector(state => state.config.startDate)
-  const numDays = useSelector(state => state.config.numDays)
-  const { data } =api.useGetDutiesQuery({startDate,numDays},{selectFromResult:(state=>state[day])})
+interface GetDutiesHookResult{
+  data?:GetDutiesResult
+}
+
+export function Cell(props:CellProps) { 
+  const { name, day, dutyType }=props
+  const startDate = useSelector<StateShape,string>(state => state.config.startDate)
+  const numDays = useSelector<StateShape, number>(state => state.config.numDays)
+  const getDayFromDuties=React.useCallback<(arg:GetDutiesHookResult)=>(Record<string,any>)>((result)=>result.data?.duties?.[day]??{},[day])
+  const data = api.useGetDutiesQuery({ startDate, numDays }, { selectFromResult: getDayFromDuties })
   const [setDuty]=api.useSetDutyMutation()
   if (!data) return <TableCell>...</TableCell>
     const morningValue = data?.AM?.[name] ?? 'LOADING'
@@ -89,4 +100,4 @@ export const Cell = (function Cell({ name, day, dutyType }) {
         
       </TableCell>
     );
-})
+}

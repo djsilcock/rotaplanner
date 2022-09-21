@@ -100,7 +100,7 @@ class BaseConfig():
         "return all values"
         return {**self._values}
 
-    def get_config_interface():
+    def get_config_interface(self):
         return []
 
 

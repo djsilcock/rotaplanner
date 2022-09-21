@@ -4,6 +4,34 @@ import { Provider } from 'react-redux'
 import { set } from 'lodash'
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { addDays, formatISO, parseISO } from 'date-fns'
+
+interface ConfigSlice{
+  startDate: string,
+  numDays: number,
+  daysArray?:string[]
+}
+export interface StateShape{
+  config: ConfigSlice,
+  api
+}
+
+interface ShiftData{
+  [name:string]:string
+}
+export interface DayData{
+  [shift:string]:ShiftData
+}
+
+interface DutiesData{
+  [day:string]:DayData
+}
+export interface GetDutiesResult{
+  days: string[],
+  names: string[],
+  duties:DutiesData
+}
+
 
 // Define a service using a base URL and expected endpoints
 export const api = createApi({
@@ -14,8 +42,8 @@ export const api = createApi({
     getStatusMessage: builder.query({
       query: () => 'statusmessage'
     }),
-    getDuties: builder.query({
-      query: ({ startdate, days }) => `duties/${startdate}?days=${days}`,
+    getDuties: builder.query<GetDutiesResult|undefined,ConfigSlice>({
+      query: ({ startDate, numDays }) => `duties/${startDate}?days=${numDays}`,
       providesTags: ['Duties']
     }),    
     setDuty: builder.mutation({
@@ -25,12 +53,12 @@ export const api = createApi({
         body: { date, shift, staff, duty }
       }),
       invalidatesTags:['Duties'],
-      async onQueryStarted({ date, shift, staff, duty }, { dispatch, getState}) {
-        const state = getState()
-        const startdate = state.config.startdate
-        const days = state.config.daysToShow
+      async onQueryStarted({ date, shift, staff, duty }, { dispatch, getState }) {
+        const state = getState() as StateShape
+        const startDate = state.config.startDate
+        const numDays = state.config.numDays
         dispatch(
-          api.util.updateQueryData('getDuties', { startdate, days }, (draft) => {
+          api.util.updateQueryData('getDuties', { startDate, numDays }, (draft) => {
             set(draft, [date, shift, staff], duty)
           })
         )
@@ -56,9 +84,7 @@ export const api = createApi({
       queryFn: () => ({ data: null }),
       onQueryStarted({ type, id, name, value }) {
         api.util.updateQueryData('getConstraintConfig', undefined, (state) => {
-          (state.find(item => item.type == type)
-            ?.rules
-            ?.find(item => item.id == id) ?? {})[name]=value
+          (state[type]?.rules?.[id] ?? {})[name]=value
         })
       }
     }),
@@ -66,17 +92,17 @@ export const api = createApi({
       queryFn: () => ({ data: null }),
       onQueryStarted({ type}) {
         api.util.updateQueryData('getConstraintConfig', undefined, (state) => {
-          (state.find(item => item.type == type) || { rules: [] })
-            .rules.push({ id: Math.random().toString(36).slice(2) })
+          state[type].rules.push({id: Math.random().toString(36).slice(2)})
         })
       }
     }),
     removeConstraintRule: builder.mutation({
-      queryFn: (data:{type:string,id:string}) => ({ data:null }),
+      queryFn: (data:{type:string,id:string}) => ({ data }),
       onQueryStarted({ type, id }) {
         api.util.updateQueryData('getConstraintConfig', undefined, (state) => {
-          (state.find(item => item.type == type) || { rules: [] })
-            .rules.push({ id: Math.random().toString(36).slice(2) })
+          const configRules = state.find(item => item.type == type)
+          if (typeof configRules == 'undefined') return
+          configRules.rules=configRules.rules.filter(item => item.id != id)
         })
       }
     }),
@@ -92,22 +118,41 @@ export const api = createApi({
 
 // Export hooks for usage in functional components, which are
 // auto-generated based on the defined endpoints
+
+const initialState = { numDays: 16 * 7, startDate: '2021-01-01' }
+
+function addDaysArray(state:ConfigSlice) {
+  const { numDays, startDate: startdatestr } = state
+  const startDate = parseISO(startdatestr)
+  state.daysArray = [...Array(numDays)].map((x, i) => formatISO(addDays(startDate, i), { representation: 'date' }))
+
+}
 const configReducer = createSlice({
   name: 'config',
-  initialState:{daysToShow:16*7,startdate:'2021-01-01'},
-  reducers: {
-    setStartDate(state, action) { state.startdate = action.payload },
-    setDaysToShow(state,action){state.daysToShow==action.payload}
+  initialState: () => {
+    const state = { ...initialState}
+    addDaysArray(state)
+    return state
+  },
+    reducers: {
+    setStartDate(state, action) {
+        state.startDate = action.payload
+        addDaysArray(state)
+    },
+      setDaysToShow(state, action) {
+        state.numDays == action.payload
+        addDaysArray(state)
+      },
+    
   }
 })
 const store = configureStore({
-  reducer: combineReducers(
-    {config:configReducer.reducer,
+  reducer:{config:configReducer.reducer,
       [api.reducerPath]: api.reducer
-    }),
+    },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(api.middleware),
-  preloadedState: window.initialData
+  //preloadedState: window.initialData
 })
 
 export function ReduxProvider({ children }) {

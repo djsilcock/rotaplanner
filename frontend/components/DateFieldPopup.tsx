@@ -10,7 +10,7 @@ import { Hyperlink } from './Hyperlink';
 
 export function DateFieldPopup({ value: defaultValue, name, onChange }) {
     const [open, setOpen] = React.useState(false);
-    const [value, setValue] = React.useState(null);
+    const [value, setValue] = React.useState<Date|null>(parseISO(defaultValue))
     React.useEffect(() => { setValue(parseISO(defaultValue)); }, [open, defaultValue]);
     const handleClose = () => { setOpen(false); };
     return <>
@@ -21,12 +21,12 @@ export function DateFieldPopup({ value: defaultValue, name, onChange }) {
                     displayStaticWrapperAs="desktop"
                     value={value}
                     onChange={(newValue) => {
-                        setValue(newValue);
+                        setValue(newValue as Date);
                     }} />
             </DialogContent>
             <DialogActions>
                 <Button onClick={() => { setValue(null); }}>Clear</Button>
-                <Button onClick={() => { onChange({ name, value: formatISO(value) }); handleClose(); }}>Accept</Button>
+                <Button onClick={() => { onChange({ name, value: value && formatISO(value) }); handleClose(); }}>Accept</Button>
                 <Button onClick={handleClose}>Cancel</Button>
             </DialogActions>
         </Dialog>

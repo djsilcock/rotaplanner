@@ -59,11 +59,11 @@ export function DateRangeDialog({ value, onChange, name }) {
     setOpen(false);
   };
     const handleClickOpen=()=>setOpen(true)  
-    const [startdate, setStartdate] = React.useState(null)
-  const [enddate, setEnddate] = React.useState(null)
+    const [startdate, setStartdate] = React.useState<Date|null>(null)
+  const [enddate, setEnddate] = React.useState<Date|null>(null)
   React.useEffect(() => {
-    setStartdate(origStartdate?parseISO(origStartdate):null)
-    setEnddate(origEnddate?parseISO(origEnddate):null)
+    setStartdate(origStartdate&&parseISO(origStartdate))
+    setEnddate(origEnddate&&parseISO(origEnddate))
     setExclusion({type:'replace',newvalue:origExclusions||[]})
   },[origStartdate,origEnddate,origExclusions,open])
   const [exclusions, setExclusion] = React.useReducer(
@@ -90,13 +90,13 @@ export function DateRangeDialog({ value, onChange, name }) {
   const displayText = (
     isValid(startdate) ? (
       isValid(enddate) ? (
-        `between ${format(startdate,'d/M/yy')} and ${format(enddate,'d/M/yy')}`
+        `between ${format(startdate as Date,'d/M/yy')} and ${format(enddate as Date,'d/M/yy')}`
       ) : (
-        `starting ${ format(startdate, 'd/M/yy')}`
+        `starting ${ format(startdate as Date, 'd/M/yy')}`
       )
     ) : (
         isValid(enddate) ? (
-          `until ${format(enddate, 'd/M/yy')}`
+          `until ${format(enddate as Date, 'd/M/yy')}`
         ) : (
           `for all dates`
         ) 
@@ -114,8 +114,8 @@ export function DateRangeDialog({ value, onChange, name }) {
     onChange({
       name,
       value: {
-        startdate: isValid(startdate) ? formatISO(startdate, { representation: 'date' }):null,
-        enddate: isValid(enddate) ? formatISO(enddate, { representation: 'date' }) : null,
+        startdate: isValid(startdate) ? formatISO(startdate as Date, { representation: 'date' }):null,
+        enddate: isValid(enddate) ? formatISO(enddate as Date, { representation: 'date' }) : null,
         exclusions: exclusions.map(exc => ({
           start: formatISO(exc.start, { representation: 'date' }),
           end: formatISO(exc.end, { representation: 'date' })
@@ -139,7 +139,7 @@ export function DateRangeDialog({ value, onChange, name }) {
             <Grid item xs={5}>
               <DatePicker
                               label="From"
-                              maxDate={enddate}
+                              maxDate={enddate as Date}
                               onChange={setStartdate}
                 value={startdate}
                 clearable
@@ -152,7 +152,7 @@ export function DateRangeDialog({ value, onChange, name }) {
               <DatePicker
                               label="To"
                               value={enddate}
-                              minDate={startdate}
+                              minDate={startdate as Date}
                 onChange={setEnddate}
                 clearable
                 renderInput={(params) => (

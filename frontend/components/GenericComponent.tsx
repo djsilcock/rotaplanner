@@ -5,7 +5,7 @@ import { TextNode } from './TextNode';
 import { NumberPopup } from './NumberPopup';
 import { MenuPopup } from './MenuPopup';
 import { DateRangeDialog } from './DateRangeDialog';
-export function GenericComponent({ component, value,dispatch, ...spec }) {
+export function GenericComponent({ component, value,onChange,...spec }) {
     const Component = {
         text: TextNode,
         multiselect: MultiSelectPopup,
@@ -15,5 +15,5 @@ export function GenericComponent({ component, value,dispatch, ...spec }) {
         daterange:DateRangeDialog
     }[component];
     
-    return <Component value={value} onChange={dispatch} {...spec} />;
+    return <Component value={value} onChange={onChange} {...spec} />;
 }
