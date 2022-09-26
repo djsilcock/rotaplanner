@@ -92,7 +92,8 @@ export const api = createApi({
       queryFn: () => ({ data: null }),
       onQueryStarted({ type}) {
         api.util.updateQueryData('getConstraintConfig', undefined, (state) => {
-          state[type].rules.push({id: Math.random().toString(36).slice(2)})
+          const newId=Math.random().toString(36).slice(2)
+          state[type].rules[newId]={id:newId}
         })
       }
     }),
@@ -100,9 +101,7 @@ export const api = createApi({
       queryFn: (data:{type:string,id:string}) => ({ data }),
       onQueryStarted({ type, id }) {
         api.util.updateQueryData('getConstraintConfig', undefined, (state) => {
-          const configRules = state.find(item => item.type == type)
-          if (typeof configRules == 'undefined') return
-          configRules.rules=configRules.rules.filter(item => item.id != id)
+          (state?.[type]?.rules[id] ?? {}).deleted=true
         })
       }
     }),

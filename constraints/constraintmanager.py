@@ -11,8 +11,7 @@ from importlib import import_module
 from typing import Literal, Optional, Union
 
 from ortools.sat.python import cp_model
-from abstracttypes import RotaSolver
-import constraints
+from solver import RotaSolver
 
 constraint_store = {}
 
@@ -25,10 +24,13 @@ class BaseConfig():
     "holds configuration values for constraint"
 
     def __init__(self, config: dict):
-        self._values = self.get_defaults()       
-        self._validators={k:getattr(self,f"validate_{k}",lambda x:False) for k in self._values}
-        self._parsers={k:getattr(self,f"parse_{k}",lambda x:x) for k in self._values}
-        updates = {k: self._parsers[k](v) for k, v in config.items() if k in self._values}
+        self._values = self.get_defaults()
+        self._validators = {k: getattr(
+            self, f"validate_{k}", lambda x: False) for k in self._values}
+        self._parsers = {k: getattr(self, f"parse_{k}", lambda x: x)
+                         for k in self._values}
+        updates = {k: self._parsers[k](
+            v) for k, v in config.items() if k in self._values}
         self._values.update(updates)
 
     def get_defaults(self) -> dict:
@@ -42,7 +44,8 @@ class BaseConfig():
 
     def errors(self) -> Optional[dict]:
         "return dict of errors, or None if validates"
-        errors = {k: self._validators[k](v, self._values) for k, v in self._values.items()}
+        errors = {k: self._validators[k](v, self._values)
+                  for k, v in self._values.items()}
         return {f: errors[f] for f in errors if errors[f]} if any(errors.values()) else None
 
     def validate_startdate(self, value) -> ValidationResult:
@@ -58,6 +61,7 @@ class BaseConfig():
                 self.values['startdate'] is not None,
                 self.values['startdate'] < self.values['enddate']):
             return 'end date cannot be before start date'
+        return False
 
     def validate_enddate(self, value) -> ValidationResult:
         "Validates start and end dates"
@@ -67,6 +71,7 @@ class BaseConfig():
             date.fromisoformat(value)
         except ValueError:
             return 'End date is not valid'
+        return False
 
     def validate_exclusions(self, value) -> ValidationResult:
         "validate exclusions"
@@ -87,6 +92,7 @@ class BaseConfig():
                         raise ValueError()
                 except ValueError:
                     return f'{exc.start} - {exc.end} is not a valid time period'
+        return False
 
     def set(self, key, value):
         "set a value"
@@ -101,6 +107,7 @@ class BaseConfig():
         return {**self._values}
 
     def get_config_interface(self):
+        "return configuration interface for constraint"
         return []
 
 
@@ -111,7 +118,7 @@ class BaseConstraint():
     dependencies = []
     name = ""
     is_configurable = True
-    config_class=BaseConfig
+    config_class = BaseConfig
 
     def get_constraint_atom(self, **kwargs):
         """Boolean atom for enforcement"""
@@ -130,15 +137,14 @@ class BaseConstraint():
             **kwargs):
         self.rota: RotaSolver = rota
         self.model: cp_model.CpModel = rota.model
-        config=self.config_class(kwargs).values()
+        config = self.config_class(kwargs).values()
         self.variables = {}
         self.startdate = config.pop('startdate')
         self.enddate = config.pop('enddate')
-        self.exclusions=config.pop('exclusions')
+        self.exclusions = config.pop('exclusions')
         self.weekdays = weekdays
         self.kwargs = config
 
-    
     def days(self, *filters):
         """return iterator of days"""
         def filterfunc(day):
@@ -183,39 +189,9 @@ class BaseConstraint():
         """remove constraint from model"""
         return
 
-
-def apply_constraint(model, **kwargs):
-    """Apply constraint spec. Use as apply_constraint(model,**constraintspec)"""
-    constraint = kwargs['constraint']
-    constraintid = kwargs['id']
-    print(f'applying:{constraint}')
-    constraint = constraint.lower()
-    if (constraint, constraintid) in model.constraints:
-        print(f'overwriting {constraintid}')
-        del model.constraints[(constraint, constraintid)]
-    model.constraints[(constraint, constraintid)] = import_module(
-        f'constraints.{constraint}').Constraint(
-        model, **kwargs)
-
-
-def get_constraint_config(constraintspec: dict):
-    "get constraint configuration from spec file"
-    def rule_mapper1(entry):
-        constraint_type, rules = entry
-        constraint_class = import_module(
-            f'constraints.{constraint_type}').Constraint
-
-        def rule_mapper2(entry):
-            ruleid, rule_spec = entry
-            return {
-                "id": ruleid,
-                "form": constraint_class.config_class(rule_spec).get_config_interface(),
-                "values": rule_spec
-            }
-        return {
-            'id': constraint_type,
-            'title': constraint_class.name,
-            'addButton': constraint_class.is_configurable,
-            'forms': list(map(rule_mapper2, rules))
-        }
-    return map(rule_mapper1, constraintspec.items())
+def get_constraint_class(constraint_type: str) -> BaseConstraint:
+    "return constraint class from constraint type"
+    try:
+        return import_module(f'constraints.{constraint_type}').Constraint
+    except Exception as import_exception:
+        raise KeyError from import_exception

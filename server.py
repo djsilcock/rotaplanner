@@ -1,16 +1,19 @@
 """Webserver module"""
 
 
-from datetime import date,timedelta
-from importlib import import_module
-import multiprocessing
+from collections import namedtuple
+from contextlib import contextmanager
+import datetime
+import itertools
 import shelve
+import sqlite3
 
 import subprocess
 import sys
 import json
 import asyncio
 import os
+from typing import List, Tuple
 import webbrowser
 import socketio
 
@@ -19,30 +22,12 @@ from sanic.signals import Event
 from constants import Duties, Shifts, Staff
 from solver import RotaSolver
 
+from constraints.constraintmanager import get_constraint_class
+
 
 app = sanic.Sanic('RotaSolver')
 sio = socketio.AsyncServer(async_mode='sanic')
 sio.attach(app)
-
-
-def launch_solver(pipe, startdate, enddate):
-    """Launches solver task"""
-    rota = RotaSolver(
-        slots_on_rota=9,
-        people_on_rota=8,
-        pipe=pipe,
-        startdate=startdate,
-        enddate=enddate)
-    rota.apply_base_rules()
-    while True:
-        message = pipe.recv()
-        messagetype = message.pop('type')
-        if messagetype == 'constraint':
-            rota.apply_constraint(message)
-        if messagetype == 'solve':
-            rota.solve()
-        if messagetype == 'exit':
-            sys.exit()
 
 
 def show_tallies(payload):
@@ -52,7 +37,7 @@ def show_tallies(payload):
     names = set()
     with shelve.open('datafile') as db:
         for key in db:
-            duty_weekday = date.fromisoformat(key).weekday()
+            duty_weekday = datetime.date.fromisoformat(key).weekday()
             oncall_type = 'wdoc' if duty_weekday < 4 else 'weoc'
             day_type = 'wddt' if duty_weekday < 5 else 'wedt'
             if key <= datestring:
@@ -70,69 +55,132 @@ def show_tallies(payload):
                     if duty in ['DEFINITE_ICU', 'ICU']:
                         tallies[(name, oncall_type)] = tallies.get(
                             (name, oncall_type), 0)+1
-
+    oncall_types = ["wddt", "wedt", "wdoc", "weoc"]
     rows = [
-        f'|{name}|{"|".join([str(tallies.get((name,duty),0)) for duty in ["wddt","wedt","wdoc","weoc"]])}|' for name in names]
-    targets = f'|Targets|{"|".join([str(tallies.get(("tot",duty),0)//9) for duty in ["wddt","wedt","wdoc","weoc"]])}|'
+        f'|{name}|{"|".join([str(tallies.get((name,duty),0)) for duty in oncall_types])}|'
+        for name in names]
+    targets = "|".join([str(tallies.get(("tot", duty), 0)//9)
+                       for duty in oncall_types])
 
     message = "\n".join([
         '| |Wkday day|Wkend day|Wkday oc|Wkend oc|',
         '|---|---|---|---|---|',
-        targets,
+        f'|Targets|{targets}|',
         "\n".join(rows),
         ""])
     return f"Tallies for:{datestring} \n\n{message}"
 
 
+# Database utils
+
+@contextmanager
+def database_cursor(row_factory=None):
+    "open database and return cursor as context manager"
+    conn = sqlite3.connect('datafile.db')
+    if row_factory is not None:
+        conn.row_factory = row_factory
+    cursor = conn.cursor()
+    yield cursor
+    cursor.close()
+    conn.close()
+
+
+def get_constraints_from_db():
+    "fetch constraints from db"
+    with database_cursor() as cursor:
+        cursor.execute('select constraint_type,rule_id,rule'
+                       'from constraints order by constraint_type,rule_id')
+        constraintlist = cursor.fetchall()
+    return [
+        {'type': constraint_type,
+         'id': rule_id,
+         **json.loads(rule)}
+        for constraint_type, rule_id, rule in constraintlist]
+
+
+INSERT_DUTY_SQL = ('insert into duties (date,shift,name,duty) values (?,?,?,?) ' +
+                   'on conflict (date,shift,name) do update set duty=excluded.duty')
+INSERT_CONSTRAINT_SQL = ('insert into constraints (constraint_type,rule_id,rule) values (?,?,?) ' +
+                         'on conflict (constraint_type,rule_id) do update set rule=excluded.rule')
+
+
+def update_duties(updates: List[Tuple[str, str, str, str]]):
+    """update list of duties
+    :param updates - list of (date,shift,name,duty) tuples
+    """
+    with database_cursor() as cursor:
+        cursor.execute('begin')
+        cursor.executemany(INSERT_DUTY_SQL, updates)
+        cursor.execute('commit')
+
+
+def update_constraints(constraints: List[Tuple[str, str, str]]):
+    """update list of constraints
+    :param updates - list of (constraint_type,constraint_id,rule,duty) tuples
+    """
+    with database_cursor() as cursor:
+        cursor.execute('begin')
+        cursor.executemany(INSERT_CONSTRAINT_SQL,
+                           [(constraint_type, rule_id, json.dumps(rule))
+                            for constraint_type, rule_id, rule in constraints])
+        cursor.execute('commit')
+
+
+def set_duty_in_db(date, shift, name, duty):
+    "sets single duty and enforces only one person may be in ICU"
+    with database_cursor() as cursor:
+        cursor.execute('begin')
+        if 'ICU' in duty:
+            cursor.execute('delete from duties '
+                           'where date=? and shift=? and duty like "%ICU%"', (date, shift))
+        cursor.execute(INSERT_DUTY_SQL, (date, shift, name, duty))
+        cursor.execute('commit')
+
+
+def get_duties_from_db(startdate, days_to_display):
+    "get data from database"
+    DutyTuple = namedtuple('DutyTuple', 'date shift name duty')
+    with database_cursor(DutyTuple) as cursor:
+        cursor.execute('select (date,shift,name,duty)'
+                       ' from duties where date>= ? and date < ? order by date,shift,name', (
+                           startdate.isoformat(),
+                           startdate +
+                           datetime.timedelta(days=days_to_display).isoformat()
+                       ))
+        data = cursor.fetchall()
+    return data
+
+
+abort_current = {'abort': lambda: None}
+
+
 async def do_recalculate(data, startdate):
     """Run recalculation as background task"""
-    await sio.emit('message', {'message': 'recalculating...'})
-    localpipe, remotepipe = multiprocessing.Pipe()
-    #startdate = min(*data.keys())
     enddate = max(*data.keys())
-    process = multiprocessing.Process(
-        target=launch_solver, args=(remotepipe, startdate, enddate))
-    process.start()
-    # remap data
-    with open('constraints.json', 'r', encoding='utf-8') as constraintsfile:
-        constraints = json.load(constraintsfile)
-        for (constraint, defs) in constraints.items():
-            for (constraintid, constraintparams) in defs.items():
-                if constraintparams.get('enabled'):
-                    localpipe.send(dict(
-                        constraintparams,
-                        type='constraint',
-                        constraint=constraint,
-                        id=constraintid))
-    localpipe.send({
-        'type': 'constraint',
-        'constraint': 'apply_leavebook',
+    constraints = get_constraints_from_db()
+    constraints.append({
+        'type': 'apply_leavebook',
         'id': 'x-leavebook',
         'current_rota': data
     })
-
-    localpipe.send({'type': 'solve'})
-    try:
-        d = {}
-        while True:
-            if localpipe.poll():
-                data = localpipe.recv()
-                if data['type'] == 'eof':
-                    localpipe.send({'type': 'exit'})
-                    break
-                actiontype = data.pop('type', None)
-                if actiontype == 'result':
-                    d.setdefault(data['day'], {}).setdefault(
-                        data['shift'], {})[data['name']] = data['duty']
-
-                else:
-                    await sio.emit(actiontype, data)
-            else:
-                await asyncio.sleep(0.01)
-    except EOFError:
-        print('pipe was closed')
-    with shelve.open('datafile') as database:
-        database.update(d)
+    abort_current['abort']()
+    rota = RotaSolver(
+        slots_on_rota=9,
+        people_on_rota=8,
+        startdate=startdate,
+        enddate=enddate)
+    for constraint in constraints:
+        rota.apply_constraint(constraint)
+    abort_current['abort'], results = rota.solve()
+    duties = []
+    async for data in results:
+        actiontype = data.pop('type', None)
+        if actiontype == 'result':
+            duties.append((data['day'], data['shift'],
+                           data['name'], data['duty']))
+        else:
+            await sio.emit(actiontype, data)
+    update_duties(duties)
 
 
 @app.post('/recalculate')
@@ -140,7 +188,7 @@ def recalculate(request):
     '''run query'''
     try:
         start_date = request.json.get('start_date')
-        date.fromisoformat(start_date)
+        datetime.date.fromisoformat(start_date)
     except ValueError:
         return sanic.response.json({'error': 'start date is invalid'}, status=400)
     with shelve.open('datafile') as database:
@@ -149,41 +197,46 @@ def recalculate(request):
     app.add_task(do_recalculate(data, start_date))
 
 
-
 status = {1: False}
 
 
 @sio.event
 def connect(*args):
+    "Socket connect"
     print(f'hello {args}')
     status[1] = True
 
 
 # @sio.event
-async def disconnect(*sid):
+async def disconnect(*_):
+    "socket disconnect"
     print('bye')
     status[1] = False
     await asyncio.sleep(5)
-    if status[1] == False:
+    if not status[1]:
         app.stop()
 
 
 @app.signal(Event.SERVER_INIT_AFTER)
-def launcher(app, loop):
+def launcher(*_):
+    "launch web browser"
     try:
-        subprocess.run('start msedge --app="{}"'.format('http://localhost:8000'),
-                       stdout=sys.stdout, stderr=sys.stderr, stdin=subprocess.PIPE, shell=True, check=True)
-    except:
+        url = 'http://localhost:8000'
+        subprocess.run(f'start msedge --app="{url}"',
+                       stdout=sys.stdout, stderr=sys.stderr, stdin=subprocess.PIPE,
+                       shell=True, check=True)
+    except subprocess.SubprocessError:
         webbrowser.open('http://localhost:8000')
 
 
 @app.signal(Event.SERVER_SHUTDOWN_AFTER)
-def shutdown(app, loop):
+def shutdown(*_):
+    "shutdown after browser exit"
     sys.exit(0)
 
 
 @app.get('/')
-def index(request):
+def index(_):
     "returns html skeleton page"
     return sanic.response.html(
         "<!DOCTYPE html><html><head><title>Rota Solver</title></head>"
@@ -198,7 +251,9 @@ app.static('/static', os.path.join(os.getcwd(), 'static'))
 
 
 @app.get('/statusmessage')
-def statusmessage(request):
+def statusmessage(_):
+    "returns status message"
+    # TODO: implement statusmessage
     return sanic.response.json({})
 
 
@@ -206,15 +261,13 @@ def statusmessage(request):
 def get_duties(request, startdate):
     "return duties for date range"
     days_to_display = int(request.args.get('days', 16*7))
-    print(type(startdate))
-
-    days_array = [(startdate+timedelta(days=daydelta)).isoformat()
+    days_array = [(startdate+datetime.timedelta(days=daydelta)).isoformat()
                   for daydelta in range(days_to_display)]
-    staff=sorted([e.name for e in Staff])
-    with shelve.open('datafile') as db:
-        duties = dict([(day, db.get(day))
-                       for day in days_array if day in db])
-        
+    staff = sorted([e.name for e in Staff])
+    duties = {}
+    for duty in get_duties_from_db(startdate, days_to_display):
+        duties.setdefault(duty.date, {}).setdefault(
+            duty.shift, {})[duty.name] = duty.duty
     return sanic.response.json({'days': days_array, 'names': staff, 'duties': duties})
 
 
@@ -223,88 +276,83 @@ def set_duty(request):
     """Update duty for shift"""
     args = request.json
     try:
-        duty = args['duty']
-        shift = args['shift']
-        staff = args['staff']
-        day = args['date']
-    except KeyError as err:
-        return sanic.response.json({
-            'status':'error',
-            'message':f'Missing value:{err.args}'},status=400)
-    try:
-        Duties[duty]
-        Staff[staff]
-        Shifts[shift]
-        date.fromisoformat(day)
-    except (ValueError, KeyError) as err:
+        duty = Duties[args['duty']].name
+        shift = Shifts[args['shift']].name
+        staff = Staff[args['staff']].name
+        date = args['date']
+        datetime.date.fromisoformat(date)
+    except (KeyError, ValueError) as err:
         return sanic.response.json({
             'status': 'error',
-            'message': f'Missing value:{err.args}'}, status=400)
-
-    print(f'set duty: {duty},{shift},{staff},{day}')
-    with shelve.open('datafile', writeback=True) as database:
-        day_allocs = database.setdefault(day, {})
-        shift_allocs = day_allocs.setdefault(shift, {})
-        if duty in ['DEFINITE_ICU', 'DEFINITE_LOCUM_ICU', 'ICU_MAYBE_LOCUM']:
-            shift_allocs.update({
-                name1: (None if duty1 in [
-                    'ICU',
-                    'LOCUM_ICU',
-                    'DEFINITE_ICU',
-                    'DEFINITE_LOCUM_ICU',
-                    'ICU_MAYBE_LOCUM'] else duty1)
-                for name1, duty1 in shift_allocs.items()})
-        shift_allocs[staff] = duty
+            'message': f'Missing or invalid value:{err.args[0]}'}, status=400)
+    print(f'set duty: {duty},{shift},{staff},{date}')
+    set_duty_in_db(date, shift, staff, duty)
     return sanic.response.empty()
 
 
+
+
+
 @app.get('/getconstraints')
-def get_constraints(request):
+def get_constraints(_):
     """return list of current constraints"""
-    with open('constraints.json', encoding='utf-8') as constraint_file:
-        constraints = json.load(constraint_file)
-    constraint_config = []
-    for constraint_type, constraint_rules in constraints.items():
-        constraint_class = import_module(
-            f'constraints.{constraint_type}').Constraint
-        constraint_config.append(
-            {'title': constraint_class.name,
-             'rules': constraint_rules,
-             'addButton': constraint_class.is_configurable})
-
-        return sanic.response.json(constraint_config)
+    constraintslist = get_constraints_from_db()
+    constraint_config = {}
+    for constraint_type, constraint_rules in itertools.groupby(
+            constraintslist, lambda c: c['type']):
+        constraint_class = get_constraint_class(constraint_class)
+        constraint_config[constraint_type] = {
+            'title': constraint_class.name,
+            'rules': {c.id: c for c in constraint_rules},
+            'addButton': constraint_class.is_configurable}
+    return sanic.response.json(constraint_config)
 
 
-def do_validate_constraint(constraint):
-    return None
+@app.post('/getconstraintinterface')
+def constraint_interface(request):
+    "generate constraint interface from values"
+    config = request.json
 
-
-@app.post('/validateconstraint')
-def validate_constraint(request):
-    constraint = request.json
-    validated = do_validate_constraint(constraint)
-    if validated:
-        return sanic.response.json({'status': 'error', 'errors': validated})
-    return sanic.response.json({'status': 'ok'})
+    def error(msg):
+        return sanic.response.json({'status': 'error', 'message': msg}, status=400)
+    if not isinstance(config, dict):
+        return error('payload must be json object')
+    constraint_type = config.get('type', None)
+    if constraint_type is None:
+        return error('No constraint_type field')
+    constraint_class = get_constraint_class(constraint_type)
+    if constraint_class is None:
+        return error(f'Unknown constraint type {constraint_type}')
+    config_class = constraint_class.config_class(config)
+    return sanic.response.json({
+        'status': 'ok',
+        'errors': config_class.errors(),
+        'interface': config_class.get_config_interface()
+    })
 
 
 @app.post('/saveconstraints')
 def save_constraints(request):
+    "Save constraints to db"
     all_constraints = request.json
-    has_error = False
-    validated_constraints = {}
-    for (constraint_type, constraints_by_type) in all_constraints.items():
-        validated_constraints[constraint_type] = {}
-        for (constraint_id, constraint) in constraints_by_type.items():
-            validated_constraints[constraint_type][constraint_id] = do_validate_constraint(
-                constraint)
-            if validated_constraints[constraint_type][constraint_id].get('error', None):
-                has_error = True
-    if not has_error:
-        with open('constraints.json', 'w', encoding='utf-8') as constraint_file:
-            json.dump(validated_constraints, constraint_file, indent=2)
-            return sanic.response.json({'status': 'ok'})
-    return sanic.response.json({'status': 'error', 'constraints': validated_constraints})
+    flattened_constraints = [
+        (constraint_type, constraint_id, constraint_spec)
+        for constraint_type, constraints_by_type in all_constraints.items()
+        for constraint_id, constraint_spec in constraints_by_type.items()
+    ]
+
+    for constraint_type, constraint_id, constraint in flattened_constraints:
+        constraint_class = get_constraint_class(constraint_type)
+        if constraint_class is None:
+            return sanic.response.json({
+                'status': 'error',
+                'error': f'unknown constraint type {constraint_type}'}, status=400)
+        if constraint_class.config_class(constraint).errors():
+            return sanic.response.json({
+                'status': 'error',
+                'error': f'error in {constraint_type} spec'}, status=400)
+    update_constraints(flattened_constraints)
+    return sanic.response.json({'status': 'ok'})
 
 
 if __name__ == "__main__":
