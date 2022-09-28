@@ -24,7 +24,7 @@ import { SettingsDialog } from '../components/SettingsDialog';
 import { MessageDialog } from '../components/MessageDialog';
 import { DateRangeDialog } from '../components/DateRangeDialog';
 import { useDispatch, useSelector } from 'react-redux';
-import { api, ReduxProvider } from '../lib/store';
+import { api, ReduxProvider,configActions } from '../lib/store';
 
 
 const rotaEpoch = new Date(2020, 10, 2)
@@ -42,10 +42,7 @@ const selectors={
 //Actions
 const actions={
   showTallies:(dateISO)=>({type:'remote/showTallies',payload:dateISO}),
-  setStartDate:(startDate=>({
-    type:'remote/setStartDate',
-    payload:formatISO(startDate,{representation:'date'})}
-    )),
+  setStartDate:configActions.setStartDate,
   recalculate:()=>({type:'remote/recalculate'})
 }
 
@@ -76,10 +73,10 @@ function InnerApp() {
   const [dutyType, setDutyType] = React.useState('DEFINITE_ICU')
   
   const config = useSelector(selectors.getStartDateAndNumDays)
-  const { data:dutiesData }=useGetDutiesQuery(config)
+  const { data: dutiesData } = useGetDutiesQuery(config)
+  console.log(dutiesData)
   const dispatch = useDispatch()
   
-
   const handleChange = React.useCallback((evt, newValue) => {
     if (newValue !== null) {
       setDutyType(newValue)
@@ -110,17 +107,20 @@ function InnerApp() {
             <ToggleButton value="CLEAR">Clear</ToggleButton>
           </ToggleButtonGroup>
 
-          <DatePicker
+          {null && <DatePicker
             value={parseISO(config.startDate)}
             onChange={(newValue) => {
-              dispatch(actions.setStartDate(newValue));
+              dispatch(actions.setStartDate(formatISO(newValue, { representation: 'date' })))
             }}
             minDate={rotaEpoch}
             showTodayButton
             renderInput={(params) => (
               <TextField variant="standard" {...params} />
             )}
-          />
+          />}
+          <input type="date"
+            value={config.startDate}
+            onChange={(evt) => dispatch(actions.setStartDate(evt.target.value))} />
           <SettingsDialog />
           <DateRangeDialog onChange={(v)=>console.log(v)}/>
           <MessageBox/>

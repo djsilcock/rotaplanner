@@ -74,11 +74,12 @@ def show_tallies(payload):
 # Database utils
 
 @contextmanager
-def database_cursor(row_factory=None):
+def database_cursor(*fields):
     "open database and return cursor as context manager"
     conn = sqlite3.connect('datafile.db')
-    if row_factory is not None:
-        conn.row_factory = row_factory
+    if len(fields)>0:
+        row_factory=namedtuple('Row',fields)
+        conn.row_factory = row_factory._make
     cursor = conn.cursor()
     yield cursor
     cursor.close()
@@ -88,7 +89,7 @@ def database_cursor(row_factory=None):
 def get_constraints_from_db():
     "fetch constraints from db"
     with database_cursor() as cursor:
-        cursor.execute('select constraint_type,rule_id,rule'
+        cursor.execute('select constraint_type,rule_id,rule '
                        'from constraints order by constraint_type,rule_id')
         constraintlist = cursor.fetchall()
     return [
@@ -139,13 +140,12 @@ def set_duty_in_db(date, shift, name, duty):
 
 def get_duties_from_db(startdate, days_to_display):
     "get data from database"
-    DutyTuple = namedtuple('DutyTuple', 'date shift name duty')
-    with database_cursor(DutyTuple) as cursor:
-        cursor.execute('select (date,shift,name,duty)'
+    with database_cursor('date','shift','name','duty') as cursor:
+        cursor.execute('select date,shift,name,duty'
                        ' from duties where date>= ? and date < ? order by date,shift,name', (
                            startdate.isoformat(),
-                           startdate +
-                           datetime.timedelta(days=days_to_display).isoformat()
+                           (startdate +
+                           datetime.timedelta(days=days_to_display)).isoformat()
                        ))
         data = cursor.fetchall()
     return data
@@ -217,8 +217,8 @@ async def disconnect(*_):
         app.stop()
 
 
-@app.signal(Event.SERVER_INIT_AFTER)
-def launcher(*_):
+#@app.signal(Event.SERVER_INIT_AFTER)
+def launcher(**_):
     "launch web browser"
     try:
         url = 'http://localhost:8000'
@@ -288,9 +288,6 @@ def set_duty(request):
     print(f'set duty: {duty},{shift},{staff},{date}')
     set_duty_in_db(date, shift, staff, duty)
     return sanic.response.empty()
-
-
-
 
 
 @app.get('/getconstraints')

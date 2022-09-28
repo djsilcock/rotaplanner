@@ -4,7 +4,7 @@ import { Provider } from 'react-redux'
 import { set } from 'lodash'
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { addDays, formatISO, parseISO } from 'date-fns'
+import { addDays, formatISO, isValid, parseISO } from 'date-fns'
 
 interface ConfigSlice{
   startDate: string,
@@ -59,7 +59,9 @@ export const api = createApi({
         const numDays = state.config.numDays
         dispatch(
           api.util.updateQueryData('getDuties', { startDate, numDays }, (draft) => {
-            set(draft, [date, shift, staff], duty)
+            if (draft) {
+              set(draft, [date, shift, staff], duty)
+            }
           })
         )
       }
@@ -120,31 +122,26 @@ export const api = createApi({
 
 const initialState = { numDays: 16 * 7, startDate: '2021-01-01' }
 
-function addDaysArray(state:ConfigSlice) {
-  const { numDays, startDate: startdatestr } = state
-  const startDate = parseISO(startdatestr)
-  state.daysArray = [...Array(numDays)].map((x, i) => formatISO(addDays(startDate, i), { representation: 'date' }))
 
-}
 const configReducer = createSlice({
   name: 'config',
   initialState: () => {
     const state = { ...initialState}
-    addDaysArray(state)
     return state
   },
     reducers: {
     setStartDate(state, action) {
         state.startDate = action.payload
-        addDaysArray(state)
     },
       setDaysToShow(state, action) {
         state.numDays == action.payload
-        addDaysArray(state)
       },
     
   }
 })
+
+export const configActions=configReducer.actions
+
 const store = configureStore({
   reducer:{config:configReducer.reducer,
       [api.reducerPath]: api.reducer

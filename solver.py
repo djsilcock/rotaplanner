@@ -28,7 +28,7 @@ class VarArrayAndObjectiveSolutionPrinter(cp_model.CpSolverSolutionCallback):
         current_time = time.time()
         obj = self.ObjectiveValue()
         time_taken = current_time - self.__start_time
-        self.queue.put(
+        self.output_queue.put(
             {'type': 'progress', 'time': time_taken, 'objective': obj})
 
         self.__solution_count += 1

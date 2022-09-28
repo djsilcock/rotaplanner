@@ -10,23 +10,18 @@ import { Hyperlink } from './Hyperlink';
 
 export function DateFieldPopup({ value: defaultValue, name, onChange }) {
     const [open, setOpen] = React.useState(false);
-    const [value, setValue] = React.useState<Date|null>(parseISO(defaultValue))
-    React.useEffect(() => { setValue(parseISO(defaultValue)); }, [open, defaultValue]);
+    const [value, setValue] = React.useState<string>(defaultValue)
+    React.useEffect(() => { setValue(defaultValue); }, [open, defaultValue]);
     const handleClose = () => { setOpen(false); };
     return <>
         <Dialog open={open} onClose={handleClose}>
             <DialogTitle>Settings</DialogTitle>
             <DialogContent>
-                <StaticDatePicker
-                    displayStaticWrapperAs="desktop"
-                    value={value}
-                    onChange={(newValue) => {
-                        setValue(newValue as Date);
-                    }} />
+                <input type='date' value={value} onChange={e=>setValue(e.target.value)}/>
             </DialogContent>
             <DialogActions>
-                <Button onClick={() => { setValue(null); }}>Clear</Button>
-                <Button onClick={() => { onChange({ name, value: value && formatISO(value) }); handleClose(); }}>Accept</Button>
+                <Button onClick={() => { setValue(undefined); }}>Clear</Button>
+                <Button onClick={() => { onChange({ name, value}); handleClose(); }}>Accept</Button>
                 <Button onClick={handleClose}>Cancel</Button>
             </DialogActions>
         </Dialog>
