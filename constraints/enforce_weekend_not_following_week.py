@@ -3,8 +3,8 @@ from calendar import THURSDAY
 
 
 
-from constants import Shifts, Staff
-from constraints.constraintmanager import BaseConstraint
+from config import Shifts, Staff
+from constraints.base import BaseConstraint
 from constraints.core_duties import icu
 
 class Constraint(BaseConstraint):
@@ -33,5 +33,5 @@ class Constraint(BaseConstraint):
                     (thursday_oc,friday_oc)
                 ]
                 for left,right in prohibited:
-                    self.model.AddBoolOr([left.Not(),right.Not()]).OnlyEnforceIf(enforced)
+                    self.model.AddBoolOr([left.Not(),right.Not()])
                 

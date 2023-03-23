@@ -1,33 +1,24 @@
 """contains rules to constrain the model"""
 from calendar import MONDAY, TUESDAY, WEDNESDAY
+from datetime import timedelta
 
 
 
 
-from constants import Shifts, Staff
-from constraints.constraintmanager import BaseConstraint
 from constraints.core_duties import icu
+from signals import signal
 
-
-class Constraint(BaseConstraint):
-    """no more than 1 weekday oncall"""
-    #print('No multiple weekday oncalls')
-    name = "No multiple weekday oncalls"
-
-    @classmethod
-    def definition(cls):
-
-        yield 'same consultant should not do more than one Mon-Wed oncall'
-
-    def apply_constraint(self):
-        self.weekdays = [MONDAY, TUESDAY, WEDNESDAY]
-        days_to_check = list(self.days())
+@signal('apply_constraint').connect
+def no_multiple_weekday_oncalls(ctx):
+        """no more than 1 weekday oncall"""
+        weekdays = [MONDAY, TUESDAY, WEDNESDAY]
+        days_to_check = list(ctx.days)
         for day in days_to_check:
-            enforced = self.get_constraint_atom(day=day)
-            start_of_week = (day // 7)*7
-            for staff in Staff:
+            enforced = 1 #self.get_constraint_atom(day=day)
+            start_of_week = day-timedelta(days=day.weekday())
+            for staff in ctx.staff:
                 sum_of_duties = sum(
-                    self.get_duty(icu(Shifts.ONCALL,start_of_week+dd,staff))
+                    ctx.dutystore[icu('oncall',start_of_week+timedelta(days=dd),staff)]
                         for dd in [0, 1, 2]
-                        if dd+start_of_week in days_to_check)
-                self.rota.model.Add(sum_of_duties < 2).OnlyEnforceIf(enforced)
+                        if start_of_week+timedelta(days=dd) in days_to_check)
+                ctx.model.Add(sum_of_duties < 2).OnlyEnforceIf(enforced)

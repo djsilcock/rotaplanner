@@ -1,94 +1,75 @@
 """contains rules to constrain the model"""
-from calendar import MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
-from collections import namedtuple
+from calendar import MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY, SATURDAY, SUNDAY
 
+import dataclasses
+from typing import TYPE_CHECKING, Optional
+from datetime import date
 
-from constants import Shifts, Staff
-from constraints.constraintmanager import BaseConstraint
 from constraints.some_shifts_are_locum import quota_icu
+from signals import signal
+
+if TYPE_CHECKING:
+    from solver import GenericConfig
+
+shift_types = [('weoc', 'Weekend oncall'),
+               ('wedt', 'Weekend daytime'),
+               ('wdoc', 'Weekday oncall'),
+               ('wddt', 'Weekday daytime'),
+               ('anywe', 'Any weekend')]
 
 
-class Constraint(BaseConstraint):
-    """Maximum deviation from target number of shifts of any given type (excluding locums)"""
-    name = "Minimise deviation from average"
-
-    
-
-    @classmethod
-    def get_config_interface(cls,config):
-        config=namedtuple('Config',['deviation','shift'])(**config)
-        yield 'same consultant should not be more than'
-        yield {
-            'name': 'deviation',
-            'component': 'number',
-            'value':config.deviation
-            }
-        yield {
-            'name': 'shift',
-            'component': 'select',
-            'options': [
-                'Weekend oncall',
-                'Weekend daytime',
-                'Weekday oncall',
-                'Weekday daytime',
-                'Any weekend'],
-            'value':config.shift}
-        yield 'shifts above or below target'
+@dataclasses.dataclass
+class AcceptableDeviationEntry:
+    staff:Optional[set[str]]
+    deviation:int
+    share:int
+    shift_defs:set[tuple[int,str]]
+    startdate:Optional[date]=None
+    enddate:Optional[date]=None
 
 
-    def apply_constraint(self):
-        kwargs = dict(**self.kwargs)
-        shift_to_check = kwargs.pop('shift').lower()
-        self.variables['shift_to_check'] = shift_to_check
-        deviation_hard_limit = kwargs.pop('deviation')
-        enforced = self.get_constraint_atom()
-        (days, shifts) = {
-            'weekend oncall': ([FRIDAY, SATURDAY, SUNDAY], [Shifts.ONCALL]),
-            'weekend daytime': ([FRIDAY, SATURDAY, SUNDAY], [Shifts.AM,Shifts.PM]),
-            'weekday oncall': ([MONDAY, TUESDAY, WEDNESDAY, THURSDAY], [Shifts.ONCALL]),
-            'weekday daytime': ([MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY], [Shifts.AM,Shifts.PM]),
-            'any weekend': ([FRIDAY, SATURDAY, SUNDAY], [Shifts.ONCALL, Shifts.AM,Shifts.PM])
-        }[shift_to_check]
-        deviation_soft_limits={}
-        self.variables['dsl'] = deviation_soft_limits
-        period_duration=9*7
-        for day in self.days():
-            if day//period_duration not in deviation_soft_limits:
-                deviation_soft_limits[day//period_duration] = self.rota.model.NewIntVar(
-                    0,
-                    deviation_hard_limit,
-                    f'soft-limit{shift_to_check}{day//period_duration}')
-            deviation_soft_limit=deviation_soft_limits[day//period_duration]
-            for staff in Staff:
-                duties = [self.get_duty(quota_icu(shift,dd,staff)) for dd in range(
-                    0, day) for shift in Shifts if dd % 7 in days and shift in shifts]
-                tally = self.rota.model.NewIntVar(
-                    0,
-                    self.rota.rota_length,
-                    f'tally{day}{shift_to_check}{staff}')
-                self.rota.model.AddAbsEquality(
-                    tally,
-                    sum(duties))
-                target = self.rota.model.NewConstant(
-                    len(duties)//self.rota.slots_on_rota,
+@dataclasses.dataclass
+class AcceptableDeviationContext:
+    entries:list[AcceptableDeviationEntry]
+
+weekend_days={(SATURDAY,'am'),(SATURDAY,'pm'),(SUNDAY,'am'),(SUNDAY,'pm')}
+weekend_nights={(FRIDAY,'oncall'),(SATURDAY,'oncall'),(SUNDAY,'oncall')}
+weekday_nights={(MONDAY,'oncall'),(TUESDAY,'oncall'),(WEDNESDAY,'oncall'),(THURSDAY,'oncall')}
+
+entries=[
+    AcceptableDeviationEntry(None,30,7,weekend_days),
+    AcceptableDeviationEntry(None,30,7,weekend_nights),
+    AcceptableDeviationEntry(None,30,7,weekday_nights)
+]
+
+@signal('apply_constraint').connect
+def apply_constraint(ctx):
+    for entry_id,entry in enumerate(entries):
+        deviation_hard_limit = entry.deviation
+        #enforced = self.get_constraint_atom()
+        deviation_soft_limits = []
+        period_duration = 9*7
+        for end_day in ctx.days[period_duration:None:period_duration]+[ctx.days[-1]]:
+            deviation_soft_limit = ctx.model.NewIntVar(
+                0,
+                deviation_hard_limit,
+                f'soft-limit{entry_id}{end_day}')
+            deviation_soft_limits.append(deviation_soft_limit)
+            for staff in (entry.staff or ctx.staff):
+                duties = [
+                    ctx.dutystore[quota_icu(shift_id, dd, staff)]
+                    for dd in ctx.days
+                    for (weekday,shift_id) in entry.shift_defs
+                    if dd <= end_day and dd.weekday()==weekday]
+                target = ctx.model.NewConstant(
+                    len(duties)//entry.share,
                 )
 
-                delta = self.rota.model.NewIntVar(-deviation_hard_limit,
-                                                  deviation_hard_limit,
-                                                  f'delta{day}{shift_to_check}{staff}')
-                delta_abs = self.rota.model.NewIntVar(-deviation_hard_limit,
-                                                      deviation_hard_limit,
-                                                      f'delta{day}{shift_to_check}{staff}')
-                self.rota.model.Add(
-                    delta == tally-target).OnlyEnforceIf(enforced)
-                self.rota.model.AddAbsEquality(delta_abs, delta)
-                self.rota.model.Add(delta_abs <= deviation_soft_limit)
-        self.rota.minimize_targets.extend(deviation_soft_limits.values())
+                delta_abs = ctx.model.NewIntVar(-deviation_hard_limit,
+                                                    deviation_hard_limit,
+                                                    f'delta{end_day}{entry.shift_defs}{staff}')
 
-    def event_stream(self, solver, event_stream):
-        yield from event_stream
-        yield {'type':'report',
-                'message':"\n\n".join([
-                    f"deviation soft limit {self.variables['shift_to_check']} for period {period}: {solver.Value(softlimit)}"
-                    for period, softlimit in self.variables['dsl'].items()])
-            }
+                ctx.model.AddAbsEquality(delta_abs, sum(duties)-target)
+                ctx.model.Add(delta_abs <= deviation_soft_limit)
+        ctx.minimize_targets.extend(deviation_soft_limits)
+

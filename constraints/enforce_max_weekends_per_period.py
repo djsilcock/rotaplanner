@@ -2,44 +2,15 @@
 from calendar import SATURDAY
 
 
+from constraints.enforce_max_x_in_y_base import enforce_max_x_in_y
+from signals import signal
 
-
-from constants import Shifts, Staff
-from constraints.constraintmanager import BaseConstraint
-from constraints.core_duties import icu
-
-
-class Constraint(BaseConstraint):
+@signal('apply_constraint').connect
+def max_weekends_per_period(ctx):
     """Maximum x weekends (day or night) in any y weekends"""
-    name = "Limit Weekend Frequency"
 
-    @classmethod
-    def definition(cls):
-
-        yield 'same consultant should not do more than'
-        yield {
-            'name': 'numerator',
-            'component': 'number'}
-        yield 'weekends in any'
-        yield {
-            'name': 'denominator',
-            'component': 'number'}
-
-    def apply_constraint(self):
-        #print(f'Maximum {numerator} weekends in {denominator}...')
-
-        kwargs = dict(**self.kwargs)
-        denominator = kwargs.pop('denominator')
-        numerator = kwargs.pop('numerator')
-        self.weekdays = [SATURDAY]
-        for day in self.days():
-            enforced = self.get_constraint_atom(day=day)
-            if day < (7*denominator):
-                continue
-            for staff in Staff:
-
-                self.rota.model.Add(sum(self.get_duty(icu(Shifts.AM,dd,staff))
-                                        for dd in range(day-(7*denominator), day, 7)) +
-                                    sum(self.get_duty(icu(Shifts.ONCALL,dd, staff))
-                                        for dd in range(day-(7*denominator), day, 7)) <= numerator
-                                    ).OnlyEnforceIf(enforced)
+    def filterfunc(shift, day, staff):
+        return (shift in ('am','oncall')) and (day.weekday()==SATURDAY)
+    
+    return enforce_max_x_in_y(ctx,filterfunc,{'numerator':2,'denominator':5})
+    

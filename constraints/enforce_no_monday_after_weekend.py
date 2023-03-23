@@ -2,19 +2,22 @@
 from calendar import MONDAY
 
 
-from constants import Shifts, Staff
+from config import Shifts, Staff
 from constraints.core_duties import icu
-from constraints.constraintmanager import BaseConstraint
+from constraints.base import BaseConstraint
 
+class Config():
+    def get_config_interface(self):
+        yield 'same consultant should not do weekend and Monday oncall'
 
+from constraints.constraint_store import register_constraint
+
+@register_constraint('enforce_no_monday_after_weekend')
 class Constraint(BaseConstraint):
     """no monday after weekend"""
     name = "No Monday after weekend"
 
-    @classmethod
-    def definition(cls):
-
-        yield 'same consultant should not do weekend and Monday oncall'
+    config_class=Config
 
     def apply_constraint(self):
         self.weekdays = [MONDAY]

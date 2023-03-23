@@ -1,65 +1,70 @@
 """contains rules to constrain the model"""
 
 
-from datetime import timedelta
-from constants import Shifts, Staff
-from constraints.constraintmanager import BaseConstraint
+from enum import Flag, StrEnum
+from config import Shifts, Staff
+from constraints.base import BaseConstraint
 from constraints.core_duties import leave, icu
 from constraints.some_shifts_are_locum import quota_icu, locum_icu
+from solver import GenericConfig
+
+LeavebookFlags=Flag('LeavebookFlags',
+    'IS_LOCUM LOCUM_STATUS_CONFIRMED DUTY_CONFIRMED')
+
+LeavebookDuties=StrEnum('LeavebookDuties',
+    'LEAVE TS NOC ICU THEATRE')
 
 
 class Constraint(BaseConstraint):
     """Leavebook entry"""
 
-    def __init__(self, rota, **kwargs):
-        super().__init__(rota, **kwargs)
+    def __init__(self, solver_context):
+        super().__init__(solver_context)
         self.leavebook = {}
 
-    def apply_constraint(self):
-        data = self.kwargs.get('current_rota')
-        for day in data:
-            for shift in data[day]:
-                for staff in data[day][shift]:
-                    self.leavebook[(Staff[staff], Shifts[shift],
-                                    day)] = data[day][shift][staff]
+    async def apply_constraint(self):
+        data = []  # TODO: get data from database
+        config: GenericConfig = self.ctx[None]
+        for item in data:
+            self.leavebook[(Staff[item.name], Shifts[item.shift],
+                            item.date)] = (item.duty, item.flags)
         for staff in Staff:
             for shift in Shifts:
                 for day in self.days():
-                    text_day = (self.rota.startdate +
-                                timedelta(days=day)).isoformat()
-                    this_duty = self.leavebook.get(
-                        (staff, shift, text_day), None)
+                    this_duty, duty_flags = self.leavebook.get(
+                        (staff, shift, day), (None, LeavebookFlags(0)))
 
-                    is_on_leave = self.get_duty(leave(shift, day, staff))
+                    is_on_leave = config.dutystore[leave(shift, day, staff)]
 
-                    self.model.Add(is_on_leave == (
-                        this_duty in ('LEAVE', 'NOC')))
+                    if this_duty in (LeavebookDuties.LEAVE,LeavebookDuties.NOC):
+                        config.model.Add(is_on_leave == 1)
+                    else:
+                        config.model.Add(is_on_leave == 0)
 
-                    implications = [
-                        (this_duty == 'ICU_MAYBE_LOCUM',
-                         self.get_duty(icu(shift, day, staff))),
-                        (this_duty == 'DEFINITE_ICU', self.get_duty(
-                            quota_icu(shift, day, staff))),
-                        (this_duty == 'DEFINITE_LOCUM_ICU',
-                         self.get_duty(locum_icu(shift, day, staff)))
-                    ]
-                    for if_this, then_that in implications:
-                        self.model.AddImplication(if_this, then_that)
+                    if this_duty == LeavebookDuties.ICU and LeavebookFlags.DUTY_CONFIRMED in duty_flags:
+                        config.model.Add(
+                            config.dutystore[icu(shift, day, staff)] == 1)
+                        if LeavebookFlags.LOCUM_STATUS_CONFIRMED in duty_flags:
+                            if LeavebookFlags.IS_LOCUM in duty_flags:
+                                config.model.Add(
+                                    config.dutystore[locum_icu(shift, day, staff)] == 1)
+                            else:
+                                config.model.Add(
+                                    config.dutystore[quota_icu(shift, day, staff)] == 1)
 
-                    if this_duty == 'ICU':
-                        self.model.AddHint(self.get_duty(
-                            icu(shift, day, staff)), 1)
-                    elif this_duty == 'LOCUM_ICU':
-                        self.model.AddHint(self.get_duty(
-                            locum_icu(shift, day, staff)), 1)
+                    if this_duty == LeavebookDuties.ICU:
+                        config.model.AddHint(config.dutystore[
+                            icu(shift, day, staff)], 1)
+                        if LeavebookFlags.IS_LOCUM in duty_flags:
+                            config.model.AddHint(config.dutystore[
+                                locum_icu(shift, day, staff)], 1)
 
-    def process_output(self, solver, pairs):
-        for ((staff, shift, day), value) in pairs:
-            text_day = (self.rota.startdate+timedelta(days=day)).isoformat()
-            leavebook_duty = self.leavebook.get((staff, shift, text_day))
-            if leavebook_duty in ['DEFINITE_ICU', 'DEFINITE_LOCUM_ICU', 'NOC']:
-                yield ((staff, shift, day), leavebook_duty)
-            elif leavebook_duty == 'ICU_MAYBE_LOCUM':
-                yield ((staff, shift, day), 'DEFINITE_ICU' if value == 'ICU' else 'DEFINITE_LOCUM_ICU')
-            else:
-                yield ((staff, shift, day), value)
+    async def enrich_output_cell(self, cell, solver):
+        staff = cell['staff']
+        shift = cell['shift']
+        day = cell['day']
+        leavebook_duty,leavebook_flags = self.leavebook.get((staff, shift, day),(None,LeavebookFlags(0)))
+        if leavebook_duty in (LeavebookDuties.NOC,LeavebookDuties.LEAVE):
+            cell['duty'] = leavebook_duty
+        flags=LeavebookFlags.LOCUM_STATUS_CONFIRMED|LeavebookFlags.DUTY_CONFIRMED|LeavebookFlags.IS_LOCUM
+        cell['flags']|=flags&leavebook_flags

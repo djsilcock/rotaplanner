@@ -1,39 +1,18 @@
-"""Contains the constants for duty types"""
-from enum import Enum,auto
-from calendar import MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY
+from enum import IntEnum,IntFlag,auto
 
-class Shifts(Enum):
-    AM=auto()
-    PM=auto()
-    ONCALL=auto()
+class Locations(IntEnum):
+    ICU=1
+    THEATRE=2
+    TIMEBACK=3
+    LEAVE=4
+    
+class Shifts(IntEnum):
+    AM=1
+    PM=2
+    ONCALL=3
 
-class Duties(Enum):
-    """all the duty types"""
-    ICU_COTW = auto()
-    ICU_LOCUM_COTW = auto()
-    ICU = auto()
-    IS_LOCUM=auto()
-    THEATRE = auto()
-    LEAVE = auto()
-    OFF = auto()
-    LOCUM_ICU = auto()
-    QUOTA_ICU = auto()
-    ICU_JP=auto()
-    ICU_TS=auto()
-    TIMEBACK=auto()
-    DROPPED_SESSION=auto()
+class Flags(IntFlag):
+    IS_LOCUM=1
+    IS_CONFIRMED=2
+    LOCUM_CONFIRMED=4
 
-
-Staff = Enum('Staff', 'SANJIV RORY SCOTT BARTEK DAN SAM CHOITI JIM')
-
-
-jobplans = {
-    Staff.SANJIV: {MONDAY, FRIDAY},
-    Staff.CHOITI: {TUESDAY, WEDNESDAY},
-    Staff.BARTEK: {MONDAY, WEDNESDAY, FRIDAY},
-    Staff.SAM: {TUESDAY, WEDNESDAY},
-    Staff.DAN: {TUESDAY, THURSDAY, FRIDAY},
-    Staff.JIM: {MONDAY, THURSDAY},
-    Staff.SCOTT: {THURSDAY, FRIDAY},
-    Staff.RORY: {MONDAY, WEDNESDAY, THURSDAY}
-}

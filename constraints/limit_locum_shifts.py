@@ -3,10 +3,43 @@ from calendar import FRIDAY
 from collections import namedtuple
 
 
-from constants import Shifts, Staff
-from constraints.constraintmanager import BaseConstraint
+from config import Shifts, Staff
+from constraints.base import BaseConstraint
 from constraints.some_shifts_are_locum import locum_icu
 
+class Config():
+    def get_config_interface(self):
+        names = [s.name.title() for s in Staff]
+        staff=self.get('staff')
+        moreless=self.get('moreless')
+        return [
+            dict(component='multiselect', name='staff', options=names),
+            'should',
+            dict(
+                component='select',
+                name='collectively',
+                options=['individually', 'collectively']) if len(staff)>1 else None,
+            'do',
+            dict(
+                component='select',
+                name='moreless',
+                options=['at least', 'at most', 'between']),
+            dict(
+                component='number',
+                name='minimum') if moreless in ['at least','between'] else None,
+            'and' if moreless=='between' else None,
+            dict(
+                component='number',
+                name='maximum') if moreless in ["at most","between"] else None,
+            dict(
+                component='multiselect',
+                name='shift_type',
+                options=[
+                    'weekday daytime',
+                    'weekend daytime',
+                    'weekend oncall',
+                    'weekday oncall']),
+            'locum shifts']
 
 class Constraint(BaseConstraint):
     """limit locum shifts for which filter is true"""
@@ -20,38 +53,7 @@ class Constraint(BaseConstraint):
             )(**config)
         return config
 
-    @classmethod
-    def get_config_interface(cls, config):
-        config=cls.validate_config(config)
-        names = [s.name.title() for s in Staff]
-        return [
-            dict(component='multiselect', name='staff', options=names),
-            'should',
-            dict(
-                component='select',
-                name='collectively',
-                options=['individually', 'collectively']) if len(config.staff)>1 else None,
-            'do',
-            dict(
-                component='select',
-                name='moreless',
-                options=['at least', 'at most', 'between']),
-            dict(
-                component='number',
-                name='minimum') if config.moreless in ['at least','between'] else None,
-            'and' if config.moreless=='between' else None,
-            dict(
-                component='number',
-                name='maximum') if config.moreless in ["at most","between"] else None,
-            dict(
-                component='multiselect',
-                name='shift_type',
-                options=[
-                    'weekday daytime',
-                    'weekend daytime',
-                    'weekend oncall',
-                    'weekday oncall']),
-            'locum shifts']
+    
 
     @classmethod
     def definition(cls):
