@@ -1,8 +1,2 @@
-Jinja2==3.1.2
-ortools==9.5.2237
-sanic==22.12.0
-sanic-ext==22.12.0
-Sanic-WTF==0.6.0
-WTForms==3.0.1
-sqlalchemy==1.4.46
-blinker==1.5
+ortools==9.6.2534
+tksheet==5.5.3
