@@ -5,6 +5,8 @@ import dataclasses
 from typing import TYPE_CHECKING, Optional
 from datetime import date
 
+from ortools.sat.python import cp_model
+
 from constraints.some_shifts_are_locum import quota_icu
 from signals import signal
 
@@ -43,7 +45,7 @@ entries=[
 ]
 
 @signal('apply_constraint').connect
-def apply_constraint(ctx):
+def enforce_quotas(ctx):
     for entry_id,entry in enumerate(entries):
         deviation_hard_limit = entry.deviation
         #enforced = self.get_constraint_atom()
@@ -61,15 +63,13 @@ def apply_constraint(ctx):
                     for dd in ctx.days
                     for (weekday,shift_id) in entry.shift_defs
                     if dd <= end_day and dd.weekday()==weekday]
-                target = ctx.model.NewConstant(
-                    len(duties)//entry.share,
-                )
+                #target = ctx.model.NewConstant(len(duties)//entry.share)
+                target = len(duties)//entry.share
 
                 delta_abs = ctx.model.NewIntVar(-deviation_hard_limit,
                                                     deviation_hard_limit,
                                                     f'delta{end_day}{entry.shift_defs}{staff}')
-
-                ctx.model.AddAbsEquality(delta_abs, sum(duties)-target)
+                ctx.model.AddAbsEquality(delta_abs,  cp_model.LinearExpr.Sum(duties)-target)
                 ctx.model.Add(delta_abs <= deviation_soft_limit)
         ctx.minimize_targets.extend(deviation_soft_limits)
 

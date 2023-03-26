@@ -67,7 +67,7 @@ def solve(
     ctx = GenericConfig(
         initial_data=data,
         context=config,
-        days=sorted(d[1] for d in data),
+        days=sorted({d[1] for d in data}),
         minimize_targets=[],
         dutystore=DutyStore(model),
         model=model,
