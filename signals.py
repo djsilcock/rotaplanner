@@ -55,13 +55,16 @@ class Signal:
 
     def _send(self, sender, wrapper, kwargs):
         output=[]
+        print(self.name or '<anonymous>')
         for func in self.listeners:
             try:
+                print ('   ',self.name,func,end='')
                 result=wrapper(func)(sender, **kwargs)
-                print (self.name,func)
                 output.append((func, result) )
+                print(output[-1][1])
             except Exception as e:
                 output.append((func,e))
+        print('done')
         return output
 
     def send(self, *args, _mode='sync', **kwargs):

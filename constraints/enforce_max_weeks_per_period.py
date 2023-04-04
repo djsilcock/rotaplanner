@@ -11,5 +11,5 @@ def max_weeks_per_period(ctx):
     def filterfunc(shift, day, _):
         return (shift=='am') and (day.weekday()==WEDNESDAY)
     
-    return enforce_max_x_in_y(ctx,filterfunc,{'numerator':2,'denominator':5})
+    return enforce_max_x_in_y(ctx,filterfunc,{'numerator':2,'denominator':35})
     

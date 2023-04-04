@@ -1,5 +1,5 @@
 "Main ui module"
-from dataclasses import dataclass
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -7,14 +7,19 @@ import tkinter.messagebox as mb
 #import tkinter.filedialog as fd
 from typing import Optional, cast
 from warnings import warn
-from copy import copy, deepcopy
+from copy import deepcopy
 import asyncio
 
 import tksheet
 
-from solver import solve
+from solver import solve,solver_manager
 from datatypes import DutyCell,SessionDuty
 import constraints
+
+executor=ThreadPoolExecutor()
+
+class StopProcessing(Exception):
+    pass
 
 class View(tk.Tk):
     "Main view class"
@@ -180,7 +185,7 @@ class View(tk.Tk):
         if undo_storage:
             self.sheet.MT.undo_storage.append(
                 ('modify_sessions', undo_storage))
-        raise Exception()
+        raise StopProcessing()
 
     def intercept_undo(self, evt):
         "Handle undo"
@@ -226,7 +231,7 @@ class View(tk.Tk):
                         undo_storage[row, col, sess] = SessionDuty()
                     cell.duties[sess] = new_session
             else:
-                raise Exception('not a dutycell instance')
+                raise TypeError('not a dutycell instance')
             if undo_storage:
                 self.sheet.MT.undo_storage.append(
                     ('modify_sessions', undo_storage))
@@ -300,8 +305,12 @@ class View(tk.Tk):
 
     def solve(self):
         "launch solver in background thread"
-        loop=asyncio.get_running_loop()
-        loop.run_in_executor(None,solve,deepcopy(self.data), {},self.result_queue,loop)
+        #loop=asyncio.get_running_loop()
+        def callback(result):
+            #asyncio.run_coroutine_threadsafe(self.result_queue.put(result),loop)
+            self.update_data(result,overwrite=True)
+        ftr=executor.submit(solve,deepcopy(self.data), {},callback)
+        ftr.add_done_callback(lambda f:f.result())
         
 
 initialdata = {
@@ -311,24 +320,18 @@ initialdata = {
     ('Debbie', date(2022, 2, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
     ('Emma', date(2022, 2, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
     ('Fiona', date(2022, 2, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
-    ('Gordon',date(2022,1,1)):DutyCell({'am':SessionDuty('THEATRE',False,False)})
+    ('Gordon',date(2022,1,1)):DutyCell({'am':SessionDuty('THEATRE',False,False)}),
+    ('Harry', date(2021, 1, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
+    ('Ian', date(2022, 2, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
+    ('Jane', date(2022, 2, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
+    ('Kate', date(2022, 2, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
+    ('Laura', date(2022, 2, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
+    ('Michael', date(2022, 2, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
+    ('Neil',date(2022,1,1)):DutyCell({'am':SessionDuty('THEATRE',False,False)})
+
 }
-async def dataqueue(ui:View):
-    result_queue=ui.result_queue
-    while True:
-        ui.update_data(await result_queue.get(),overwrite=True)
 
-async def uiloop():
-    "run the main ui loop"
-    ui = View(data=initialdata, pubhols={date(2022, 1, 1)})
-    updater=asyncio.create_task(dataqueue(ui))
-    try:
-        while ui.children:
-            await asyncio.sleep(0.1)
-            ui.update()
-    except asyncio.CancelledError:
-        ui.destroy()
-    finally:
-        updater.cancel()
-
-asyncio.run(uiloop())
+ui = View(data=initialdata, pubhols={date(2022, 1, 1)})
+ui.mainloop()
+executor.shutdown()
+solver_manager.stop()

@@ -12,5 +12,5 @@ def max_weekends_per_period(ctx):
     def filterfunc(shift, day, staff):
         return (shift in ('am','oncall')) and (day.weekday()==SATURDAY)
     
-    return enforce_max_x_in_y(ctx,filterfunc,{'numerator':2,'denominator':5})
+    return enforce_max_x_in_y(ctx,filterfunc,{'numerator':2,'denominator':35})
     
