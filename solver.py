@@ -16,7 +16,6 @@ from signals import signal
 # from constraints import get_all_constraint_classes
 
 if TYPE_CHECKING:
-    from constraints.base import BaseConstraint
     from ui import View
 
 solvers_queue = queue.Queue()

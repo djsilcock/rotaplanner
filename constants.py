@@ -16,3 +16,4 @@ class Flags(IntFlag):
     IS_CONFIRMED=2
     LOCUM_CONFIRMED=4
 
+APPLY_CONSTRAINT='apply_constraint'

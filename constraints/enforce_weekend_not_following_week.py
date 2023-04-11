@@ -4,7 +4,7 @@ from calendar import THURSDAY
 
 
 from config import Shifts, Staff
-from constraints.base import BaseConstraint
+from constraints.utils import BaseConstraint
 from constraints.core_duties import icu
 
 class Constraint(BaseConstraint):

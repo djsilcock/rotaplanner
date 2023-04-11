@@ -1,6 +1,6 @@
 """contains rules to constrain the model"""
 
-from constraints.base import BaseConstraint
+from constraints.utils import BaseConstraint
 
 class Config():
     def get_defaults(self) -> dict:

@@ -3,7 +3,7 @@
 
 from enum import Flag, StrEnum
 from config import Shifts, Staff
-from constraints.base import BaseConstraint
+from constraints.utils import BaseConstraint
 from constraints.core_duties import leave, icu
 from constraints.some_shifts_are_locum import quota_icu, locum_icu
 from solver import GenericConfig

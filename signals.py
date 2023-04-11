@@ -23,6 +23,7 @@ class Signal:
 
     def connect(self, func):
         "connect receiver to signal"
+        self.is_connected=True
         if asyncio.iscoroutinefunction(func):
             self.has_coroutine_listeners = True
         if func not in self.listeners:

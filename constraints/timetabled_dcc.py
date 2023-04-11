@@ -11,7 +11,7 @@ from wtforms.widgets import TextInput
 from wtforms.validators import (StopValidation,InputRequired,ValidationError)
 
 from config import Shifts, Staff
-from constraints.base import BaseConstraint
+from constraints.utils import BaseConstraint
 from constraints.core_duties import leave, nonclinical, theatre,icu
 from database import get_names_from_db
 

@@ -6,7 +6,7 @@ import dataclasses
 
 from sqlalchemy import select
 
-from constraints.base import BaseConstraint
+from constraints.utils import BaseConstraint
 from constraints.core_duties import Clinical, NonClinical, allocated_for_duty
 from constraints.constraint_store import register_constraint
 from .enums import DutyBasis, RotationType

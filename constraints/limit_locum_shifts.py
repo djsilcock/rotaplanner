@@ -4,7 +4,7 @@ from collections import namedtuple
 
 
 from config import Shifts, Staff
-from constraints.base import BaseConstraint
+from constraints.utils import BaseConstraint
 from constraints.some_shifts_are_locum import locum_icu
 
 class Config():

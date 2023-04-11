@@ -4,7 +4,7 @@ from constraints.core_duties import icu,clinical
 from datetime import timedelta
 from signals import signal
 
-#@signal('apply_constraint').connect
+@signal('apply_constraint').connect
 def no_night_before_clinical_day(ctx):
     """no night before clinical day (except Sunday and Thursday)"""
     
