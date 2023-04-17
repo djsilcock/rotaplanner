@@ -42,6 +42,9 @@ def clinical(shift,day,staff):
     "is clinical"
     return ('CLINICAL',shift,day,staff)
 
+def nonclinical(shift,day,staff):
+    return ('NONCLINICAL',shift,day,staff)
+
 
 @dataclass
 class CoreDutiesContext:
@@ -87,12 +90,15 @@ def core_duties(ctx: 'GenericConfig'):
                         shift, day, staff, duty)] for duty in clinical_duty_types]
                 is_clinical = ctx.dutystore[clinical(
                         shift, day, staff)]
-                ctx.model.Add(sum(clinical_duties)+is_clinical.Not()==1)
+                is_nonclinical=ctx.dutystore[nonclinical(shift,day,staff)]
+                ctx.model.Add(is_clinical==(1-is_nonclinical))
+                ctx.model.Add(sum(clinical_duties)+is_nonclinical==1)
 
 @signal('build_output').connect
 def build_output(ctx, outputdict, solver):
     "core duties output"
     print('core_duties builder')
+    output=[]
     for key,value in ctx.dutystore.items():
         match key:
             case ('ALLOCATED_DUTY',shift,day,staff,location):
@@ -103,4 +109,10 @@ def build_output(ctx, outputdict, solver):
                         cell.duties[shift].duty=None
                     else:
                         cell.duties[shift].duty=location
-                    
+            case ('TEMPLATE',key,year,week,staff):
+                if solver.Value(value):
+                    #print (key,year,week,staff)
+                    output.append((year,week,staff,key))
+    with open('output.txt','w') as f:
+        for y,w,s,k in sorted(output):
+            print(f'{y} {w} {s} {k}',file=f)

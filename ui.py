@@ -1,10 +1,12 @@
 "Main ui module"
 from concurrent.futures import ThreadPoolExecutor
+import csv
 from datetime import date, timedelta
+import pickle
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.messagebox as mb
-#import tkinter.filedialog as fd
+import tkinter.filedialog as fd
 from typing import Optional, cast
 from warnings import warn
 from copy import deepcopy
@@ -132,7 +134,7 @@ class View(tk.Tk):
         file_menu = tk.Menu(menu, tearoff=False)
         file_menu.add_command(
             label='Import from CLW export',
-            command=self.save_data
+            command=self.import_clw_csv
         )
         file_menu.add_command(
             label='Save changes',
@@ -163,7 +165,6 @@ class View(tk.Tk):
         menu.add_cascade(label='File', menu=file_menu)
         menu.add_cascade(label='Duties', menu=duty_menu)
         menu.add_cascade(label='Solve', menu=solve_menu)
-        self.solve()
         
     def intercept_delete(self, evt):
         "Delete cell (before_delete handler)"
@@ -300,38 +301,42 @@ class View(tk.Tk):
 
     def save_data(self):
         "Save data to disc"
-        #TODO: implement save data
-        warn('Save not implemented yet')
+        with open('savefile','wb') as f:
+            pickle.dump(self.data,f)
+
+    def load_data(self):
+        "load from file"
+        try:
+            with open('savefile','rb') as f:
+                self.update_data(pickle.load(f),overwrite=True)
+        except FileNotFoundError:
+            pass
 
     def solve(self):
         "launch solver in background thread"
-        #loop=asyncio.get_running_loop()
         def callback(result):
-            #asyncio.run_coroutine_threadsafe(self.result_queue.put(result),loop)
             self.update_data(result,overwrite=True)
         ftr=executor.submit(solve,deepcopy(self.data), {},callback)
         ftr.add_done_callback(lambda f:f.result())
+
+    def import_clw_csv(self):
+        csvfile=fd.askopenfilename()
+        if csvfile is None:
+            return
+        data:dict[tuple,DutyCell]={}
+        with open(csvfile,'rt',encoding="utf-8",newline="") as f:
+            reader=csv.DictReader(f)
+            for r in reader:
+                key=(r['Person'],date.fromisoformat(r['Date']))
+                cell=data.setdefault(key,DutyCell(duties={}))
+                cell.duties[r['Session']]=SessionDuty(r['Location'])
+        self.update_data(data)
+
         
 
-initialdata = {
-    ('Adam', date(2021, 1, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
-    ('Ben', date(2022, 2, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
-    ('Charlie', date(2022, 2, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
-    ('Debbie', date(2022, 2, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
-    ('Emma', date(2022, 2, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
-    ('Fiona', date(2022, 2, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
-    ('Gordon',date(2022,1,1)):DutyCell({'am':SessionDuty('THEATRE',False,False)}),
-    ('Harry', date(2021, 1, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
-    ('Ian', date(2022, 2, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
-    ('Jane', date(2022, 2, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
-    ('Kate', date(2022, 2, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
-    ('Laura', date(2022, 2, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
-    ('Michael', date(2022, 2, 1)): DutyCell({'am': SessionDuty('ICU', False, False), 'pm': SessionDuty('ICU', False, False)}),
-    ('Neil',date(2022,1,1)):DutyCell({'am':SessionDuty('THEATRE',False,False)})
 
-}
-
-ui = View(data=initialdata, pubhols={date(2022, 1, 1)})
+ui = View(data={}, pubhols={date(2022, 1, 1)})
+ui.load_data()
 ui.mainloop()
 executor.shutdown()
 solver_manager.stop()
