@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from calendar import MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
 
 from constraints.core_duties import clinical, icu, leave, theatre, nonclinical
-from config.jobplans import jobplans
+from config.jobplans import jobplans,trainee_default
 
 from signals import signal
 
