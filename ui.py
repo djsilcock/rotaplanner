@@ -14,18 +14,23 @@ import asyncio
 
 import tksheet
 
-from solver import solve,solver_manager
-from datatypes import DutyCell,SessionDuty
+from solver import solve, solver_manager
+from datatypes import DutyCell, SessionDuty
+from storage import load_data,import_clw_csv,save_data
+
 import constraints
 
-executor=ThreadPoolExecutor()
+executor = ThreadPoolExecutor()
+
 
 class StopProcessing(Exception):
     pass
 
+
 class View(tk.Tk):
     "Main view class"
-    solver:Optional[asyncio.Task]
+    solver: Optional[asyncio.Task]
+
     def update_data(self, data, overwrite=False):
         """update duty data in sheet
         data: dict of (name,date):DutyCell"""
@@ -38,11 +43,11 @@ class View(tk.Tk):
                       default=date.today())
         self.dates = [mindate+timedelta(days=i)
                       for i in range((maxdate-mindate).days+1)]
-        
+
         self.names = sorted({d[0] for d in self.data})
         for day in self.dates:
             for name in self.names:
-                self.data.setdefault((name,day),DutyCell(duties={}))
+                self.data.setdefault((name, day), DutyCell(duties={}))
         self.sheet.headers([d.isoformat()+'\n' for d in self.dates])
         self.sheet.row_index(self.names)
         self.sheet.set_sheet_data(data=[
@@ -52,11 +57,10 @@ class View(tk.Tk):
         self.highlight_pubhols()
         self.sheet.set_all_cell_sizes_to_text()
 
-
     def __init__(self, data=None, pubhols=()):
         super().__init__()
-        self.result_queue=asyncio.Queue()
-        self.solver=None
+        self.result_queue = asyncio.Queue()
+        self.solver = None
         self.dates = []
         self.data = {}
         self.title('Rota Solver')
@@ -165,10 +169,10 @@ class View(tk.Tk):
         menu.add_cascade(label='File', menu=file_menu)
         menu.add_cascade(label='Duties', menu=duty_menu)
         menu.add_cascade(label='Solve', menu=solve_menu)
-        
+
     def intercept_delete(self, evt):
         "Delete cell (before_delete handler)"
-        #print('delete', evt)
+        # print('delete', evt)
         undo_storage = {}
         sessions_to_set = [k for k, v in self.editsession.items() if v.get()]
         for box, _ in evt.selectionboxes:
@@ -190,17 +194,17 @@ class View(tk.Tk):
 
     def intercept_undo(self, evt):
         "Handle undo"
-        #print('undo', evt)
+        # print('undo', evt)
         match evt.storeddata:
             case ('modify_sessions', sess):
                 for (row, col, sess), val in sess.items():
-                    #print(('setting', row, col, sess, val))
+                    # print(('setting', row, col, sess, val))
                     if val:
                         cell = self.sheet.get_cell_data(
                             r=row, c=col, return_copy=False)
                         if isinstance(cell, DutyCell):
                             cell.duties[sess] = val
-                            #print('updated cell', cell)
+                            # print('updated cell', cell)
                         else:
                             self.sheet.set_cell_data(r=row, c=col, value=DutyCell(
                                 duties={sess: val}), set_copy=False)  # type: ignore
@@ -210,7 +214,7 @@ class View(tk.Tk):
 
     def setduty(self):
         "Set duty as determined by menu"
-        #print(self.sheet.get_selected_cells(), self.sessiontype.get())
+        # print(self.sheet.get_selected_cells(), self.sessiontype.get())
         sessions_to_set = [k for k, v in self.editsession.items() if v.get()]
         new_duty = self.sessiontype.get()
         undo_storage = {}
@@ -287,7 +291,7 @@ class View(tk.Tk):
             for sess, duty in cell.duties.items():
                 if sess in sessions_to_set:
                     duties_to_set.append(duty)
-        
+
         set_lock = any((not duty.locked) for duty in duties_to_set)
         for duty in duties_to_set:
             duty.locked = set_lock
@@ -301,38 +305,32 @@ class View(tk.Tk):
 
     def save_data(self):
         "Save data to disc"
-        with open('savefile','wb') as f:
-            pickle.dump(self.data,f)
+        save_data(self.data)
 
     def load_data(self):
         "load from file"
         try:
-            with open('savefile','rb') as f:
-                self.update_data(pickle.load(f),overwrite=True)
+
+            self.update_data(load_data(), overwrite=True)
         except FileNotFoundError:
             pass
 
     def solve(self):
         "launch solver in background thread"
         def callback(result):
-            self.update_data(result,overwrite=True)
-        ftr=executor.submit(solve,deepcopy(self.data), {},callback)
-        ftr.add_done_callback(lambda f:f.result())
+            self.update_data(result, overwrite=True)
+        ftr = solve(self.data, {}, callback)
+        ftr.add_done_callback(lambda f: f.result())
 
     def import_clw_csv(self):
-        csvfile=fd.askopenfilename()
+        csvfile = fd.askopenfilename()
         if csvfile is None:
             return
-        data:dict[tuple,DutyCell]={}
-        with open(csvfile,'rt',encoding="utf-8",newline="") as f:
-            reader=csv.DictReader(f)
-            for r in reader:
-                key=(r['Person'],date.fromisoformat(r['Date']))
-                cell=data.setdefault(key,DutyCell(duties={}))
-                cell.duties[r['Session']]=SessionDuty(r['Location'])
+        data = import_clw_csv(csvfile)
         self.update_data(data)
 
-        
+
+
 
 
 ui = View(data={}, pubhols={date(2022, 1, 1)})

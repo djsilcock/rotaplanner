@@ -1,6 +1,7 @@
 # pylint: disable=invalid-name
 """Rota solver"""
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from threading import Lock, Event
 from typing import TYPE_CHECKING, Callable
@@ -71,10 +72,11 @@ class SolverManager:
         self.solver_lock = Lock()
         self.solver_events = []
         self._shutdown = False
+        self.executor=ThreadPoolExecutor()
 
     def shutdown(self):
-        self._shutdown = True
         self.stop()
+        self.executor.shutdown()
 
     def solve(self, model, callback):
         print('starting solver')
@@ -84,19 +86,29 @@ class SolverManager:
         print('waiting for solver lock') 
         with self.solver_lock:
             print('lock obtained')
-            if self._shutdown or stop_event.is_set():
-                return
             printer = SolutionPrinter(callback, stop_event)
             solver = cp_model.CpSolver()
-            print('solving...')
-            solver.Solve(model, printer)
-            status = solver.StatusName()
-            if stop_event.is_set():
-                return
-            if status in ['FEASIBLE', 'OPTIMAL']:
-                callback(solver)
-            return status
-
+            def do_solve():
+                if stop_event.is_set():
+                    return
+                print(f'solving with {id(solver)}')
+                solver.Solve(model, printer)
+                status = solver.StatusName()
+                if stop_event.is_set():
+                    print(f'solver {id(solver)} aborted')
+                    return
+                if status in ['FEASIBLE', 'OPTIMAL']:
+                    callback(solver)
+                stop_event.set()
+                self.solver_events.remove(stop_event)
+                return status
+            def stop_solver():
+                stop_event.wait()
+                solver.StopSearch()
+            self.executor.submit(stop_solver)
+            return self.executor.submit(do_solve)
+            
+            
     def stop(self):
         for e in self.solver_events:
             e.set()
