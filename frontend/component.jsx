@@ -1,35 +1,47 @@
 
 import {createSlice,current} from "@reduxjs/toolkit"
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import {css,cx} from '@emotion/css'
-import { useMemo, useState, useRef, useCallback } from "react"
+import { useMemo, useState, useRef, useCallback, useEffect } from "react"
 
 import useRemoteApi from './remoteApi'
 
-function DutyButton({name,date,session,duties}){
+function DutyButton({name,date,session,duties,rowNo,colNo}){
         const remoteApi=useRemoteApi()
-        const dutylabel=dutylabels[duties?.[session]?.duty ?? '-']??{classname:unallocatedCSS,label:duties?.[session]?.duty??'?'}
+        const dutylabel=dutylabels[duties?.[session]?.duty ?? '-']??{classname:'unallocated',label:duties?.[session]?.duty??'?'}
         const dutyflags=duties?.[session]?.flags ??{}
+        const isFocussed=useSelector((state)=>(
+          (state?.grid?.selected?.row==rowNo)&&
+          (state?.grid?.selected?.column==colNo)))
+        const dispatch=useDispatch()
         const onClick=useCallback(()=>{
           remoteApi.dutyClick({name,date,session})
           divRef.current.focus()
+          dispatch(gridSlice.actions.setGridSelection({row:rowNo,column:colNo}))
         })
-        const onBlur=useCallback(()=>{
-          console.log(`blurred ${name}${date}${session}`)
-        })
-        const onFocus=useCallback(()=>{console.log(`focussed ${name}${date}${session}`)})
+        useEffect(()=>{
+          if (isFocussed){
+            divRef.current.focus()
+          }
+        },[isFocussed])
         const divRef=useRef()
-        
-        return <div tabIndex={-1} ref={divRef} key={session} className={dutylabel.classname} {...{onClick,onBlur,onFocus}}>
+        const className=cx(dutyCSS,dutylabel.classname,isFocussed?'selected':'')
+        return <div tabIndex={-1} ref={divRef} key={session} className={className} {...{onClick}}>
             {session}:{dutylabel.label}
             {dutyflags.confirmed?'🔒':''}{dutyflags.locum?'💷':''}
             </div>
 }
-function TableCell({name,date}){
+function TableCell({name,date,rowNo,colNo}){
     const duties=useSelector(state=>state.grid.data[`${date}|${name}`])
-    return <td title={JSON.stringify(duties)}>{['am','pm','oncall'].map(session=><DutyButton name={name} date={date} session={session} duties={duties}/>)}</td>
+    return <td title={JSON.stringify(duties)}>{['am','pm','oncall'].map((session,i)=><DutyButton rowNo={rowNo*3+i} colNo={colNo} name={name} date={date} session={session} duties={duties}/>)}</td>
 }
-
+const containerCSS=css`
+  display:grid;
+  grid-template-columns: 1fr;
+  grid-template-rows:min-content 1fr;
+  max-height: calc(100vh - 20px);
+  max-width: 100vw;
+  `
 const mainTableCSS=css`
   white-space: nowrap;
   font-family: Verdana;
@@ -78,46 +90,74 @@ const mainTableCSS=css`
 
   `
 
-  const baseCSS=css`
+  const dutyCSS=css`
     width:100%;
     &:hover {
-      background-color: #EEEEFF
+      background-color: #EEEEFF;
     }
-    &:focus {
-      background-color: #EEFFFF
+    &.selected:focus {
+      background-color: #EEFFFF;
     }
+    &.icu {
+      color: #0000DD;
+    }
+    &.theatre {
+      color: #00DD00
+    }
+    &.unallocated {
+      color: #DDDDDD
+    }
+
     `
-  const icuCSS=cx(baseCSS,css`color: #0000DD;`)
-  const theatreCSS=cx(baseCSS,css`color: #00DD00;`)
-  const unallocatedCSS=cx(baseCSS,css`color: #DDDDDD;`)
   
   const dutylabels={
-    '-':{classname:unallocatedCSS,label:'-'},
-    'ICU':{classname:icuCSS,label:'ICU'},
-    'TH':{classname:theatreCSS,label:'Th'},
-    'LEAVE':{classname:unallocatedCSS,label:'Leave'}
+    '-':{classname:'unallocated',label:'-'},
+    'ICU':{classname:'icu',label:'ICU'},
+    'TH':{classname:'theatre',label:'Th'},
+    'LEAVE':{classname:'unallocated',label:'Leave'}
 }
-console.log(dutylabels)
+
 function MainTable(props){
     const rows= useSelector(state=>state.grid.names)
     const cols= useSelector(state=>state.grid.dates)
+    const dispatch=useDispatch()
+    const keyDown=useCallback(e=>{
+      switch (e.key) {
+        case 'ArrowUp':
+        case 'ArrowDown':
+        case 'ArrowLeft':
+        case 'ArrowRight':
+          e.preventDefault()
+          dispatch(gridSlice.actions.arrowKey(e.key))
+          break;
+        default:
+          break;
+      }
+    })
     headrow=<tr><th>First</th>{cols.map(x=><th key={x}>{x}</th>)}</tr>
-    tblrows=rows.map(r=><tr><th>{r}</th>{cols.map(x=><TableCell key={x} name={r} date={x}/>)}</tr>)
-    return <div className='bottom-panel'>
-        <table className={mainTableCSS}>
+    tblrows=rows.map((r,rowNo)=><tr key={r}><th>{r}</th>{cols.map((x,i)=><TableCell rowNo={rowNo} colNo={i} key={x} name={r} date={x}/>)}</tr>)
+    return <div  className='bottom-panel' style={{overflow:'auto'}}>
+        <table onKeyDown={keyDown} tabIndex={0} className={mainTableCSS}>
             <thead>{headrow}</thead>
             <tbody>{tblrows}</tbody>
             </table></div>
+}
+function MessageBox(props){
+  const row=useSelector((state)=>state.grid.selected.row)
+  const col=useSelector((state)=>state.grid.selected.column)
+  return <div><div>{row}</div><div>{col}</div></div>
+  
 }
 function Component(props){
     const remoteApi=useRemoteApi()
     const [title,setTitle]=useState('Not Yet')
     window.setThis=(content)=>setTitle(content)
-    return <>
-    <div className='container'>
-    <h1>{title}</h1>
-    <a onClick={()=>{remoteApi.output('Hello!!')}}>Click me</a>
     
+    return <>
+    <div className={containerCSS}>
+    <div><h1>{title}</h1>
+    <a onClick={()=>{remoteApi.output('Hello!!')}}>Click me</a>
+    </div>
     <MainTable/>
     </div>
     </>
@@ -125,8 +165,27 @@ function Component(props){
 
 const gridSlice=createSlice({
     name:'grid',
-    initialState:window.initialState,
-  reducers: {},
+    initialState:{selected:{row:0,column:0},dates:[],names:[],grid:{}},
+  reducers: {
+    setGridSelection(state,action){
+      state.selected=action.payload
+    },
+    arrowKey(state,{payload}){
+      switch (payload) {
+        case 'ArrowUp':
+          state.selected.row=Math.max(state.selected.row-1,0)
+          break
+        case 'ArrowDown':
+          state.selected.row=Math.min(state.selected.row+1,state.names.length*3-1)
+          break
+        case 'ArrowLeft':
+          state.selected.column=Math.max(state.selected.column-1,0)
+          break
+        case 'ArrowRight':
+          state.selected.column=Math.min(state.dates.length-1,state.selected.column+1)
+          break
+    }
+  }},
   extraReducers: (builder) => {
     builder
       .addCase('grid/setDuty', (state, action)=> {
@@ -171,8 +230,7 @@ const gridSlice=createSlice({
         return newState
       })
       .addDefaultCase((state,action)=>{console.log({state,action})})
-  },
+  }
 })
-
 
 export {gridSlice,Component}

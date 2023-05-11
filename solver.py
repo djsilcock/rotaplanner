@@ -13,6 +13,7 @@ from ortools.sat.python import cp_model
 from datatypes import DutyCell, SessionDuty
 
 from signals import signal
+from datastore import DataStore
 
 # from constraints import get_all_constraint_classes
 
@@ -118,7 +119,7 @@ solver_manager = SolverManager()
 
 
 def solve(
-        data: dict,
+        datastore: DataStore,
         config: dict,
         progress_callback: Callable
 ):
@@ -129,6 +130,7 @@ def solve(
     """
     print('Setting up...')
     model = cp_model.CpModel()
+    data=datastore.data
     ctx = GenericConfig(
         initial_data=data,
         context=config,

@@ -1096,7 +1096,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
-          function useEffect2(create, deps) {
+          function useEffect3(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useEffect(create, deps);
           }
@@ -1878,7 +1878,7 @@
           exports.useContext = useContext5;
           exports.useDebugValue = useDebugValue2;
           exports.useDeferredValue = useDeferredValue;
-          exports.useEffect = useEffect2;
+          exports.useEffect = useEffect3;
           exports.useId = useId;
           exports.useImperativeHandle = useImperativeHandle;
           exports.useInsertionEffect = useInsertionEffect;
@@ -23548,7 +23548,7 @@
             return x2 === y2 && (x2 !== 0 || 1 / x2 === 1 / y2) || x2 !== x2 && y2 !== y2;
           }
           var objectIs = typeof Object.is === "function" ? Object.is : is;
-          var useState2 = React3.useState, useEffect2 = React3.useEffect, useLayoutEffect2 = React3.useLayoutEffect, useDebugValue2 = React3.useDebugValue;
+          var useState2 = React3.useState, useEffect3 = React3.useEffect, useLayoutEffect2 = React3.useLayoutEffect, useDebugValue2 = React3.useDebugValue;
           var didWarnOld18Alpha = false;
           var didWarnUncachedGetSnapshot = false;
           function useSyncExternalStore3(subscribe, getSnapshot, getServerSnapshot) {
@@ -23585,7 +23585,7 @@
                 });
               }
             }, [subscribe, value, getSnapshot]);
-            useEffect2(function() {
+            useEffect3(function() {
               if (checkIfSnapshotChanged(inst)) {
                 forceUpdate({
                   inst
@@ -23658,7 +23658,7 @@
           }
           var objectIs = typeof Object.is === "function" ? Object.is : is;
           var useSyncExternalStore3 = shim.useSyncExternalStore;
-          var useRef3 = React3.useRef, useEffect2 = React3.useEffect, useMemo4 = React3.useMemo, useDebugValue2 = React3.useDebugValue;
+          var useRef3 = React3.useRef, useEffect3 = React3.useEffect, useMemo4 = React3.useMemo, useDebugValue2 = React3.useDebugValue;
           function useSyncExternalStoreWithSelector3(subscribe, getSnapshot, getServerSnapshot, selector, isEqual) {
             var instRef = useRef3(null);
             var inst;
@@ -23715,7 +23715,7 @@
               return [getSnapshotWithSelector, getServerSnapshotWithSelector];
             }, [getSnapshot, getServerSnapshot, selector, isEqual]), getSelection = _useMemo[0], getServerSelection = _useMemo[1];
             var value = useSyncExternalStore3(subscribe, getSelection, getServerSelection);
-            useEffect2(function() {
+            useEffect3(function() {
               inst.hasValue = true;
               inst.value = value;
             }, [value]);
@@ -27382,6 +27382,32 @@
 
   // .yarn/__virtual__/react-redux-virtual-56673ba762/0/cache/react-redux-npm-8.0.5-9ff31aed95-a108f4f7ea.zip/node_modules/react-redux/es/hooks/useStore.js
   var import_react7 = __toESM(require_react());
+  function createStoreHook(context = ReactReduxContext) {
+    const useReduxContext2 = (
+      // @ts-ignore
+      context === ReactReduxContext ? useReduxContext : () => (0, import_react7.useContext)(context)
+    );
+    return function useStore2() {
+      const {
+        store: store2
+      } = useReduxContext2();
+      return store2;
+    };
+  }
+  var useStore = /* @__PURE__ */ createStoreHook();
+
+  // .yarn/__virtual__/react-redux-virtual-56673ba762/0/cache/react-redux-npm-8.0.5-9ff31aed95-a108f4f7ea.zip/node_modules/react-redux/es/hooks/useDispatch.js
+  function createDispatchHook(context = ReactReduxContext) {
+    const useStore2 = (
+      // @ts-ignore
+      context === ReactReduxContext ? useStore : createStoreHook(context)
+    );
+    return function useDispatch2() {
+      const store2 = useStore2();
+      return store2.dispatch;
+    };
+  }
+  var useDispatch = /* @__PURE__ */ createDispatchHook();
 
   // .yarn/__virtual__/react-redux-virtual-56673ba762/0/cache/react-redux-npm-8.0.5-9ff31aed95-a108f4f7ea.zip/node_modules/react-redux/es/index.js
   initializeUseSelector(import_with_selector.useSyncExternalStoreWithSelector);
@@ -28757,22 +28783,25 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
 
   // component.jsx
   var import_jsx_runtime = __toESM(require_jsx_runtime());
-  function DutyButton({ name, date, session, duties }) {
+  function DutyButton({ name, date, session, duties, rowNo, colNo }) {
     const remoteApi = remoteApi_default();
-    const dutylabel = dutylabels[duties?.[session]?.duty ?? "-"] ?? { classname: unallocatedCSS, label: duties?.[session]?.duty ?? "?" };
+    const dutylabel = dutylabels[duties?.[session]?.duty ?? "-"] ?? { classname: "unallocated", label: duties?.[session]?.duty ?? "?" };
     const dutyflags = duties?.[session]?.flags ?? {};
+    const isFocussed = useSelector((state) => state?.grid?.selected?.row == rowNo && state?.grid?.selected?.column == colNo);
+    const dispatch = useDispatch();
     const onClick = (0, import_react8.useCallback)(() => {
       remoteApi.dutyClick({ name, date, session });
       divRef.current.focus();
+      dispatch(gridSlice.actions.setGridSelection({ row: rowNo, column: colNo }));
     });
-    const onBlur = (0, import_react8.useCallback)(() => {
-      console.log(`blurred ${name}${date}${session}`);
-    });
-    const onFocus = (0, import_react8.useCallback)(() => {
-      console.log(`focussed ${name}${date}${session}`);
-    });
+    (0, import_react8.useEffect)(() => {
+      if (isFocussed) {
+        divRef.current.focus();
+      }
+    }, [isFocussed]);
     const divRef = (0, import_react8.useRef)();
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { tabIndex: -1, ref: divRef, className: dutylabel.classname, ...{ onClick, onBlur, onFocus }, children: [
+    const className = cx(dutyCSS, dutylabel.classname, isFocussed ? "selected" : "");
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { tabIndex: -1, ref: divRef, className, ...{ onClick }, children: [
       session,
       ":",
       dutylabel.label,
@@ -28780,10 +28809,17 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
       dutyflags.locum ? "\u{1F4B7}" : ""
     ] }, session);
   }
-  function TableCell({ name, date }) {
+  function TableCell({ name, date, rowNo, colNo }) {
     const duties = useSelector((state) => state.grid.data[`${date}|${name}`]);
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { title: JSON.stringify(duties), children: ["am", "pm", "oncall"].map((session) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DutyButton, { name, date, session, duties })) });
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", { title: JSON.stringify(duties), children: ["am", "pm", "oncall"].map((session, i2) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DutyButton, { rowNo: rowNo * 3 + i2, colNo, name, date, session, duties })) });
   }
+  var containerCSS = css`
+  display:grid;
+  grid-template-columns: 1fr;
+  grid-template-rows:min-content 1fr;
+  max-height: calc(100vh - 20px);
+  max-width: 100vw;
+  `;
   var mainTableCSS = css`
   white-space: nowrap;
   font-family: Verdana;
@@ -28831,37 +28867,57 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
   }
 
   `;
-  var baseCSS = css`
+  var dutyCSS = css`
     width:100%;
     &:hover {
-      background-color: #EEEEFF
+      background-color: #EEEEFF;
     }
-    &:focus {
-      background-color: #EEFFFF
+    &.selected:focus {
+      background-color: #EEFFFF;
     }
+    &.icu {
+      color: #0000DD;
+    }
+    &.theatre {
+      color: #00DD00
+    }
+    &.unallocated {
+      color: #DDDDDD
+    }
+
     `;
-  var icuCSS = cx(baseCSS, css`color: #0000DD;`);
-  var theatreCSS = cx(baseCSS, css`color: #00DD00;`);
-  var unallocatedCSS = cx(baseCSS, css`color: #DDDDDD;`);
   var dutylabels = {
-    "-": { classname: unallocatedCSS, label: "-" },
-    "ICU": { classname: icuCSS, label: "ICU" },
-    "TH": { classname: theatreCSS, label: "Th" },
-    "LEAVE": { classname: unallocatedCSS, label: "Leave" }
+    "-": { classname: "unallocated", label: "-" },
+    "ICU": { classname: "icu", label: "ICU" },
+    "TH": { classname: "theatre", label: "Th" },
+    "LEAVE": { classname: "unallocated", label: "Leave" }
   };
-  console.log(dutylabels);
   function MainTable(props) {
     const rows = useSelector((state) => state.grid.names);
     const cols = useSelector((state) => state.grid.dates);
+    const dispatch = useDispatch();
+    const keyDown = (0, import_react8.useCallback)((e2) => {
+      switch (e2.key) {
+        case "ArrowUp":
+        case "ArrowDown":
+        case "ArrowLeft":
+        case "ArrowRight":
+          e2.preventDefault();
+          dispatch(gridSlice.actions.arrowKey(e2.key));
+          break;
+        default:
+          break;
+      }
+    });
     headrow = /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("tr", { children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("th", { children: "First" }),
       cols.map((x2) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("th", { children: x2 }, x2))
     ] });
-    tblrows = rows.map((r2) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("tr", { children: [
+    tblrows = rows.map((r2, rowNo) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("tr", { children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("th", { children: r2 }),
-      cols.map((x2) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { name: r2, date: x2 }, x2))
-    ] }));
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "bottom-panel", children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("table", { className: mainTableCSS, children: [
+      cols.map((x2, i2) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { rowNo, colNo: i2, name: r2, date: x2 }, x2))
+    ] }, r2));
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "bottom-panel", style: { overflow: "auto" }, children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("table", { onKeyDown: keyDown, tabIndex: 0, className: mainTableCSS, children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("thead", { children: headrow }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("tbody", { children: tblrows })
     ] }) });
@@ -28870,18 +28926,40 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     const remoteApi = remoteApi_default();
     const [title, setTitle] = (0, import_react8.useState)("Not Yet");
     window.setThis = (content) => setTitle(content);
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "container", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", { children: title }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", { onClick: () => {
-        remoteApi.output("Hello!!");
-      }, children: "Click me" }),
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: containerCSS, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", { children: title }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", { onClick: () => {
+          remoteApi.output("Hello!!");
+        }, children: "Click me" })
+      ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MainTable, {})
     ] }) });
   }
   var gridSlice = createSlice({
     name: "grid",
-    initialState: window.initialState,
-    reducers: {},
+    initialState: { selected: { row: 0, column: 0 }, dates: [], names: [], grid: {} },
+    reducers: {
+      setGridSelection(state, action) {
+        state.selected = action.payload;
+      },
+      arrowKey(state, { payload }) {
+        switch (payload) {
+          case "ArrowUp":
+            state.selected.row = Math.max(state.selected.row - 1, 0);
+            break;
+          case "ArrowDown":
+            state.selected.row = Math.min(state.selected.row + 1, state.names.length * 3 - 1);
+            break;
+          case "ArrowLeft":
+            state.selected.column = Math.max(state.selected.column - 1, 0);
+            break;
+          case "ArrowRight":
+            state.selected.column = Math.min(state.dates.length - 1, state.selected.column + 1);
+            break;
+        }
+      }
+    },
     extraReducers: (builder) => {
       builder.addCase(
         "grid/setDuty",
@@ -28939,6 +29017,20 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
   window.store = configureStore({
     reducer: { grid: gridSlice.reducer }
   });
+  if (window?.pywebview?.api) {
+    console.log("ready");
+    window.pywebview.api.refresh_data();
+  } else {
+    console.log("not ready yet");
+    window.addEventListener("pywebviewready", () => {
+      console.log("ready now");
+      window.pywebview.api.refresh_data();
+    });
+  }
+  window.store.do_dispatch = (action) => {
+    console.log(action);
+    window.store.dispatch(action);
+  };
   root.render(
     /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Provider_default, { store, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Component, {}) })
   );

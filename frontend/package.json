@@ -1,6 +1,7 @@
 {
   "name": "frontend",
   "packageManager": "yarn@3.5.0",
+  "scripts": {"dev":"esbuild --bundle --watch --jsx=automatic --outfile=../jsfile.js app.jsx"},
   "dependencies": {
     "@emotion/css": "^11.10.6",
     "@emotion/react": "^11.10.6",
