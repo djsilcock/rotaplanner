@@ -16,5 +16,11 @@
   "python.analysis.autoImportCompletions": true,
   "python.analysis.autoImportUserSymbols": true,
   "python.analysis.completeFunctionParens": true,
-  "python.analysis.diagnosticMode": "openFilesOnly"
+  "python.analysis.diagnosticMode": "openFilesOnly",
+  "eslint.packageManager": "yarn",
+  "eslint.workingDirectories": [
+    "./frontend"
+  ],
+  "typescript.tsdk": ".yarn/sdks/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
 }

@@ -1,0 +1,18 @@
+
+[tool.pyflow]
+name = ""
+py_version = "3.11"
+version = "0.1.0"
+
+[tool.pyflow.scripts]
+
+[tool.pyflow.dependencies]
+pywebview = "4.0.2"
+ortools = "9.6.2534"
+tksheet = "5.5.3"
+ortools = "9.6.2534"
+tksheet = "5.5.3"
+pywebview = "4.0.2"
+
+[tool.pyflow.dev-dependencies]
+

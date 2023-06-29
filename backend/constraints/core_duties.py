@@ -17,12 +17,13 @@ Locations=('NONCLINICAL','ICU','THEATRE','LEAVE')
 
 
 clinical_duty_types = ('THEATRE', 'ICU')
-
+apply_constraint=signal('apply_constraint')
+build_output=signal('build_output')
+register_urls=signal('register_urls')
 
 def allocated_for_duty(shift: str, day: date, staff: str, location: str):
     "is allocated for a given duty"
     return ('ALLOCATED_DUTY', shift, day, staff, location)
-
 
 def icu(shift: str, day: date, staff: str):
     "An ICU daytime shift"
@@ -32,7 +33,6 @@ def icu(shift: str, day: date, staff: str):
 def theatre(shift: str, day: date, staff: str):
     "Theatre shift"
     return allocated_for_duty(shift, day, staff, 'THEATRE')
-
 
 def leave(shift: str, day: date, staff):
     "is on leave"
@@ -60,7 +60,7 @@ cover_requirements=[
     *((day,shift,theatre,">=",1) for day in range(5) for shift in ('am','pm'))
 ]
 
-@signal('apply_constraint').connect
+@apply_constraint.connect
 def required_coverage(ctx:'GenericConfig'):
     for day in ctx.days:
         for (weekday,shift,dutytype,op,requirement) in cover_requirements:
@@ -74,13 +74,12 @@ def required_coverage(ctx:'GenericConfig'):
                 }[op]
                 ctx.model.Add(oper(sum(ctx.dutystore[dutytype(shift, day, staff)]
                     for staff in ctx.staff),requirement))
-@signal('apply_constraint').connect
+                
+@apply_constraint.connect
 def core_duties(ctx: 'GenericConfig'):
-    "One person for ICU, no multitasking"
+    "No multitasking"
     for day in ctx.days:
         for shift in ctx.shifts:
-            # one person must be on for ICU per shift
-            
             # one person can only be doing one thing at a time
             for staff in ctx.staff:
                 ctx.model.Add(
@@ -94,8 +93,8 @@ def core_duties(ctx: 'GenericConfig'):
                 ctx.model.Add(is_clinical==(1-is_nonclinical))
                 ctx.model.Add(sum(clinical_duties)+is_nonclinical==1)
 
-@signal('build_output').connect
-def build_output(ctx, outputdict, solver):
+@build_output.connect
+def builder(ctx, outputdict, solver):
     "core duties output"
     print('core_duties builder')
     output=[]

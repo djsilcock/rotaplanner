@@ -18,6 +18,7 @@ class Signal:
     "Signal class. Use signal() factory function to create"
 
     def __init__(self, name=None):
+        print(f'creating signal:{name or "(anonymous)"}')
         self.listeners = []
         self.name = name
         self.has_coroutine_listeners = False

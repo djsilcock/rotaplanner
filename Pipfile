@@ -5,8 +5,9 @@ name = "pypi"
 
 [packages]
 ortools = "==9.6.2534"
-tksheet = "==5.5.3"
 pywebview = "==4.0.2"
+eel = "*"
+aiohttp = "*"
 
 [dev-packages]
 
