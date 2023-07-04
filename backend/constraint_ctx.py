@@ -1,17 +1,13 @@
-from typing import TYPE_CHECKING, Any
+from inspect import signature
+from typing import TYPE_CHECKING, Any, Callable
+import asyncio
 
+from signals import Signal
 if TYPE_CHECKING:
     from ortools.sat.python import cp_model
 
-class Signal:
-    def __init__(self):
-        self.handlers=[]
-    def connect(self,func):
-        if func not in self.handlers:
-            self.handlers.append(func)
-        return func
-    def emit(self,__sender=None,**kwargs):
-        return [handler(__sender,**kwargs) for handler in self.handlers]
+    
+            
     
 class DutyStore(dict):
     "creates cp_model.BoolVar instances"
@@ -29,13 +25,18 @@ class SignalSet:
         self.after_apply=Signal()
 
 class ConstraintContext:
-    core:Any
+    __protected_names=()
     def __init__(self,/,model):
         super().__init__()
         self.model=model
         self.dutystore=DutyStore(model)
         self.__runonce_cache={}
         self.signals=SignalSet()
+        self.__protected_names=('model','dutystore','signals','runonce')
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        if __name in self.__protected_names:
+            raise TypeError(f'cannot assign to {__name} after initialisation')
+        return super().__setattr__(__name,__value)
     def runonce(self,func):
         try:
             return self.__runonce_cache[id(func)]

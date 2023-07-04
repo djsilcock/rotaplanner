@@ -1,7 +1,8 @@
 "Implement pub-sub signalling"
 
 import asyncio
-from functools import partial
+from inspect import signature
+from typing import Callable
 
 namespace = {}
 
@@ -13,69 +14,72 @@ def signal(name=None):
     else:
         return namespace.setdefault(name, Signal(name))
 
-
+def run_async(coro):
+    try:
+        loop=asyncio.get_running_loop()
+        task=loop.create_task(coro)
+        while not task.done():
+            loop._run_once()
+        return task.result()
+    except:
+        return asyncio.run(coro)
 class Signal:
-    "Signal class. Use signal() factory function to create"
-
-    def __init__(self, name=None):
-        print(f'creating signal:{name or "(anonymous)"}')
-        self.listeners = []
-        self.name = name
-        self.has_coroutine_listeners = False
-
-    def connect(self, func):
-        "connect receiver to signal"
+    def __init__(self,name=None):
+        self.name=name
+        self.sync_handlers=[]
+        self.async_handlers=[]
+        self.mandatory_args=set()
+    def wrap_handler(self,func:Callable):
+        sig=signature(func)
+        param_names=[]
+        for name,param in sig.parameters.items():
+            if param.kind in (param.POSITIONAL_ONLY,param.VAR_POSITIONAL):
+                raise TypeError('positional-only arguments are not allowed in handlers')
+            if param.kind==param.VAR_KEYWORD:
+                def pass_all_params(func,params):
+                    return func(**params)
+                return pass_all_params
+            if param.default==param.empty:
+                self.mandatory_args.add(name)
+            param_names.append(name)
+        def pass_selected_params(func,params):
+            picked_params={name:params[name] for name in param_names if name in params}
+            return func(**picked_params)
+        return pass_selected_params
+    def check_signature(self,kwargs):
+        if not self.mandatory_args.issubset(set(kwargs)):
+            raise TypeError(f'parameters ({",".join(self.mandatory_args-set(kwargs))}) are missing')
+    def connect(self,func):
         if asyncio.iscoroutinefunction(func):
-            self.has_coroutine_listeners = True
-        if func not in self.listeners:
-            self.listeners.append(func)
-
-    def get_sender(self, maybe_sender):
-        "extract sender from call"
-        if len(maybe_sender) == 1:
-            sender = maybe_sender[0]
-        elif len(maybe_sender) == 0:
-            sender = None
+            if func not in self.async_handlers:
+                self.async_handlers.append((self.wrap_handler(func),func))
         else:
-            raise TypeError('Only one positional argument allowed')
-        return sender
+            if func not in self.sync_handlers:
+                self.sync_handlers.append((self.wrap_handler(func),func))
+        return func
 
-    async def dispatch_corofunction(self, func, threaded, sender, kwargs):
-        "wrap coroutine function to work async"
-        if asyncio.iscoroutinefunction(func):
-            return (sender, await func(sender, **kwargs))
-        elif threaded:
-            return (sender, await asyncio.to_thread(func, sender, **kwargs))
-        else:
-            return (sender, func(sender, **kwargs))
+    def emit(self,**kwargs):
+        self.check_signature(kwargs)
+        if len(self.async_handlers)>0:
+            return run_async(self.emit_async(**kwargs))
+        return [wrapper(handler,kwargs) for wrapper,handler in self.sync_handlers]
+    async def emit_async_generator(self,**kwargs):
+        self.check_signature(kwargs)        
+        for wrapper,handler in self.sync_handlers:
+            await asyncio.sleep(0)
+            yield wrapper(handler,kwargs)
+        for wrapper,handler in self.async_handlers:
+            yield await wrapper(handler,kwargs)
 
-    def _send(self, sender, dispatcher, kwargs):
-        output = []
-        print(self.name or '<anonymous>')
-        for func in self.listeners:
-            try:
-                print('   ', self.name,end='')
-                result = dispatcher(func, sender, kwargs)
-                output.append(result)
-                print(result)
-            except Exception as e:
-                raise
-        print('done')
-        return output
-
-    def send(self, *args, _threaded=False, **kwargs):
-        "Send message to all attached receivers"
-        if self.has_coroutine_listeners or _threaded:
-            return asyncio.run(self.send_async(*args, _threaded=_threaded, **kwargs))
-        def dispatcher(func, sender, kwargs):
-            return (func, func(sender, **kwargs))
-        return self._send(self.get_sender(args), dispatcher, kwargs)
-
-    async def send_async(self, *args, _threaded=True, **kwargs):
-        "Send message asynchronously"
-        sender = self.get_sender(args)
-        if self.has_coroutine_listeners or _threaded:
-            def dispatcher(func, sender, kwargs):
-                return self.dispatch_corofunction(func, _threaded, sender, **kwargs)
-            return await asyncio.gather(*self._send(sender, dispatcher, kwargs))
-        return self.send(*args, **kwargs)
+    async def emit_concurrent_generator(self,**kwargs):
+        self.check_signature(kwargs)
+        async_handlers=[asyncio.create_task(w(h,kwargs)) for w,h in self.async_handlers]
+        for h in self.sync_handlers:
+            await asyncio.sleep(0)
+            yield h(**kwargs)
+        for r in asyncio.as_completed(async_handlers):
+            yield await r
+    async def emit_async(self,**kwargs):
+        return [i async for i in self.emit_async_generator(**kwargs)]
+    async def emit_concurrent(self,**kwargs):
+        return [i async for i in self.emit_concurrent_generator(**kwargs)]
