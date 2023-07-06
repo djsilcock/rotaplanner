@@ -8,12 +8,10 @@ from calendar import MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY,SATURDAY,SUNDAY
 from datatypes import DutyCell
 
 from signals import signal
+from constraint_ctx import ConstraintContext
 
 if TYPE_CHECKING:
     from solver import GenericConfig
-
-
-Locations=('NONCLINICAL','ICU','THEATRE','LEAVE')
 
 
 clinical_duty_types = ('THEATRE', 'ICU')
@@ -21,30 +19,32 @@ apply_constraint=signal('apply_constraint')
 build_output=signal('build_output')
 register_urls=signal('register_urls')
 
-def allocated_for_duty(shift: str, day: date, staff: str, location: str):
-    "is allocated for a given duty"
-    return ('ALLOCATED_DUTY', shift, day, staff, location)
-
-def icu(shift: str, day: date, staff: str):
-    "An ICU daytime shift"
-    return allocated_for_duty(shift, day, staff, 'ICU')
-
-
-def theatre(shift: str, day: date, staff: str):
-    "Theatre shift"
-    return allocated_for_duty(shift, day, staff, 'THEATRE')
-
-def leave(shift: str, day: date, staff):
-    "is on leave"
-    return allocated_for_duty(shift, day, staff, 'LEAVE')
-
-def clinical(shift,day,staff):
-    "is clinical"
-    return ('CLINICAL',shift,day,staff)
-
-def nonclinical(shift,day,staff):
-    return ('NONCLINICAL',shift,day,staff)
-
+class CoreDuties:
+    def __init__(self,ctx:ConstraintContext):
+        self.ctx=ctx
+        ctx.config['coreduties']=self
+    @classmethod
+    def from_context(cls,ctx:ConstraintContext):
+        return ctx.config.setdefault('coreduties',cls(ctx))
+    def allocated_for_duty(self,shift: str, day: date, staff: str, location: str):
+        "is allocated for a given duty"
+        if location not in locations and location not in groups:
+            raise KeyError(f'{location} not recognised')
+        return self.ctx.dutystore[('ALLOCATED_DUTY', shift, day, staff, location)]
+    locations=('NC','ICU','THEATRE','LEAVE')
+    groups={
+        'CLINICAL':('THEATRE','ICU'),
+        'NONCLINICAL':('LEAVE','NC'),
+        'JOBPLANNED':('CLINICAL','LEAVE'),
+        'NOTJOBPLANNED':('TS','NC','LEAVE')
+    }
+    cover_requirements=[
+        *((day,shift,'ICU',"==",1) for day in range(7) for shift in ('am','pm','oncall')),
+        *((day,'oncall','THEATRE',"==",1) for day in range(7)),
+        *((day,shift,'THEATRE',"==",1) for day in (SATURDAY,SUNDAY) for shift in ('am','pm')),
+        *((day,shift,'THEATRE',">=",1) for day in range(5) for shift in ('am','pm'))
+    ]
+    
 
 @dataclass
 class CoreDutiesContext:
@@ -53,17 +53,12 @@ class CoreDutiesContext:
     nonclinical_duties: set[str] = field(default_factory=set)
     days: set[date] = field(default_factory=set)
 
-cover_requirements=[
-    *((day,shift,icu,"==",1) for day in range(7) for shift in ('am','pm','oncall')),
-    *((day,'oncall',theatre,"==",1) for day in range(7)),
-    *((day,shift,theatre,"==",1) for day in (SATURDAY,SUNDAY) for shift in ('am','pm')),
-    *((day,shift,theatre,">=",1) for day in range(5) for shift in ('am','pm'))
-]
 
 @apply_constraint.connect
-def required_coverage(ctx:'GenericConfig'):
+def required_coverage(ctx:ConstraintContext):
+    cdctx=CoreDuties.from_context(ctx)
     for day in ctx.days:
-        for (weekday,shift,dutytype,op,requirement) in cover_requirements:
+        for (weekday,shift,dutytype,op,requirement) in cdctx.cover_requirements:
             if day.weekday()==weekday:
                 oper={
                     "==":operator.eq,
@@ -72,46 +67,30 @@ def required_coverage(ctx:'GenericConfig'):
                     ">":operator.gt,
                     "<":operator.lt
                 }[op]
-                ctx.model.Add(oper(sum(ctx.dutystore[dutytype(shift, day, staff)]
+                ctx.model.Add(oper(sum(cdctx.dutystore[allocated_for_duty(shift, day, staff,dutytype)]
                     for staff in ctx.staff),requirement))
                 
 @apply_constraint.connect
-def core_duties(ctx: 'GenericConfig'):
+def core_duties(ctx: ConstraintContext):
     "No multitasking"
-    for day in ctx.days:
-        for shift in ctx.shifts:
+    cdctx=CoreDuties.from_context(ctx)
+    for day in ctx.core_config.days:
+        for shift in ctx.core_config.shifts:
             # one person can only be doing one thing at a time
-            for staff in ctx.staff:
+            for staff in ctx.core_config.staff:
                 ctx.model.Add(
-                    sum(ctx.dutystore[allocated_for_duty(shift, day, staff, duty_type)]
-                    for duty_type in Locations)==1)
-                clinical_duties=[ctx.dutystore[allocated_for_duty(
-                        shift, day, staff, duty)] for duty in clinical_duty_types]
-                is_clinical = ctx.dutystore[clinical(
-                        shift, day, staff)]
-                is_nonclinical=ctx.dutystore[nonclinical(shift,day,staff)]
-                ctx.model.Add(is_clinical==(1-is_nonclinical))
-                ctx.model.Add(sum(clinical_duties)+is_nonclinical==1)
+                    sum(cdctx.allocated_for_duty(shift, day, staff, duty_type)
+                    for duty_type in cdctx.locations)==1)
+                for group_name,grp in cdctx.groups.items():
+                    in_group=set(grp)
+                    not_in_group=set(locations)-set(grp)
+                    for loc in in_group:
+                        ctx.model.Add(sum(ctx.allocated_for_duty(shift,day,staff,loc) for loc in grp)>=1).OnlyEnforceIf(ctx.allocated_for_duty(shift,day,staff,group_name)==1)
+                        ctx.model.Add(sum(ctx.allocated_for_duty(shift,day,staff,loc) for loc in grp)==0).OnlyEnforceIf(ctx.allocated_for_duty(shift,day,staff,group_name)==0)
 
-@build_output.connect
-def builder(ctx, outputdict, solver):
-    "core duties output"
-    print('core_duties builder')
-    output=[]
-    for key,value in ctx.dutystore.items():
-        match key:
-            case ('ALLOCATED_DUTY',shift,day,staff,location):
-                if solver.Value(value):
-                    cell=outputdict[(staff,day)]
-                    assert isinstance(cell,DutyCell)
-                    if location == 'NONCLINICAL':
-                        cell.duties[shift].duty=None
-                    else:
-                        cell.duties[shift].duty=location
-            case ('TEMPLATE',key,year,week,staff):
-                if solver.Value(value):
-                    #print (key,year,week,staff)
-                    output.append((year,week,staff,key))
-    with open('output.txt','w') as f:
-        for y,w,s,k in sorted(output):
-            print(f'{y} {w} {s} {k}',file=f)
+    @ctx.signals.result.connect
+    def builder(ctx, staff,day,shift,sessionduty, solver):
+        "core duties output"
+        for loc in cdctx.locations:
+            if solver.Value(cdctx.allocated_for_duty(shift,day,staff,loc)):
+                sessionduty.duty=loc
