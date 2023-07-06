@@ -24,14 +24,15 @@ class SignalSet:
 
 class ConstraintContext:
     __protected_names=()
-    def __init__(self,/,model):
+    def __init__(self,/,model,core_config):
         super().__init__()
         self.model=model
+        self.core_config=core_config
         self.dutystore=DutyStore(model)
         self.config={}
         self.__runonce_cache={}
         self.signals=SignalSet()
-        self.__protected_names=('model','dutystore','signals','runonce','config')
+        self.__protected_names=('model','dutystore','signals','runonce','config',core_config)
     def __setattr__(self, __name: str, __value: Any) -> None:
         if __name in self.__protected_names:
             raise TypeError(f'cannot assign to {__name} after initialisation')
