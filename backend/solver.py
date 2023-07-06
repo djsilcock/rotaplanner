@@ -20,25 +20,6 @@ from datastore import DataStore
 
 # from constraints import get_all_constraint_classes
 
-solvers_queue = queue.Queue()
-solver_lock = Lock()
-
-
-
-@dataclasses.dataclass
-class GenericConfig:
-    "Generic config information"
-    initial_data: dict
-    days: list[date]
-    context: dict
-    dutystore: dict[tuple, cp_model.IntVar]
-    model: cp_model.CpModel
-    minimize_targets: list[cp_model.IntVar]
-    constraint_atoms: list[cp_model.IntVar]
-    shifts: tuple
-    staff: set[str]
-    locations: set[str]
-    condition: asyncio.Condition
 
 @dataclasses.dataclass
 class CoreConfig:
@@ -76,8 +57,8 @@ async def solve_async(datastore,config,progress_callback):
     model = cp_model.CpModel()
     solver = cp_model.CpSolver()
     data=datastore.data
-    ctx=cast(CoreContext,ConstraintContext(model=model))
-    ctx.core = CoreConfig(
+    ctx=ConstraintContext(model=model)
+    core_config = CoreConfig(
         days=sorted({d[1] for d in data}),
         minimize_targets=[],
         constraint_atoms=[],
@@ -85,19 +66,20 @@ async def solve_async(datastore,config,progress_callback):
         staff={n[0] for n in data},
         locations=set(('ICU', 'Theatre')),
     )
+    ctx.config['core']=core_config
 
     @ctx.signals.after_apply.connect
     def minimize_targets():
-        model.Minimize(sum(ctx.core.minimize_targets))
+        model.Minimize(sum(core_config.minimize_targets))
     await signal('apply_constraint').send_async(ctx=ctx,**config)
     await ctx.signals.after_apply.send_async()
 
     def process_result(solver):
         outputdict = {}
-        assert ctx.core.days is not None
-        for day in ctx.core.days: 
-            for staff in ctx.core.staff:
-                for shift in ctx.core.shifts:
+        assert core_config.days is not None
+        for day in core_config.days: 
+            for staff in core_config.staff:
+                for shift in core_config.shifts:
                     sd=SessionDuty()
                     ctx.signals.result.send(
                         staff=staff,
