@@ -57,29 +57,29 @@ async def solve_async(datastore,config,progress_callback):
     model = cp_model.CpModel()
     solver = cp_model.CpSolver()
     data=datastore.data
-    ctx=ConstraintContext(model=model)
-    core_config = CoreConfig(
-        days=sorted({d[1] for d in data}),
-        minimize_targets=[],
-        constraint_atoms=[],
-        shifts=('am', 'pm', 'oncall'),
-        staff={n[0] for n in data},
-        locations=set(('ICU', 'Theatre')),
-    )
-    ctx.config['core']=core_config
-
+    ctx=ConstraintContext(
+        model=model,
+        core_config = CoreConfig(
+            days=sorted({d[1] for d in data}),
+            minimize_targets=[],
+            constraint_atoms=[],
+            shifts=('am', 'pm', 'oncall'),
+            staff={n[0] for n in data},
+            locations=set(('ICU', 'Theatre')),
+        ))
+    
     @ctx.signals.after_apply.connect
     def minimize_targets():
-        model.Minimize(sum(core_config.minimize_targets))
+        model.Minimize(sum(ctx.core_config.minimize_targets))
     await signal('apply_constraint').send_async(ctx=ctx,**config)
     await ctx.signals.after_apply.send_async()
 
     def process_result(solver):
         outputdict = {}
-        assert core_config.days is not None
-        for day in core_config.days: 
-            for staff in core_config.staff:
-                for shift in core_config.shifts:
+        assert ctx.core_config.days is not None
+        for day in ctx.core_config.days: 
+            for staff in ctx.core_config.staff:
+                for shift in ctx.core_config.shifts:
                     sd=SessionDuty()
                     ctx.signals.result.send(
                         staff=staff,
