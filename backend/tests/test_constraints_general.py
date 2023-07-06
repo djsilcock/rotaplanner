@@ -3,7 +3,10 @@ def test_general():
     import constraints
     assert constraints is not None
 
+import contextlib
 import pytest
+import pytest_asyncio
+from backend.solver import async_solver_ctx
 from constraint_ctx import Signal,ConstraintContext
 import asyncio
 
@@ -15,9 +18,9 @@ def test_sync_signal():
     @signal1.connect
     def myfunc2(hello):
         return ('myfunc2',hello)
-    signal1.emit(hello='world')
+    signal1.send(hello='world')
     with pytest.raises(TypeError):
-        signal1.emit(bar='baz')
+        signal1.send(bar='baz')
 
 @pytest.mark.asyncio
 async def test_async_signal():
@@ -35,12 +38,12 @@ async def test_async_signal():
 
     async def emitter():
         with pytest.raises(TypeError):
-            signal2.emit(hello='async',world='flat')
-        await signal2.emit_async(hello='async',world='world')
-        await signal2.emit_concurrent(hello='concurrent',world='world')
-        async for s in signal2.emit_async_generator(hello='async gen',world='world'):
+            signal2.send(hello='async',world='flat')
+        await signal2.send_async(hello='async',world='world')
+        await signal2.send_concurrent(hello='concurrent',world='world')
+        async for s in signal2.async_generator(hello='async gen',world='world'):
             pass
-        async for s in signal2.emit_concurrent_generator(hello='concurrent gen',world='world'):
+        async for s in signal2.concurrent_generator(hello='concurrent gen',world='world'):
             pass
             
 
@@ -51,3 +54,14 @@ def test_constraintctx():
     ctx.otherattrib=77
     with pytest.raises(TypeError):
         ctx.model=99
+
+@pytest.mark.asyncio
+async def test_mockcalled():
+    from unittest.mock import Mock
+    m=Mock()
+    m()
+    m.assert_called()
+    app={}
+    async with contextlib.asynccontextmanager(async_solver_ctx)(app):
+        assert 'solve' in app
+        

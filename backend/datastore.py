@@ -1,17 +1,19 @@
 from dataclasses import asdict
+from typing import Iterable
 from warnings import warn
 from datatypes import SessionDuty
-from storage import load_data,import_clw_csv,save_data
+import storage as default_storage
 from datetime import date, timedelta
 
 
 class DataStore:
-    def __init__(self):
+    def __init__(self,storage=default_storage):
         self.data:dict[tuple,SessionDuty]={}
         self.names=[]
         self.dates=[]
         self.sessions=('am','pm','eve','night')
         self.pubhols=set()
+        self.storage=storage
     def update_data(self, data, overwrite=False):
         """update duty data in sheet
         data: dict of (name,date):DutyCell"""
@@ -75,13 +77,13 @@ class DataStore:
         
     def save_data(self):
         "Save data to disc"
-        save_data(self.data)
+        self.storage.save_data(self.data)
     def load_data(self):
         "load from file"
         try:
-            self.update_data(load_data(), overwrite=True)
+            self.update_data(self.storage.load_data(), overwrite=True)
         except FileNotFoundError:
             warn("Savefile not found")
-            pass
-    def import_clw_csv(self,csvfile):
-        self.update_data(import_clw_csv(csvfile))
+    def import_clw_csv(self,csvfile:Iterable[str]):
+        "import from csv file"
+        self.update_data(self.storage.import_clw_csv(csvfile))

@@ -7,8 +7,6 @@ if TYPE_CHECKING:
     from ortools.sat.python import cp_model
 
     
-            
-    
 class DutyStore(dict):
     "creates cp_model.BoolVar instances"
     def __init__(self, model: 'cp_model.CpModel'):
@@ -38,13 +36,10 @@ class ConstraintContext:
             raise TypeError(f'cannot assign to {__name} after initialisation')
         return super().__setattr__(__name,__value)
     def runonce(self,func):
+        "run wrapped function only once"
         try:
             return self.__runonce_cache[id(func)]
         except KeyError:
             retval=func(self)
             self.__runonce_cache[id(func)]=retval
             return retval
-    
-
-
-
