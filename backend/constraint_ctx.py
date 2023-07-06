@@ -28,9 +28,10 @@ class ConstraintContext:
         super().__init__()
         self.model=model
         self.dutystore=DutyStore(model)
+        self.config={}
         self.__runonce_cache={}
         self.signals=SignalSet()
-        self.__protected_names=('model','dutystore','signals','runonce')
+        self.__protected_names=('model','dutystore','signals','runonce','config')
     def __setattr__(self, __name: str, __value: Any) -> None:
         if __name in self.__protected_names:
             raise TypeError(f'cannot assign to {__name} after initialisation')
