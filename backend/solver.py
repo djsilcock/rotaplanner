@@ -4,11 +4,9 @@
 
 from contextlib import suppress
 from datetime import date
-from threading import Lock
-from typing import TYPE_CHECKING, Callable, cast
+from typing import Callable
 import dataclasses
 import asyncio
-import queue
 
 
 from ortools.sat.python import cp_model
@@ -32,7 +30,6 @@ class CoreConfig:
     locations: set[str]
 
 
-
 class SolutionPrinter(cp_model.CpSolverSolutionCallback):
     """Print intermediate solutions (objective, variable values, time)."""
 
@@ -44,22 +41,19 @@ class SolutionPrinter(cp_model.CpSolverSolutionCallback):
         "solution callback"
         self.callback(self)
 
-class CoreContext(ConstraintContext):
-    core:CoreConfig
 
-async def solve_async(datastore,config,progress_callback):
+async def solve_async(datastore, config, result_queue:asyncio.Queue):
     """Solve rota
     data: initial duty data as dict of (name,date):duties
     config: configuration for constraints
     callback:feed results back to main thread
     """
-    print('Setting up...')
     model = cp_model.CpModel()
     solver = cp_model.CpSolver()
-    data=datastore.data
-    ctx=ConstraintContext(
+    data = datastore.data
+    ctx = ConstraintContext(
         model=model,
-        core_config = CoreConfig(
+        core_config=CoreConfig(
             days=sorted({d[1] for d in data}),
             minimize_targets=[],
             constraint_atoms=[],
@@ -67,79 +61,75 @@ async def solve_async(datastore,config,progress_callback):
             staff={n[0] for n in data},
             locations=set(('ICU', 'Theatre')),
         ))
-    
-    @ctx.signals.after_apply.connect
-    def minimize_targets():
-        model.Minimize(sum(ctx.core_config.minimize_targets))
-    await signal('apply_constraint').send_async(ctx=ctx,**config)
-    await ctx.signals.after_apply.send_async()
 
-    def process_result(solver):
+    
+        
+    await ctx.apply_constraints()
+    model.Minimize(sum(ctx.core_config.minimize_targets))
+
+    async def process_result(solution):
         outputdict = {}
         assert ctx.core_config.days is not None
-        for day in ctx.core_config.days: 
+        for day in ctx.core_config.days:
             for staff in ctx.core_config.staff:
                 for shift in ctx.core_config.shifts:
-                    sd=SessionDuty()
-                    ctx.signals.result.send(
+                    sd = SessionDuty()
+                    await ctx.result(
                         staff=staff,
                         day=day,
                         shift=shift,
-                        sessionduty=sd, 
-                        solver=solver)
-                    outputdict[(day,staff,shift)]=sd
-        return outputdict
+                        sessionduty=sd,
+                        solution=solution
+                        )
+                    outputdict[(day, staff, shift)] = sd
+        await result_queue.put(outputdict)
 
-    def post_result(solver: cp_model.CpSolver):
-        print('callback')
-        result = process_result(solver)
-        print(solver.ObjectiveValue())
-        progress_callback(result)
+    loop=asyncio.get_running_loop()
+    def post_result(solution: cp_model.CpSolver|cp_model.CpSolverSolutionCallback):
+        asyncio.run_coroutine_threadsafe(process_result(solution),loop)
 
     print('starting solver')
     printer = SolutionPrinter(post_result)
     try:
-        await asyncio.to_thread(lambda:solver.Solve(model, printer))
+        await asyncio.to_thread(lambda: solver.Solve(model, printer))
     finally:
         solver.StopSearch()
     status = solver.StatusName()
     if status in ['FEASIBLE', 'OPTIMAL']:
-        post_result(solver)
+        await process_result(solver)
     return status
-        
-async def solver_runner(solver_queue:asyncio.Queue[tuple|None]):
-    current_solver:asyncio.Task|None=None
+
+
+async def solver_runner(solver_queue: asyncio.Queue[tuple | None]):
+    "background task to run solver"
+    current_solver: asyncio.Task | None = None
     try:
         while True:
-            solver_args=await solver_queue.get()
+            solver_args = await solver_queue.get()
             if current_solver:
                 current_solver.cancel()
-            with suppress(asyncio.CancelledError):
-                await current_solver
+                with suppress(asyncio.CancelledError):
+                    await current_solver
             if solver_args is not None:
-                current_solver=asyncio.create_task(solve_async(*solver_args))
+                current_solver = asyncio.create_task(solve_async(*solver_args))
     finally:
         if current_solver:
             current_solver.cancel()
-            
-
 
 
 async def async_solver_ctx(app):
-    solver_queue=asyncio.Queue()
-    runner=asyncio.create_task(solver_runner(solver_queue))
+    "set up solver context on aiohttp app"
+    solver_queue = asyncio.Queue()
+    runner = asyncio.create_task(solver_runner(solver_queue))
+
     async def solve(
         datastore: DataStore,
         config: dict,
         progress_callback: Callable
     ):
-        await solver_queue.put((datastore,config,progress_callback))
-    app['solve']=solve
+        await solver_queue.put((datastore, config, progress_callback))
+    app['solve'] = solve
     yield
     runner.cancel()
     with suppress(asyncio.CancelledError):
         await runner
-
-
-
-

@@ -1,9 +1,12 @@
 """contains rules to constrain the model"""
 from collections import deque
-from datetime import timedelta
-from typing import TYPE_CHECKING
+from dataclasses import dataclass
+from datetime import date, timedelta
+from enum import Enum, StrEnum
+from typing import TYPE_CHECKING, Literal
 from calendar import MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
 from backend.constraint_ctx import ConstraintContext
+from backend.constraints import acceptable_duties
 
 from constraints.core_duties import CoreDuties
 from config.jobplans import jobplans,trainee_default
@@ -43,8 +46,22 @@ class Getters:
     def timeback(ctx: 'GenericConfig', shift, day, staff):
         return ctx.dutystore[leave(shift, day, staff)]
 
+AnchorType=Literal['MONTH']|Literal['WEEK']
 
+class TemplateEntry:
+    week:int
+    day:int
+    acceptable_duties:set
 
+class Template:
+    anchor_date:date
+    anchor_type:AnchorType
+    repeat_period:int
+    template_entries=list[TemplateEntry]
+    def __init__(self,anchor_date:date,anchor_type:AnchorType,template_entries:list[TemplateEntry|dict],repeat_period:int|None=None):
+        pass
+    def thing(self):
+        self.__init__(anchor_type='')
 
 
 def template_var(ctx, template, day, staff):
