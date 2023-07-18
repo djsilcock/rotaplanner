@@ -13,7 +13,6 @@ from ortools.sat.python import cp_model
 from constraint_ctx import ConstraintContext
 from datatypes import SessionDuty
 
-from signals import signal
 from datastore import DataStore
 
 # from constraints import get_all_constraint_classes
@@ -48,11 +47,9 @@ async def solve_async(datastore, config, result_queue:asyncio.Queue):
     config: configuration for constraints
     callback:feed results back to main thread
     """
-    model = cp_model.CpModel()
-    solver = cp_model.CpSolver()
+
     data = datastore.data
     ctx = ConstraintContext(
-        model=model,
         core_config=CoreConfig(
             days=sorted({d[1] for d in data}),
             minimize_targets=[],
@@ -60,12 +57,10 @@ async def solve_async(datastore, config, result_queue:asyncio.Queue):
             shifts=('am', 'pm', 'oncall'),
             staff={n[0] for n in data},
             locations=set(('ICU', 'Theatre')),
-        ))
+        ),**config)
 
-    
-        
     await ctx.apply_constraints()
-    model.Minimize(sum(ctx.core_config.minimize_targets))
+    ctx.model.Minimize(sum(ctx.core_config.minimize_targets))
 
     async def process_result(solution):
         outputdict = {}
@@ -90,8 +85,9 @@ async def solve_async(datastore, config, result_queue:asyncio.Queue):
 
     print('starting solver')
     printer = SolutionPrinter(post_result)
+    solver = cp_model.CpSolver()
     try:
-        await asyncio.to_thread(lambda: solver.Solve(model, printer))
+        await asyncio.to_thread(lambda: solver.Solve(ctx.model, printer))
     finally:
         solver.StopSearch()
     status = solver.StatusName()

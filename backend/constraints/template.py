@@ -1,13 +1,13 @@
 """contains rules to constrain the model"""
-from collections import deque
+from collections import deque, namedtuple
 from dataclasses import dataclass
 from datetime import date, timedelta
 from enum import Enum, StrEnum
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal, NamedTuple,Self
 from calendar import MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
-from backend.constraint_ctx import ConstraintContext
-from backend.constraints import acceptable_duties
-
+from backend.constraint_ctx import DutyStore
+from constraint_ctx import ConstraintContext,BaseConstraintConfig
+from constraints import acceptable_duties
 from constraints.core_duties import CoreDuties
 from config.jobplans import jobplans,trainee_default
 
@@ -29,23 +29,6 @@ def expand(template, head=None):
     yield head
 
 
-class Getters:
-    @staticmethod
-    def icu(ctx, shift, day, staff):
-        return ctx.dutystore[icu(shift, day, staff)]
-    @staticmethod
-    def theatre(ctx, shift, day, staff):
-        return ctx.dutystore[theatre(shift, day, staff)]
-    @staticmethod
-    def get_clinical(ctx: 'GenericConfig', shift, day, staff):
-        return ctx.dutystore[clinical(shift, day, staff)]
-    @staticmethod
-    def nonclinical(ctx: 'GenericConfig', shift, day, staff):
-        return ctx.dutystore[nonclinical(shift, day, staff)]
-    @staticmethod
-    def timeback(ctx: 'GenericConfig', shift, day, staff):
-        return ctx.dutystore[leave(shift, day, staff)]
-
 AnchorType=Literal['MONTH']|Literal['WEEK']
 
 class TemplateEntry:
@@ -53,28 +36,75 @@ class TemplateEntry:
     day:int
     acceptable_duties:set
 
+class BoundTemplateEntry(NamedTuple):
+    date:date
+    session:str
+    duty:str
+
+
+class BoundTemplate(NamedTuple):
+    staff_member:str
+    template_entries:tuple[BoundTemplateEntry,...]
+
+
 class Template:
+    template_id:Any
     anchor_date:date
+    start_date:date
+    end_date:date
     anchor_type:AnchorType
     repeat_period:int
-    template_entries=list[TemplateEntry]
+    staff_members:set
+    template_entries:list[TemplateEntry]
     def __init__(self,anchor_date:date,anchor_type:AnchorType,template_entries:list[TemplateEntry|dict],repeat_period:int|None=None):
-        pass
-    def thing(self):
-        self.__init__(anchor_type='')
+        self._bindings={}
+    def bind(self,day,staff) ->BoundTemplate|None:
+        if day in self._bindings:
+            return self._bindings[day,staff]
+        if day<self.start_date:
+            return None
+        if day>self.end_date:
+            return None
+        if day==self.anchor_date:
+            if self.anchor_type=='MONTH':
+                nth_of_month=self.anchor_date.day//7
+                day_of_
+
+                MTWTFSSMTW    MTWTFSSMTW
+                123456789A    3456789ABC
+        
+
 
 
 def template_var(ctx, template, day, staff):
     return ctx.dutystore[('TEMPLATE', repr(template), day.isocalendar().year, day.isocalendar().week, staff)]
 
 
-@signal('apply_constraint').connect
-def apply_templates(ctx: ConstraintContext):
-    cdctx=CoreDuties.from_context(ctx)
-    for day in ctx.days:
+class TemplateConstraint(BaseConstraintConfig):
+    dutystore:DutyStore[BoundTemplate]
+    def apply_constraint(self):
+        core_duties=CoreDuties.from_context(self.ctx)
+        core=self.ctx.core_config
+        bound_templates:dict[tuple[str,date,str],set]={}
+        templates:list[Template]=[]
+        for day in core.days:
+            for template in templates:
+                for staff in template.staff_members:
+                    if (bound:=template.bind(day,staff)):
+                        for entry in bound.template_entries:
+                            bound_templates.setdefault((staff,entry.date,entry.session),set()).add(bound)
+        for day in core.days:
+            for staff in core.staff:
+                for shift in core.shifts:
+                    if (staff,day,shift) in bound_templates:
+                    
+
+
+
+
         enforced = True
-        for staff in ctx.staff:
-            for shift in ctx.shifts:
+        for staff in core.staff:
+            for shift in core.shifts:
                 valid_templates = []
                 jp = jobplans.get(staff, trainee_default)
                 for template_or_templates in jp:
