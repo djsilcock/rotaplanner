@@ -1,126 +1,111 @@
 """contains rules to constrain the model"""
-from collections import deque, namedtuple
 from dataclasses import dataclass
 from datetime import date, timedelta
-from enum import Enum, StrEnum
-from typing import TYPE_CHECKING, Any, Literal, NamedTuple,Self
-from calendar import MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
-from backend.constraint_ctx import DutyStore
-from constraint_ctx import ConstraintContext,BaseConstraintConfig
-from constraints import acceptable_duties
+from typing import Any, Literal, NamedTuple
+from constraint_ctx import DutyStore,BaseConstraintConfig
 from constraints.core_duties import CoreDuties
-from config.jobplans import jobplans,trainee_default
-
-from signals import signal
-
-
-def expand(template, head=None):
-    if head is None:
-        head = []
-    tmp = deque(template)
-    while tmp:
-        a, b, c = tmp.popleft()
-        if isinstance(a, tuple):
-            for x in a:
-                yield from expand([(x, b, c), *tmp], head[:])
-            return
-        else:
-            head.append((a, b, c))
-    yield head
+from constraints.date_utils import is_cycle, is_nth_of_month
+from config.jobplans import jobplans, trainee_default
 
 
-AnchorType=Literal['MONTH']|Literal['WEEK']
+AnchorType = Literal['MONTH'] | Literal['WEEK']
+
 
 class TemplateEntry:
-    week:int
-    day:int
-    acceptable_duties:set
+    "entry in template config"
+    date_offset: int
+    session: str
+    tag: str
+
 
 class BoundTemplateEntry(NamedTuple):
-    date:date
-    session:str
-    duty:str
+    "immutable entry in bound template"
+    date: date
+    session: str
+    tag: str
 
 
 class BoundTemplate(NamedTuple):
-    staff_member:str
-    template_entries:tuple[BoundTemplateEntry,...]
+    "immutable tuple of template bound to date,session, and person"
+    staff_member: str
+    template_id: Any
+    anchor_date: date
+    template_entries: tuple[BoundTemplateEntry, ...]
 
 
+@dataclass
 class Template:
-    template_id:Any
-    anchor_date:date
-    start_date:date
-    end_date:date
-    anchor_type:AnchorType
-    repeat_period:int
-    staff_members:set
-    template_entries:list[TemplateEntry]
-    def __init__(self,anchor_date:date,anchor_type:AnchorType,template_entries:list[TemplateEntry|dict],repeat_period:int|None=None):
-        self._bindings={}
-    def bind(self,day,staff) ->BoundTemplate|None:
-        if day in self._bindings:
-            return self._bindings[day,staff]
-        if day<self.start_date:
+    "configuration class for template"
+    template_id: Any
+    anchor_date: date
+    start_date: date
+    end_date: date
+    anchor_type: AnchorType
+    repeat_period: int
+    staff_members: set
+    template_entries: list[TemplateEntry]
+
+    def bind(self, day, staff) -> BoundTemplate | None:
+        "attempt to bind to day and staff"
+        if day < self.start_date:
             return None
-        if day>self.end_date:
+        if day > self.end_date:
             return None
-        if day==self.anchor_date:
-            if self.anchor_type=='MONTH':
-                nth_of_month=self.anchor_date.day//7
-                day_of_
+        if self.anchor_type == 'MONTH':
+            if not is_nth_of_month(day, self.anchor_date):
+                return None
+        if self.anchor_type == 'WEEK':
+            if not is_cycle(self.anchor_date, day, self.repeat_period):
+                return None
+        return BoundTemplate(
+            staff_member=staff,
+            template_id=self.template_id,
+            anchor_date=day,
+            template_entries=tuple(BoundTemplateEntry(
+                date=day+timedelta(days=te.date_offset),
+                session=te.session,
+                tag=te.tag) for te in self.template_entries
+            ))
 
-                MTWTFSSMTW    MTWTFSSMTW
-                123456789A    3456789ABC
-        
 
-
-
-def template_var(ctx, template, day, staff):
-    return ctx.dutystore[('TEMPLATE', repr(template), day.isocalendar().year, day.isocalendar().week, staff)]
+class BoundTemplateKey(NamedTuple):
+    "namedtuple for internal use"
+    staff: str
+    day: date
+    session: str
+    tag: str
 
 
 class TemplateConstraint(BaseConstraintConfig):
-    dutystore:DutyStore[BoundTemplate]
+    "applies templates to rota"
+    dutystore: DutyStore[BoundTemplate]
+    templates: list[Template]
+
+    def configure(self):
+        self.templates = []
+        # TODO: implement loading config
+
     def apply_constraint(self):
-        core_duties=CoreDuties.from_context(self.ctx)
-        core=self.ctx.core_config
-        bound_templates:dict[tuple[str,date,str],set]={}
-        templates:list[Template]=[]
+        core_duties = CoreDuties.from_context(self.ctx)
+        core = self.ctx.core_config
+        bound_templates: dict[BoundTemplateKey, set[BoundTemplate]] = {}
+        self.dutystore = DutyStore(self.ctx.model)
         for day in core.days:
-            for template in templates:
+            for template in self.templates:
                 for staff in template.staff_members:
-                    if (bound:=template.bind(day,staff)):
+                    if (bound := template.bind(day, staff)):
                         for entry in bound.template_entries:
-                            bound_templates.setdefault((staff,entry.date,entry.session),set()).add(bound)
+                            key = BoundTemplateKey(
+                                staff, entry.date, entry.session, entry.tag)
+                            bound_templates.setdefault(key, set()).add(bound)
         for day in core.days:
             for staff in core.staff:
                 for shift in core.shifts:
-                    if (staff,day,shift) in bound_templates:
-                    
-
-
-
-
-        enforced = True
-        for staff in core.staff:
-            for shift in core.shifts:
-                valid_templates = []
-                jp = jobplans.get(staff, trainee_default)
-                for template_or_templates in jp:
-                    for template in expand(template_or_templates):
-                        for template_entry in template:
-                            duty, weekday, dutyshift = template_entry
-                            weekoffset = weekday//7
-                            weekday = weekday-7*weekoffset
-                            cotw = template_var(
-                                ctx, template, day-timedelta(days=weekoffset*-7), staff)
-                            if day.weekday() == weekday and shift == dutyshift:
-                                if template not in valid_templates:
-                                    valid_templates.append(template)
-                                rule = ctx.model.Add(getattr(Getters, duty)(
-                                    ctx, shift, day, staff) == 1)
-                                rule.OnlyEnforceIf(cotw)
-                assert len(valid_templates) > 0
-                ctx.model.Add(sum(template_var(ctx, cotw_key, day, staff)
-                              for cotw_key in valid_templates) >= 1)
+                    for tag in (*core_duties.locations, *core_duties.tags):
+                        key = BoundTemplateKey(staff, day, shift, tag)
+                        if key in bound_templates:
+                            self.model.Add(
+                                sum(self.dutystore[bound] for bound in bound_templates[key]) > 0)
+                        else:
+                            self.model.Add(core_duties.allocated_for_duty(
+                                shift, day, staff, tag) == 0)
