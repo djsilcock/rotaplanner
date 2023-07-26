@@ -5,29 +5,47 @@ from datetime import date, timedelta
 from datatypes import SessionDuty
 import storage as default_storage
 
+storages={'default':default_storage}
 
 class DataStore:
-    def __init__(self, storage=default_storage):
+    def __init__(self, storage='default'):
         self.data: dict[tuple, SessionDuty] = {}
-        self.names = []
         self.dates = []
         self.sessions = ('am', 'pm', 'eve', 'night')
-        self.pubhols = set()
         self.storage = storage
+        self.config = {}
+
+    @property
+    def names(self):
+        return self.config.get(None,{}).get('names',())
+    
+    @property
+    def pubhols(self):
+        return tuple(self.config.get(None,{}).get('pubhols',()))
+    
+    def get_storage_class(self):
+        return storages[self.storage]
+    
+    def update_config(self,config:dict,overwrite=False):
+        "update configuration information"
+        if overwrite:
+            self.config=config.copy()
+        else:
+            self.config.update(config)
 
     def update_data(self, data, overwrite=False):
         """update duty data in sheet
-        data: dict of (name,date):DutyCell"""
+        data: dict of (name,date,session):SessionDuty"""
+
         if overwrite:
             self.data.clear()
-        self.data.update(data)
+        self.data.update({key:val if isinstance(val,SessionDuty) else SessionDuty(**val) for key,val in data.items()})
         mindate = min((key[1] for key in self.data),
                       default=date.today())
         maxdate = max((key[1] for key in self.data),
                       default=date.today())
         self.dates = [mindate+timedelta(days=i)
                       for i in range((maxdate-mindate).days+1)]
-        self.names = sorted({d[0] for d in self.data})
         for day in self.dates:
             for name in self.names:
                 for sess in self.sessions:
@@ -67,7 +85,7 @@ class DataStore:
     def delflag(self, name, d, session, flag):
         try:
             cell = self.data[(name, d, session)]
-            cell.flags.remove(flag)
+            cell.flags.discard(flag)
         except KeyError:
             return
 
@@ -78,14 +96,23 @@ class DataStore:
         except KeyError:
             return
 
+    def set_public_holiday(self,_date,is_holiday=True):
+        pubhols:set[date]=self.config.setdefault('pubhols',set())
+        if is_holiday:
+            pubhols.add(_date)
+        else:
+            pubhols.discard(_date)
+
     def save_data(self):
         "Save data to disc"
-        self.storage.save_data(self.data)
+        self.get_storage_class().save_data(self)
 
     def load_data(self):
         "load from file"
         try:
-            self.update_data(self.storage.load_data(), overwrite=True)
+            newfile=self.get_storage_class().load_data()
+            self.data=newfile.data
+            self.config=newfile.config
         except FileNotFoundError:
             warn("Savefile not found")
 

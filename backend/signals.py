@@ -52,12 +52,15 @@ class Signal:
                 self.sync_handlers.append((self._wrap_handler(func),func))
         return func
 
-    def send(self,**kwargs):
+    def _send(self,**kwargs):
         "Call registered handlers"
         self._check_signature(kwargs)
         if len(self.async_handlers)>0:
             raise TypeError('cannot run async handler synchronously')
         return [wrapper(handler,kwargs) for wrapper,handler in self.sync_handlers]
+    def send(self,**kwargs):
+        return list(self._send(**kwargs))
+    
     async def async_generator(self,**kwargs):
         "Asynchronously iterate handlers"
         self._check_signature(kwargs)        
@@ -70,10 +73,10 @@ class Signal:
     async def concurrent_generator(self,**kwargs):
         "Call handlers concurrently and iterate responses"
         self._check_signature(kwargs)
-        async_handlers=[asyncio.create_task(wrapper(handler,kwargs)) for wrapper,handler in self.async_handlers]
         for handler in self.sync_handlers:
             await asyncio.sleep(0)
             yield handler(**kwargs)
+        async_handlers=[asyncio.create_task(wrapper(handler,kwargs)) for wrapper,handler in self.async_handlers]
         for result in asyncio.as_completed(async_handlers):
             yield await result
     async def send_async(self,**kwargs):
@@ -82,3 +85,13 @@ class Signal:
     async def send_concurrent(self,**kwargs):
         "Call handlers concurrently"
         return [i async for i in self.concurrent_generator(**kwargs)]
+    def first(self,**kwargs):
+        for r in self._send(**kwargs):
+            if r is not None:
+                return r
+    async def first_async(self,**kwargs):
+        async for r in self.async_generator(**kwargs):
+            if r is not None:
+                return r
+            
+

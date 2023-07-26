@@ -16,11 +16,11 @@ def import_clw_csv(csvfile):
 
 def save_data(data):
     "Save data to disc"
-    with open('savefile', 'wb') as f:
+    with open('datafile', 'wb') as f:
         pickle.dump(data, f)
 
 
 def load_data():
     "load from file"
-    with open('savefile', 'rb') as f:
+    with open('datafile', 'rb') as f:
         return pickle.load(f)
