@@ -1,6 +1,6 @@
 "constraint context"
 from inspect import isawaitable
-from typing import TYPE_CHECKING,Self,Generic, Type,TypeVar
+from typing import TYPE_CHECKING,Self,Generic,TypeVar
 from ortools.sat.python import cp_model
 
 from datatypes import SessionDuty
@@ -27,15 +27,13 @@ _registered_constraints=dict()
 class BaseConstraintConfig():
     "Base constraint class"
     constraint_name=None
-    _ctx=None
-    def __init__(self,ctx:'ConstraintContext'|None=None):
-        if ctx:
-            self._ctx=ctx
-            if self.constraint_name is not None:
-                if self.constraint_name in ctx.constraints:
-                    raise TypeError(f'{self.constraint_name} already registered for this context')
-                ctx.constraints[self.constraint_name]=self
-                self.configure()
+    def __init__(self,ctx:'ConstraintContext'):
+        if self.constraint_name is not None:
+            if self.constraint_name in ctx.constraints:
+                raise TypeError(f'{self.constraint_name} already registered for this context')
+            ctx.constraints[self.constraint_name]=self
+            self.ctx=ctx
+            self.configure()
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
         if cls.constraint_name is not None:
@@ -44,13 +42,7 @@ class BaseConstraintConfig():
             _registered_constraints[cls.constraint_name]=cls
     def configure(self):
         "configuration options for constraint"
-    
-    @property
-    def ctx(self) -> 'ConstraintContext':
-        "constraint context"
-        if self._ctx is None:
-            raise ValueError('not registered to a constraint context')
-        return self._ctx
+
     @property
     def model(self) -> cp_model.CpModel:
         "return currently used model"
@@ -74,15 +66,10 @@ class BaseConstraintConfig():
         "modify result sessionduty inplace"
 
     @classmethod
-    def from_frontend_json(cls,json_config) -> Self:
-        "process json config from frontend"
+    def validate_frontend_json(cls,json_config,old_config):
+        "validate json config from frontend"
         raise NotImplementedError
-    @classmethod
-    def get_ui_config(cls,datastore):
-        "get ui config for given request"
-    def save_config(self,datastore):
-        "save config to datastore"
-    
+
 
 class ConstraintContext:
     """Constraint context"""
@@ -107,25 +94,30 @@ class ConstraintContext:
     async def apply_constraints(self):
         "apply all constraints"
         constraint_results=[
-            cons.from_context(self).apply_constraint() 
+            cons.from_context(self).apply_constraint()
             for cons in get_registered_constraints().values()]
-        for r in constraint_results:
-            if isawaitable(r):
-                await r
+        for result in constraint_results:
+            if isawaitable(result):
+                await result
     async def result(self,solution):
         "generate result from solution"
         outputdict = {}
         for day in self.core_config.days:
             for staff in self.core_config.staff:
                 for shift in self.core_config.shifts:
-                    sessionduty = SessionDuty()    
+                    sessionduty = SessionDuty()
                     for cons in self.constraints.values():
-                        r=cons.result(staff,day,shift,sessionduty,solution)
-                        if isawaitable(r):
-                            await r
+                        result=cons.result(staff,day,shift,sessionduty,solution)
+                        if isawaitable(result):
+                            await result
                     outputdict[(day, staff, shift)] = sessionduty
-        
+        return outputdict
 
 def get_registered_constraints() ->dict[str,BaseConstraintConfig]:
     "return list of all registered constraints"
     return dict(_registered_constraints)
+
+def validate_json_config(json_config:dict,old_config:dict):
+    "validate json form from frontend"
+    constraint_class:BaseConstraintConfig=_registered_constraints[json_config['constraint_name']]
+    return constraint_class.validate_frontend_json(json_config,old_config)
