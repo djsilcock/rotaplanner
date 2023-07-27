@@ -1,4 +1,4 @@
-from enum import IntEnum,IntFlag,auto
+from enum import IntEnum,IntFlag
 
 class Locations(IntEnum):
     ICU=1

@@ -25,9 +25,9 @@
     mod
   ));
 
-  // ../.yarn/cache/react-npm-18.2.0-1eae08fee2-88e38092da.zip/node_modules/react/cjs/react.development.js
+  // .yarn/cache/react-npm-18.2.0-1eae08fee2-88e38092da.zip/node_modules/react/cjs/react.development.js
   var require_react_development = __commonJS({
-    "../.yarn/cache/react-npm-18.2.0-1eae08fee2-88e38092da.zip/node_modules/react/cjs/react.development.js"(exports, module) {
+    ".yarn/cache/react-npm-18.2.0-1eae08fee2-88e38092da.zip/node_modules/react/cjs/react.development.js"(exports, module) {
       "use strict";
       if (true) {
         (function() {
@@ -1898,9 +1898,9 @@
     }
   });
 
-  // ../.yarn/cache/react-npm-18.2.0-1eae08fee2-88e38092da.zip/node_modules/react/index.js
+  // .yarn/cache/react-npm-18.2.0-1eae08fee2-88e38092da.zip/node_modules/react/index.js
   var require_react = __commonJS({
-    "../.yarn/cache/react-npm-18.2.0-1eae08fee2-88e38092da.zip/node_modules/react/index.js"(exports, module) {
+    ".yarn/cache/react-npm-18.2.0-1eae08fee2-88e38092da.zip/node_modules/react/index.js"(exports, module) {
       "use strict";
       if (false) {
         module.exports = null;
@@ -1910,9 +1910,9 @@
     }
   });
 
-  // ../.yarn/cache/scheduler-npm-0.23.0-a379a6bc3b-d79192eeaa.zip/node_modules/scheduler/cjs/scheduler.development.js
+  // .yarn/cache/scheduler-npm-0.23.0-a379a6bc3b-d79192eeaa.zip/node_modules/scheduler/cjs/scheduler.development.js
   var require_scheduler_development = __commonJS({
-    "../.yarn/cache/scheduler-npm-0.23.0-a379a6bc3b-d79192eeaa.zip/node_modules/scheduler/cjs/scheduler.development.js"(exports) {
+    ".yarn/cache/scheduler-npm-0.23.0-a379a6bc3b-d79192eeaa.zip/node_modules/scheduler/cjs/scheduler.development.js"(exports) {
       "use strict";
       if (true) {
         (function() {
@@ -2360,9 +2360,9 @@
     }
   });
 
-  // ../.yarn/cache/scheduler-npm-0.23.0-a379a6bc3b-d79192eeaa.zip/node_modules/scheduler/index.js
+  // .yarn/cache/scheduler-npm-0.23.0-a379a6bc3b-d79192eeaa.zip/node_modules/scheduler/index.js
   var require_scheduler = __commonJS({
-    "../.yarn/cache/scheduler-npm-0.23.0-a379a6bc3b-d79192eeaa.zip/node_modules/scheduler/index.js"(exports, module) {
+    ".yarn/cache/scheduler-npm-0.23.0-a379a6bc3b-d79192eeaa.zip/node_modules/scheduler/index.js"(exports, module) {
       "use strict";
       if (false) {
         module.exports = null;
@@ -2372,9 +2372,9 @@
     }
   });
 
-  // ../.yarn/__virtual__/react-dom-virtual-4c2f1381fe/0/cache/react-dom-npm-18.2.0-dd675bca1c-7d323310be.zip/node_modules/react-dom/cjs/react-dom.development.js
+  // .yarn/__virtual__/react-dom-virtual-99918a025c/0/cache/react-dom-npm-18.2.0-dd675bca1c-7d323310be.zip/node_modules/react-dom/cjs/react-dom.development.js
   var require_react_dom_development = __commonJS({
-    "../.yarn/__virtual__/react-dom-virtual-4c2f1381fe/0/cache/react-dom-npm-18.2.0-dd675bca1c-7d323310be.zip/node_modules/react-dom/cjs/react-dom.development.js"(exports) {
+    ".yarn/__virtual__/react-dom-virtual-99918a025c/0/cache/react-dom-npm-18.2.0-dd675bca1c-7d323310be.zip/node_modules/react-dom/cjs/react-dom.development.js"(exports) {
       "use strict";
       if (true) {
         (function() {
@@ -23463,9 +23463,9 @@
     }
   });
 
-  // ../.yarn/__virtual__/react-dom-virtual-4c2f1381fe/0/cache/react-dom-npm-18.2.0-dd675bca1c-7d323310be.zip/node_modules/react-dom/index.js
+  // .yarn/__virtual__/react-dom-virtual-99918a025c/0/cache/react-dom-npm-18.2.0-dd675bca1c-7d323310be.zip/node_modules/react-dom/index.js
   var require_react_dom = __commonJS({
-    "../.yarn/__virtual__/react-dom-virtual-4c2f1381fe/0/cache/react-dom-npm-18.2.0-dd675bca1c-7d323310be.zip/node_modules/react-dom/index.js"(exports, module) {
+    ".yarn/__virtual__/react-dom-virtual-99918a025c/0/cache/react-dom-npm-18.2.0-dd675bca1c-7d323310be.zip/node_modules/react-dom/index.js"(exports, module) {
       "use strict";
       if (false) {
         checkDCE();
@@ -23476,9 +23476,9 @@
     }
   });
 
-  // ../.yarn/__virtual__/react-dom-virtual-4c2f1381fe/0/cache/react-dom-npm-18.2.0-dd675bca1c-7d323310be.zip/node_modules/react-dom/client.js
+  // .yarn/__virtual__/react-dom-virtual-99918a025c/0/cache/react-dom-npm-18.2.0-dd675bca1c-7d323310be.zip/node_modules/react-dom/client.js
   var require_client = __commonJS({
-    "../.yarn/__virtual__/react-dom-virtual-4c2f1381fe/0/cache/react-dom-npm-18.2.0-dd675bca1c-7d323310be.zip/node_modules/react-dom/client.js"(exports) {
+    ".yarn/__virtual__/react-dom-virtual-99918a025c/0/cache/react-dom-npm-18.2.0-dd675bca1c-7d323310be.zip/node_modules/react-dom/client.js"(exports) {
       "use strict";
       var m = require_react_dom();
       if (false) {
@@ -23507,9 +23507,9 @@
     }
   });
 
-  // ../.yarn/__virtual__/use-sync-external-store-virtual-d7f95e4349/0/cache/use-sync-external-store-npm-1.2.0-44f75d2564-5c639e0f8d.zip/node_modules/use-sync-external-store/cjs/use-sync-external-store-shim.development.js
+  // .yarn/__virtual__/use-sync-external-store-virtual-efe5fb898d/0/cache/use-sync-external-store-npm-1.2.0-44f75d2564-5c639e0f8d.zip/node_modules/use-sync-external-store/cjs/use-sync-external-store-shim.development.js
   var require_use_sync_external_store_shim_development = __commonJS({
-    "../.yarn/__virtual__/use-sync-external-store-virtual-d7f95e4349/0/cache/use-sync-external-store-npm-1.2.0-44f75d2564-5c639e0f8d.zip/node_modules/use-sync-external-store/cjs/use-sync-external-store-shim.development.js"(exports) {
+    ".yarn/__virtual__/use-sync-external-store-virtual-efe5fb898d/0/cache/use-sync-external-store-npm-1.2.0-44f75d2564-5c639e0f8d.zip/node_modules/use-sync-external-store/cjs/use-sync-external-store-shim.development.js"(exports) {
       "use strict";
       if (true) {
         (function() {
@@ -23629,9 +23629,9 @@
     }
   });
 
-  // ../.yarn/__virtual__/use-sync-external-store-virtual-d7f95e4349/0/cache/use-sync-external-store-npm-1.2.0-44f75d2564-5c639e0f8d.zip/node_modules/use-sync-external-store/shim/index.js
+  // .yarn/__virtual__/use-sync-external-store-virtual-efe5fb898d/0/cache/use-sync-external-store-npm-1.2.0-44f75d2564-5c639e0f8d.zip/node_modules/use-sync-external-store/shim/index.js
   var require_shim = __commonJS({
-    "../.yarn/__virtual__/use-sync-external-store-virtual-d7f95e4349/0/cache/use-sync-external-store-npm-1.2.0-44f75d2564-5c639e0f8d.zip/node_modules/use-sync-external-store/shim/index.js"(exports, module) {
+    ".yarn/__virtual__/use-sync-external-store-virtual-efe5fb898d/0/cache/use-sync-external-store-npm-1.2.0-44f75d2564-5c639e0f8d.zip/node_modules/use-sync-external-store/shim/index.js"(exports, module) {
       "use strict";
       if (false) {
         module.exports = null;
@@ -23641,9 +23641,9 @@
     }
   });
 
-  // ../.yarn/cache/react-npm-18.2.0-1eae08fee2-88e38092da.zip/node_modules/react/cjs/react-jsx-runtime.development.js
+  // .yarn/cache/react-npm-18.2.0-1eae08fee2-88e38092da.zip/node_modules/react/cjs/react-jsx-runtime.development.js
   var require_react_jsx_runtime_development = __commonJS({
-    "../.yarn/cache/react-npm-18.2.0-1eae08fee2-88e38092da.zip/node_modules/react/cjs/react-jsx-runtime.development.js"(exports) {
+    ".yarn/cache/react-npm-18.2.0-1eae08fee2-88e38092da.zip/node_modules/react/cjs/react-jsx-runtime.development.js"(exports) {
       "use strict";
       if (true) {
         (function() {
@@ -24519,9 +24519,9 @@
     }
   });
 
-  // ../.yarn/cache/react-npm-18.2.0-1eae08fee2-88e38092da.zip/node_modules/react/jsx-runtime.js
+  // .yarn/cache/react-npm-18.2.0-1eae08fee2-88e38092da.zip/node_modules/react/jsx-runtime.js
   var require_jsx_runtime = __commonJS({
-    "../.yarn/cache/react-npm-18.2.0-1eae08fee2-88e38092da.zip/node_modules/react/jsx-runtime.js"(exports, module) {
+    ".yarn/cache/react-npm-18.2.0-1eae08fee2-88e38092da.zip/node_modules/react/jsx-runtime.js"(exports, module) {
       "use strict";
       if (false) {
         module.exports = null;
@@ -24534,7 +24534,7 @@
   // app.jsx
   var import_client = __toESM(require_client());
 
-  // ../.yarn/cache/@emotion-sheet-npm-1.2.2-a918ac483c-d973273c9c.zip/node_modules/@emotion/sheet/dist/emotion-sheet.browser.esm.js
+  // .yarn/cache/@emotion-sheet-npm-1.2.2-a918ac483c-d973273c9c.zip/node_modules/@emotion/sheet/dist/emotion-sheet.browser.esm.js
   function sheetForTag(tag) {
     if (tag.sheet) {
       return tag.sheet;
@@ -24627,7 +24627,7 @@
     return StyleSheet2;
   }();
 
-  // ../.yarn/cache/stylis-npm-4.2.0-6b07f11c99-0eb6cc1b86.zip/node_modules/stylis/src/Enum.js
+  // .yarn/cache/stylis-npm-4.2.0-6b07f11c99-0eb6cc1b86.zip/node_modules/stylis/src/Enum.js
   var MS = "-ms-";
   var MOZ = "-moz-";
   var WEBKIT = "-webkit-";
@@ -24638,7 +24638,7 @@
   var KEYFRAMES = "@keyframes";
   var LAYER = "@layer";
 
-  // ../.yarn/cache/stylis-npm-4.2.0-6b07f11c99-0eb6cc1b86.zip/node_modules/stylis/src/Utility.js
+  // .yarn/cache/stylis-npm-4.2.0-6b07f11c99-0eb6cc1b86.zip/node_modules/stylis/src/Utility.js
   var abs = Math.abs;
   var from = String.fromCharCode;
   var assign = Object.assign;
@@ -24676,7 +24676,7 @@
     return array.map(callback).join("");
   }
 
-  // ../.yarn/cache/stylis-npm-4.2.0-6b07f11c99-0eb6cc1b86.zip/node_modules/stylis/src/Tokenizer.js
+  // .yarn/cache/stylis-npm-4.2.0-6b07f11c99-0eb6cc1b86.zip/node_modules/stylis/src/Tokenizer.js
   var line = 1;
   var column = 1;
   var length = 0;
@@ -24802,7 +24802,7 @@
     return slice(index, position);
   }
 
-  // ../.yarn/cache/stylis-npm-4.2.0-6b07f11c99-0eb6cc1b86.zip/node_modules/stylis/src/Parser.js
+  // .yarn/cache/stylis-npm-4.2.0-6b07f11c99-0eb6cc1b86.zip/node_modules/stylis/src/Parser.js
   function compile(value) {
     return dealloc(parse("", null, null, null, [""], value = alloc(value), 0, [0], value));
   }
@@ -24935,7 +24935,7 @@
     return node(value, root2, parent, DECLARATION, substr(value, 0, length2), substr(value, length2 + 1, -1), length2);
   }
 
-  // ../.yarn/cache/stylis-npm-4.2.0-6b07f11c99-0eb6cc1b86.zip/node_modules/stylis/src/Serializer.js
+  // .yarn/cache/stylis-npm-4.2.0-6b07f11c99-0eb6cc1b86.zip/node_modules/stylis/src/Serializer.js
   function serialize(children, callback) {
     var output = "";
     var length2 = sizeof(children);
@@ -24961,7 +24961,7 @@
     return strlen(children = serialize(element.children, callback)) ? element.return = element.value + "{" + children + "}" : "";
   }
 
-  // ../.yarn/cache/stylis-npm-4.2.0-6b07f11c99-0eb6cc1b86.zip/node_modules/stylis/src/Middleware.js
+  // .yarn/cache/stylis-npm-4.2.0-6b07f11c99-0eb6cc1b86.zip/node_modules/stylis/src/Middleware.js
   function middleware(collection) {
     var length2 = sizeof(collection);
     return function(element, index, children, callback) {
@@ -24972,7 +24972,7 @@
     };
   }
 
-  // ../.yarn/cache/@emotion-memoize-npm-0.8.1-9b1e35ff15-a19cc01a29.zip/node_modules/@emotion/memoize/dist/emotion-memoize.esm.js
+  // .yarn/cache/@emotion-memoize-npm-0.8.1-9b1e35ff15-a19cc01a29.zip/node_modules/@emotion/memoize/dist/emotion-memoize.esm.js
   function memoize(fn) {
     var cache2 = /* @__PURE__ */ Object.create(null);
     return function(arg) {
@@ -24982,7 +24982,7 @@
     };
   }
 
-  // ../.yarn/cache/@emotion-cache-npm-11.11.0-3e6e449071-8eb1dc22be.zip/node_modules/@emotion/cache/dist/emotion-cache.browser.esm.js
+  // .yarn/cache/@emotion-cache-npm-11.11.0-3e6e449071-8eb1dc22be.zip/node_modules/@emotion/cache/dist/emotion-cache.browser.esm.js
   var identifierWithPointTracking = function identifierWithPointTracking2(begin, points, index) {
     var previous = 0;
     var character2 = 0;
@@ -25383,7 +25383,7 @@
     return cache2;
   };
 
-  // ../.yarn/cache/@emotion-hash-npm-0.9.1-650576c2b1-716e17e48b.zip/node_modules/@emotion/hash/dist/emotion-hash.esm.js
+  // .yarn/cache/@emotion-hash-npm-0.9.1-650576c2b1-716e17e48b.zip/node_modules/@emotion/hash/dist/emotion-hash.esm.js
   function murmur2(str) {
     var h = 0;
     var k, i = 0, len = str.length;
@@ -25413,7 +25413,7 @@
     return ((h ^ h >>> 15) >>> 0).toString(36);
   }
 
-  // ../.yarn/cache/@emotion-unitless-npm-0.8.1-bcf0a8f565-385e21d184.zip/node_modules/@emotion/unitless/dist/emotion-unitless.esm.js
+  // .yarn/cache/@emotion-unitless-npm-0.8.1-bcf0a8f565-385e21d184.zip/node_modules/@emotion/unitless/dist/emotion-unitless.esm.js
   var unitlessKeys = {
     animationIterationCount: 1,
     aspectRatio: 1,
@@ -25464,7 +25464,7 @@
     strokeWidth: 1
   };
 
-  // ../.yarn/cache/@emotion-serialize-npm-1.1.2-4b856d3761-413c352e65.zip/node_modules/@emotion/serialize/dist/emotion-serialize.browser.esm.js
+  // .yarn/cache/@emotion-serialize-npm-1.1.2-4b856d3761-413c352e65.zip/node_modules/@emotion/serialize/dist/emotion-serialize.browser.esm.js
   var ILLEGAL_ESCAPE_SEQUENCE_ERROR = `You have illegal escape sequence in your template literal, most likely inside content's property value.
 Because you write your CSS inside a JavaScript string you actually have to do double escaping, so for example "content: '\\00d7';" should become "content: '\\\\00d7';".
 You can read more about this here:
@@ -25717,7 +25717,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     };
   };
 
-  // ../.yarn/cache/@emotion-utils-npm-1.2.1-3d04f99348-e0b44be070.zip/node_modules/@emotion/utils/dist/emotion-utils.browser.esm.js
+  // .yarn/cache/@emotion-utils-npm-1.2.1-3d04f99348-e0b44be070.zip/node_modules/@emotion/utils/dist/emotion-utils.browser.esm.js
   var isBrowser = true;
   function getRegisteredStyles(registered, registeredStyles, classNames) {
     var rawClassName = "";
@@ -25759,7 +25759,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     }
   };
 
-  // ../.yarn/cache/@emotion-css-npm-11.11.2-dbfa42cf83-1edea109df.zip/node_modules/@emotion/css/create-instance/dist/emotion-css-create-instance.esm.js
+  // .yarn/cache/@emotion-css-npm-11.11.2-dbfa42cf83-1edea109df.zip/node_modules/@emotion/css/create-instance/dist/emotion-css-create-instance.esm.js
   function insertWithoutScoping(cache2, serialized) {
     if (cache2.inserted[serialized.name] === void 0) {
       return cache2.insert("", serialized, cache2.sheet, true);
@@ -25873,7 +25873,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     return cls;
   };
 
-  // ../.yarn/cache/@emotion-css-npm-11.11.2-dbfa42cf83-1edea109df.zip/node_modules/@emotion/css/dist/emotion-css.esm.js
+  // .yarn/cache/@emotion-css-npm-11.11.2-dbfa42cf83-1edea109df.zip/node_modules/@emotion/css/dist/emotion-css.esm.js
   var _createEmotion = createEmotion({
     key: "css"
   });
@@ -25891,7 +25891,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
   // component.jsx
   var import_react = __toESM(require_react());
 
-  // ../.yarn/cache/@tanstack-query-core-npm-4.29.15-80dfbbe965-dc99d59a14.zip/node_modules/@tanstack/query-core/build/lib/subscribable.mjs
+  // .yarn/cache/@tanstack-query-core-npm-4.32.0-6a5dca274f-7b3d965d63.zip/node_modules/@tanstack/query-core/build/lib/subscribable.mjs
   var Subscribable = class {
     constructor() {
       this.listeners = /* @__PURE__ */ new Set();
@@ -25917,7 +25917,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     }
   };
 
-  // ../.yarn/cache/@tanstack-query-core-npm-4.29.15-80dfbbe965-dc99d59a14.zip/node_modules/@tanstack/query-core/build/lib/utils.mjs
+  // .yarn/cache/@tanstack-query-core-npm-4.32.0-6a5dca274f-7b3d965d63.zip/node_modules/@tanstack/query-core/build/lib/utils.mjs
   var isServer = typeof window === "undefined" || "Deno" in window;
   function noop() {
     return void 0;
@@ -26151,7 +26151,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     return data;
   }
 
-  // ../.yarn/cache/@tanstack-query-core-npm-4.29.15-80dfbbe965-dc99d59a14.zip/node_modules/@tanstack/query-core/build/lib/focusManager.mjs
+  // .yarn/cache/@tanstack-query-core-npm-4.32.0-6a5dca274f-7b3d965d63.zip/node_modules/@tanstack/query-core/build/lib/focusManager.mjs
   var FocusManager = class extends Subscribable {
     constructor() {
       super();
@@ -26193,8 +26193,9 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
       });
     }
     setFocused(focused) {
-      this.focused = focused;
-      if (focused) {
+      const changed = this.focused !== focused;
+      if (changed) {
+        this.focused = focused;
         this.onFocus();
       }
     }
@@ -26217,7 +26218,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
   };
   var focusManager = new FocusManager();
 
-  // ../.yarn/cache/@tanstack-query-core-npm-4.29.15-80dfbbe965-dc99d59a14.zip/node_modules/@tanstack/query-core/build/lib/onlineManager.mjs
+  // .yarn/cache/@tanstack-query-core-npm-4.32.0-6a5dca274f-7b3d965d63.zip/node_modules/@tanstack/query-core/build/lib/onlineManager.mjs
   var onlineEvents = ["online", "offline"];
   var OnlineManager = class extends Subscribable {
     constructor() {
@@ -26262,8 +26263,9 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
       });
     }
     setOnline(online) {
-      this.online = online;
-      if (online) {
+      const changed = this.online !== online;
+      if (changed) {
+        this.online = online;
         this.onOnline();
       }
     }
@@ -26286,7 +26288,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
   };
   var onlineManager = new OnlineManager();
 
-  // ../.yarn/cache/@tanstack-query-core-npm-4.29.15-80dfbbe965-dc99d59a14.zip/node_modules/@tanstack/query-core/build/lib/retryer.mjs
+  // .yarn/cache/@tanstack-query-core-npm-4.32.0-6a5dca274f-7b3d965d63.zip/node_modules/@tanstack/query-core/build/lib/retryer.mjs
   function defaultRetryDelay(failureCount) {
     return Math.min(1e3 * 2 ** failureCount, 3e4);
   }
@@ -26415,10 +26417,10 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     };
   }
 
-  // ../.yarn/cache/@tanstack-query-core-npm-4.29.15-80dfbbe965-dc99d59a14.zip/node_modules/@tanstack/query-core/build/lib/logger.mjs
+  // .yarn/cache/@tanstack-query-core-npm-4.32.0-6a5dca274f-7b3d965d63.zip/node_modules/@tanstack/query-core/build/lib/logger.mjs
   var defaultLogger = console;
 
-  // ../.yarn/cache/@tanstack-query-core-npm-4.29.15-80dfbbe965-dc99d59a14.zip/node_modules/@tanstack/query-core/build/lib/notifyManager.mjs
+  // .yarn/cache/@tanstack-query-core-npm-4.32.0-6a5dca274f-7b3d965d63.zip/node_modules/@tanstack/query-core/build/lib/notifyManager.mjs
   function createNotifyManager() {
     let queue = [];
     let transactions = 0;
@@ -26486,7 +26488,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
   }
   var notifyManager = createNotifyManager();
 
-  // ../.yarn/cache/@tanstack-query-core-npm-4.29.15-80dfbbe965-dc99d59a14.zip/node_modules/@tanstack/query-core/build/lib/removable.mjs
+  // .yarn/cache/@tanstack-query-core-npm-4.32.0-6a5dca274f-7b3d965d63.zip/node_modules/@tanstack/query-core/build/lib/removable.mjs
   var Removable = class {
     destroy() {
       this.clearGcTimeout();
@@ -26510,7 +26512,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     }
   };
 
-  // ../.yarn/cache/@tanstack-query-core-npm-4.29.15-80dfbbe965-dc99d59a14.zip/node_modules/@tanstack/query-core/build/lib/query.mjs
+  // .yarn/cache/@tanstack-query-core-npm-4.32.0-6a5dca274f-7b3d965d63.zip/node_modules/@tanstack/query-core/build/lib/query.mjs
   var Query = class extends Removable {
     constructor(config) {
       super();
@@ -26697,7 +26699,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
       addSignalProperty(queryFnContext);
       const fetchFn = () => {
         if (!this.options.queryFn) {
-          return Promise.reject("Missing queryFn");
+          return Promise.reject("Missing queryFn for queryKey '" + this.options.queryHash + "'");
         }
         this.abortSignalConsumed = false;
         return this.options.queryFn(queryFnContext);
@@ -26893,7 +26895,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     };
   }
 
-  // ../.yarn/cache/@tanstack-query-core-npm-4.29.15-80dfbbe965-dc99d59a14.zip/node_modules/@tanstack/query-core/build/lib/queryCache.mjs
+  // .yarn/cache/@tanstack-query-core-npm-4.32.0-6a5dca274f-7b3d965d63.zip/node_modules/@tanstack/query-core/build/lib/queryCache.mjs
   var QueryCache = class extends Subscribable {
     constructor(config) {
       super();
@@ -26993,7 +26995,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     }
   };
 
-  // ../.yarn/cache/@tanstack-query-core-npm-4.29.15-80dfbbe965-dc99d59a14.zip/node_modules/@tanstack/query-core/build/lib/mutation.mjs
+  // .yarn/cache/@tanstack-query-core-npm-4.32.0-6a5dca274f-7b3d965d63.zip/node_modules/@tanstack/query-core/build/lib/mutation.mjs
   var Mutation = class extends Removable {
     constructor(config) {
       super();
@@ -27220,7 +27222,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     };
   }
 
-  // ../.yarn/cache/@tanstack-query-core-npm-4.29.15-80dfbbe965-dc99d59a14.zip/node_modules/@tanstack/query-core/build/lib/mutationCache.mjs
+  // .yarn/cache/@tanstack-query-core-npm-4.32.0-6a5dca274f-7b3d965d63.zip/node_modules/@tanstack/query-core/build/lib/mutationCache.mjs
   var MutationCache = class extends Subscribable {
     constructor(config) {
       super();
@@ -27294,7 +27296,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     }
   };
 
-  // ../.yarn/cache/@tanstack-query-core-npm-4.29.15-80dfbbe965-dc99d59a14.zip/node_modules/@tanstack/query-core/build/lib/infiniteQueryBehavior.mjs
+  // .yarn/cache/@tanstack-query-core-npm-4.32.0-6a5dca274f-7b3d965d63.zip/node_modules/@tanstack/query-core/build/lib/infiniteQueryBehavior.mjs
   function infiniteQueryBehavior() {
     return {
       onFetch: (context) => {
@@ -27326,7 +27328,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
               }
             });
           };
-          const queryFn = context.options.queryFn || (() => Promise.reject("Missing queryFn"));
+          const queryFn = context.options.queryFn || (() => Promise.reject("Missing queryFn for queryKey '" + context.options.queryHash + "'"));
           const buildNewPages = (pages, param, page, previous) => {
             newPageParams = previous ? [param, ...newPageParams] : [...newPageParams, param];
             return previous ? [page, ...pages] : [...pages, page];
@@ -27391,7 +27393,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     return options.getPreviousPageParam == null ? void 0 : options.getPreviousPageParam(pages[0], pages);
   }
 
-  // ../.yarn/cache/@tanstack-query-core-npm-4.29.15-80dfbbe965-dc99d59a14.zip/node_modules/@tanstack/query-core/build/lib/queryClient.mjs
+  // .yarn/cache/@tanstack-query-core-npm-4.32.0-6a5dca274f-7b3d965d63.zip/node_modules/@tanstack/query-core/build/lib/queryClient.mjs
   var QueryClient = class {
     constructor(config = {}) {
       this.queryCache = config.queryCache || new QueryCache();
@@ -27674,7 +27676,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     }
   };
 
-  // ../.yarn/cache/@tanstack-query-core-npm-4.29.15-80dfbbe965-dc99d59a14.zip/node_modules/@tanstack/query-core/build/lib/queryObserver.mjs
+  // .yarn/cache/@tanstack-query-core-npm-4.32.0-6a5dca274f-7b3d965d63.zip/node_modules/@tanstack/query-core/build/lib/queryObserver.mjs
   var QueryObserver = class extends Subscribable {
     constructor(client, options) {
       super();
@@ -27751,7 +27753,13 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     }
     getOptimisticResult(options) {
       const query = this.client.getQueryCache().build(this.client, options);
-      return this.createResult(query, options);
+      const result = this.createResult(query, options);
+      if (shouldAssignObserverCurrentProperties(this, result, options)) {
+        this.currentResult = result;
+        this.currentResultOptions = this.options;
+        this.currentResultState = this.currentQuery.state;
+      }
+      return result;
     }
     getCurrentResult() {
       return this.currentResult;
@@ -27998,10 +28006,11 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
         const {
           notifyOnChangeProps
         } = this.options;
-        if (notifyOnChangeProps === "all" || !notifyOnChangeProps && !this.trackedProps.size) {
+        const notifyOnChangePropsValue = typeof notifyOnChangeProps === "function" ? notifyOnChangeProps() : notifyOnChangeProps;
+        if (notifyOnChangePropsValue === "all" || !notifyOnChangePropsValue && !this.trackedProps.size) {
           return true;
         }
-        const includedProps = new Set(notifyOnChangeProps != null ? notifyOnChangeProps : this.trackedProps);
+        const includedProps = new Set(notifyOnChangePropsValue != null ? notifyOnChangePropsValue : this.trackedProps);
         if (this.options.useErrorBoundary) {
           includedProps.add("error");
         }
@@ -28091,8 +28100,20 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
   function isStale(query, options) {
     return query.isStaleByTime(options.staleTime);
   }
+  function shouldAssignObserverCurrentProperties(observer, optimisticResult, options) {
+    if (options.keepPreviousData) {
+      return false;
+    }
+    if (options.placeholderData !== void 0) {
+      return optimisticResult.isPlaceholderData;
+    }
+    if (observer.getCurrentResult() !== optimisticResult) {
+      return true;
+    }
+    return false;
+  }
 
-  // ../.yarn/cache/@tanstack-query-core-npm-4.29.15-80dfbbe965-dc99d59a14.zip/node_modules/@tanstack/query-core/build/lib/mutationObserver.mjs
+  // .yarn/cache/@tanstack-query-core-npm-4.32.0-6a5dca274f-7b3d965d63.zip/node_modules/@tanstack/query-core/build/lib/mutationObserver.mjs
   var MutationObserver = class extends Subscribable {
     constructor(client, options) {
       super();
@@ -28195,11 +28216,11 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     }
   };
 
-  // ../.yarn/__virtual__/@tanstack-react-query-virtual-29ada90f88/0/cache/@tanstack-react-query-npm-4.29.15-85e499426e-de703806af.zip/node_modules/@tanstack/react-query/build/lib/useSyncExternalStore.mjs
+  // .yarn/__virtual__/@tanstack-react-query-virtual-03c16fe3fa/0/cache/@tanstack-react-query-npm-4.32.0-e395c7fbde-fe9c9573a6.zip/node_modules/@tanstack/react-query/build/lib/useSyncExternalStore.mjs
   var import_shim = __toESM(require_shim(), 1);
   var useSyncExternalStore = import_shim.useSyncExternalStore;
 
-  // ../.yarn/__virtual__/@tanstack-react-query-virtual-29ada90f88/0/cache/@tanstack-react-query-npm-4.29.15-85e499426e-de703806af.zip/node_modules/@tanstack/react-query/build/lib/QueryClientProvider.mjs
+  // .yarn/__virtual__/@tanstack-react-query-virtual-03c16fe3fa/0/cache/@tanstack-react-query-npm-4.32.0-e395c7fbde-fe9c9573a6.zip/node_modules/@tanstack/react-query/build/lib/QueryClientProvider.mjs
   var React = __toESM(require_react(), 1);
   var defaultContext = /* @__PURE__ */ React.createContext(void 0);
   var QueryClientSharingContext = /* @__PURE__ */ React.createContext(false);
@@ -28247,13 +28268,13 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     }, children));
   };
 
-  // ../.yarn/__virtual__/@tanstack-react-query-virtual-29ada90f88/0/cache/@tanstack-react-query-npm-4.29.15-85e499426e-de703806af.zip/node_modules/@tanstack/react-query/build/lib/isRestoring.mjs
+  // .yarn/__virtual__/@tanstack-react-query-virtual-03c16fe3fa/0/cache/@tanstack-react-query-npm-4.32.0-e395c7fbde-fe9c9573a6.zip/node_modules/@tanstack/react-query/build/lib/isRestoring.mjs
   var React2 = __toESM(require_react(), 1);
   var IsRestoringContext = /* @__PURE__ */ React2.createContext(false);
   var useIsRestoring = () => React2.useContext(IsRestoringContext);
   var IsRestoringProvider = IsRestoringContext.Provider;
 
-  // ../.yarn/__virtual__/@tanstack-react-query-virtual-29ada90f88/0/cache/@tanstack-react-query-npm-4.29.15-85e499426e-de703806af.zip/node_modules/@tanstack/react-query/build/lib/QueryErrorResetBoundary.mjs
+  // .yarn/__virtual__/@tanstack-react-query-virtual-03c16fe3fa/0/cache/@tanstack-react-query-npm-4.32.0-e395c7fbde-fe9c9573a6.zip/node_modules/@tanstack/react-query/build/lib/QueryErrorResetBoundary.mjs
   var React3 = __toESM(require_react(), 1);
   function createValue() {
     let isReset = false;
@@ -28272,10 +28293,10 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
   var QueryErrorResetBoundaryContext = /* @__PURE__ */ React3.createContext(createValue());
   var useQueryErrorResetBoundary = () => React3.useContext(QueryErrorResetBoundaryContext);
 
-  // ../.yarn/__virtual__/@tanstack-react-query-virtual-29ada90f88/0/cache/@tanstack-react-query-npm-4.29.15-85e499426e-de703806af.zip/node_modules/@tanstack/react-query/build/lib/errorBoundaryUtils.mjs
+  // .yarn/__virtual__/@tanstack-react-query-virtual-03c16fe3fa/0/cache/@tanstack-react-query-npm-4.32.0-e395c7fbde-fe9c9573a6.zip/node_modules/@tanstack/react-query/build/lib/errorBoundaryUtils.mjs
   var React4 = __toESM(require_react(), 1);
 
-  // ../.yarn/__virtual__/@tanstack-react-query-virtual-29ada90f88/0/cache/@tanstack-react-query-npm-4.29.15-85e499426e-de703806af.zip/node_modules/@tanstack/react-query/build/lib/utils.mjs
+  // .yarn/__virtual__/@tanstack-react-query-virtual-03c16fe3fa/0/cache/@tanstack-react-query-npm-4.32.0-e395c7fbde-fe9c9573a6.zip/node_modules/@tanstack/react-query/build/lib/utils.mjs
   function shouldThrowError(_useErrorBoundary, params) {
     if (typeof _useErrorBoundary === "function") {
       return _useErrorBoundary(...params);
@@ -28283,7 +28304,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     return !!_useErrorBoundary;
   }
 
-  // ../.yarn/__virtual__/@tanstack-react-query-virtual-29ada90f88/0/cache/@tanstack-react-query-npm-4.29.15-85e499426e-de703806af.zip/node_modules/@tanstack/react-query/build/lib/errorBoundaryUtils.mjs
+  // .yarn/__virtual__/@tanstack-react-query-virtual-03c16fe3fa/0/cache/@tanstack-react-query-npm-4.32.0-e395c7fbde-fe9c9573a6.zip/node_modules/@tanstack/react-query/build/lib/errorBoundaryUtils.mjs
   var ensurePreventErrorBoundaryRetry = (options, errorResetBoundary) => {
     if (options.suspense || options.useErrorBoundary) {
       if (!errorResetBoundary.isReset()) {
@@ -28305,7 +28326,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     return result.isError && !errorResetBoundary.isReset() && !result.isFetching && shouldThrowError(useErrorBoundary, [result.error, query]);
   };
 
-  // ../.yarn/__virtual__/@tanstack-react-query-virtual-29ada90f88/0/cache/@tanstack-react-query-npm-4.29.15-85e499426e-de703806af.zip/node_modules/@tanstack/react-query/build/lib/suspense.mjs
+  // .yarn/__virtual__/@tanstack-react-query-virtual-03c16fe3fa/0/cache/@tanstack-react-query-npm-4.32.0-e395c7fbde-fe9c9573a6.zip/node_modules/@tanstack/react-query/build/lib/suspense.mjs
   var ensureStaleTime = (defaultedOptions) => {
     if (defaultedOptions.suspense) {
       if (typeof defaultedOptions.staleTime !== "number") {
@@ -28326,7 +28347,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     defaultedOptions.onSettled == null ? void 0 : defaultedOptions.onSettled(void 0, error);
   });
 
-  // ../.yarn/__virtual__/@tanstack-react-query-virtual-29ada90f88/0/cache/@tanstack-react-query-npm-4.29.15-85e499426e-de703806af.zip/node_modules/@tanstack/react-query/build/lib/useBaseQuery.mjs
+  // .yarn/__virtual__/@tanstack-react-query-virtual-03c16fe3fa/0/cache/@tanstack-react-query-npm-4.32.0-e395c7fbde-fe9c9573a6.zip/node_modules/@tanstack/react-query/build/lib/useBaseQuery.mjs
   var React5 = __toESM(require_react(), 1);
   function useBaseQuery(options, Observer) {
     const queryClient = useQueryClient({
@@ -28374,13 +28395,13 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
     return !defaultedOptions.notifyOnChangeProps ? observer.trackResult(result) : result;
   }
 
-  // ../.yarn/__virtual__/@tanstack-react-query-virtual-29ada90f88/0/cache/@tanstack-react-query-npm-4.29.15-85e499426e-de703806af.zip/node_modules/@tanstack/react-query/build/lib/useQuery.mjs
+  // .yarn/__virtual__/@tanstack-react-query-virtual-03c16fe3fa/0/cache/@tanstack-react-query-npm-4.32.0-e395c7fbde-fe9c9573a6.zip/node_modules/@tanstack/react-query/build/lib/useQuery.mjs
   function useQuery(arg1, arg2, arg3) {
     const parsedOptions = parseQueryArgs(arg1, arg2, arg3);
     return useBaseQuery(parsedOptions, QueryObserver);
   }
 
-  // ../.yarn/__virtual__/@tanstack-react-query-virtual-29ada90f88/0/cache/@tanstack-react-query-npm-4.29.15-85e499426e-de703806af.zip/node_modules/@tanstack/react-query/build/lib/useMutation.mjs
+  // .yarn/__virtual__/@tanstack-react-query-virtual-03c16fe3fa/0/cache/@tanstack-react-query-npm-4.32.0-e395c7fbde-fe9c9573a6.zip/node_modules/@tanstack/react-query/build/lib/useMutation.mjs
   var React6 = __toESM(require_react(), 1);
   function useMutation(arg1, arg2, arg3) {
     const options = parseMutationArgs(arg1, arg2, arg3);
