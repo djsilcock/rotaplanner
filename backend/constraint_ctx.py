@@ -8,6 +8,7 @@ from datatypes import SessionDuty
 if TYPE_CHECKING:
     from solver import CoreConfig
 
+
 DutyKey=TypeVar('DutyKey')
 
 class DutyStore(Generic[DutyKey]):
@@ -33,15 +34,17 @@ class BaseConstraintConfig():
                 raise TypeError(f'{self.constraint_name} already registered for this context')
             ctx.constraints[self.constraint_name]=self
             self.ctx=ctx
-            self.configure()
+            self.setup()
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
         if cls.constraint_name is not None:
             if cls.constraint_name in _registered_constraints:
                 raise TypeError(f'constraint {cls.constraint_name} is already registered')
             _registered_constraints[cls.constraint_name]=cls
-    def configure(self):
+    def setup(self):
         "configuration options for constraint"
+    def config(self) ->dict:
+        return self.ctx.config.setdefault(self.constraint_name,{})
 
     @property
     def model(self) -> cp_model.CpModel:
@@ -67,13 +70,13 @@ class BaseConstraintConfig():
 
     @classmethod
     def validate_frontend_json(cls,json_config,old_config):
-        "validate json config from frontend"
+        """validate json config from frontend. Return picklable object or raise ValueError()"""
         raise NotImplementedError
 
 
 class ConstraintContext:
     """Constraint context"""
-    def __init__(self,/,config):
+    def __init__(self,/,config:dict):
         super().__init__()
         self.model=cp_model.CpModel()
         self.constraints={}

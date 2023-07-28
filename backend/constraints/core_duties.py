@@ -24,19 +24,28 @@ class CoreDuties(BaseConstraintConfig):
 
     def configure(self):
         self.dutystore = DutyStore(self.model)
-        self.locations = ('NA', 'ICU', 'THEATRE', 'LEAVE')
-        self.tags = ('CLINICAL', 'NONCLINICAL', 'JOBPLANNED',
-                     'NOTJOBPLANNED', 'EXTRA', 'QUOTA', 'LOCUM')
+        self.locations = ('NA', 'ICU', 'THEATRE', 'LEAVE', 'TIMEBACK')
+        self.tags = ('CLINICAL', 'NONCLINICAL',
+                     'JOBPLANNED', 'NOTJOBPLANNED',
+                     'LEAVE_JP', 'LEAVE_NJP', 'NOT_LEAVE',
+                     'EXTRA', 'QUOTA', 'LOCUM_PAY', 'TIMESHIFT')
+        self.groups = {
+            '*EXTRA': ('LOCUM_PAY', 'TIMESHIFT'),
+            '*CLINICAL': ('ICU', 'THEATRE'),
+            '*NONCLINICAL': ('LEAVE', 'NA', 'TIMEBACK'),
+        }
         self.rules = [
-            ('== 1', ('THEATRE', 'ICU', 'NONCLINICAL')),
-            ('== 1', ('LEAVE', 'NA', 'CLINICAL')),
+            ('== 1', ('*CLINICAL', 'NONCLINICAL')),
+            ('== 1', ('*NONCLINICAL', 'CLINICAL')),
             ('== 1', ('CLINICAL', 'NONCLINICAL')),
-            {'IF': 'JOBPLANNED', 'THEN': [('==1', ('CLINICAL', 'LEAVE'))]},
-            {'IF': 'NOTJOBPLANNED', 'THEN': [
-                ('==1', ('NA', 'LEAVE', 'EXTRA'))]},
-            {'IF': 'OOH', 'THEN': [
-                ('==1', ('QUOTA', 'LOCUM', 'NONCLINICAL'))]},
-            ('== 1', ('JOBPLANNED', 'NOTJOBPLANNED', 'OOH'))
+            ('== 1', ('NOTJOBPLANNED', 'LEAVE_JP', 'CLINICAL', 'TIMEBACK')),
+            ('== 1', ('JOBPLANNED', 'NA', 'LEAVE_NJP', 'EXTRA', 'QUOTA')),
+            ('== 1', ('JOBPLANNED', 'NOTJOBPLANNED')),
+            ('== 1', ('LEAVE_JP', 'LEAVE_NJP', 'NOT_LEAVE')),
+            ('== 1', ('LEAVE', 'NOT_LEAVE')),
+            ('== 1', ('NOT_EXTRA', '*EXTRA')),
+            ('== 1', ('EXTRA', 'NOT_EXTRA'))
+
         ]
 
     def allocated_for_duty(self, shift: str, day: date, staff: str, location: str):
@@ -46,11 +55,22 @@ class CoreDuties(BaseConstraintConfig):
         return self.dutystore[(shift, day, staff, location)]
 
     def add_conditions(self, shift, day, staff, rules, *conditions):
+        def expand(group):
+            for g in group:
+                if g in self.locations:
+                    yield g
+                elif g in self.tags:
+                    yield g
+                elif g in self.groups:
+                    yield from expand(self.groups[g])
+                else:
+                    raise KeyError(
+                        f'{g} is not a recognised location,tag or group')
         for rule in rules:
             match rule:
                 case (str(cmp), *grp) if ' ' in cmp:
                     total = sum(self.allocated_for_duty(
-                        shift, day, staff, loc) for loc in grp)
+                        shift, day, staff, loc) for loc in expand(grp))
                     match cmp.partition(' '):
                         case (op, ' ', length) if int(length):
                             length = int(length)
@@ -62,10 +82,10 @@ class CoreDuties(BaseConstraintConfig):
                                           '<': operator.lt}[op](total, length)
                             r = self.model.Add(comparison)
                         case _:
-                            raise ValueError()
+                            raise ValueError(f'{cmp} not recognised')
                 case ('ALL', *grp):
                     r = self.model.Add(
-                        sum(self.allocated_for_duty(shift, day, staff, loc) for loc in grp) == len(grp))
+                        sum(self.allocated_for_duty(shift, day, staff, loc) for loc in expand(grp)) == len(grp))
                 case {'IF': if_condition}:
                     if 'THEN' in rule:
                         self.add_conditions(rule['THEN'], self.allocated_for_duty(
