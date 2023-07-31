@@ -2,15 +2,15 @@
 
 
 from collections import deque
+from typing import TypeVar, Iterable,Callable,Any
 
 
-
-def get_constraint_atom(generic_context, key):
-    """Boolean atom for enforcement"""
-    name = ('constraint', key)
-    enforce_this = generic_context.dutystore[name]
-    generic_context.constraint_atoms.append(enforce_this)
-    return enforce_this
+T=TypeVar('T')                    
+def groupby(iterable:Iterable[T],func:Callable[[T],Any]) ->Iterable[list[T]]:
+    groups={}
+    for i in iterable:
+        groups.setdefault(func(i),[]).append(i)
+    return groups.values()
 
 def sliding_date_range(days,length):
     "returns window of dates.Pre-filters are passed to underlying days iterator"

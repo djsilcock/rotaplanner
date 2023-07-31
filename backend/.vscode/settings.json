@@ -1,5 +1,10 @@
 {
     "python.autoComplete.extraPaths": [
+
         
-    ]
+    ],
+    "python.linting.cwd": "/workspace/rotaplanner/backend",
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.linting.enabled": true
 }
