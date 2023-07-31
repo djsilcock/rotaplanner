@@ -28448,7 +28448,10 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
 
   // component.jsx
   var import_jsx_runtime = __toESM(require_jsx_runtime());
-  var genericFetch = ({ queryKey }) => fetch(`/${queryKey.join("/")}`).then((result) => result.json());
+  var genericFetch = async ({ queryKey }) => {
+    const fetchresult = await fetch(`/${queryKey.join("/")}`);
+    return await fetchresult.json();
+  };
   var getDutySelector = (name, date, session) => {
     const cellid = `${date}|${name}|${session}`;
     return (data) => data?.[cellid];
@@ -28684,7 +28687,7 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_liter
   var import_jsx_runtime2 = __toESM(require_jsx_runtime());
   el = document.getElementById("root");
   root = (0, import_client.createRoot)(el);
-  var queryclient = new QueryClient();
+  var queryclient = new QueryClient({ defaultOptions: { queries: { useErrorBoundary: true } } });
   root.render(
     /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(QueryClientProvider, { client: queryclient, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Component, {}) })
   );
@@ -28759,3 +28762,4 @@ react/cjs/react-jsx-runtime.development.js:
    * LICENSE file in the root directory of this source tree.
    *)
 */
+//# sourceMappingURL=jsfile.js.map

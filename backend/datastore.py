@@ -28,7 +28,7 @@ class DataStore:
     @property
     def pubhols(self) -> tuple[date]:
         "get tuple of public holidays"
-        return tuple(self.config.get(None, {}).get('pubhols', ()))
+        return self.config.get(None, {}).get('pubhols', set())
 
     def get_storage_class(self):
         "get current storage backend"
@@ -64,9 +64,9 @@ class DataStore:
         "return configuration options as dict"
         return {
             'names': self.names,
-            'minDate': min(self.dates).isoformat(),
-            'maxDate': max(self.dates).isoformat(),
-            'dates': [d.isoformat() for d in self.dates],
+            'minDate': min(self.dates,default=date.today()).isoformat(),
+            'maxDate': max(self.dates,default=date.today()).isoformat(),
+            'dates': [d.isoformat() for d in (self.dates if self.dates else [date.today()])],
             'pubhols': [ph.isoformat() for ph in self.pubhols]
         }
 

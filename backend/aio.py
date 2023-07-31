@@ -3,12 +3,12 @@ import os
 from typing import cast
 from aiohttp import web
 import asyncio
-from datetime import date, timedelta
+from datetime import date, timedelta,datetime
 import json
 import subprocess
 from contextlib import contextmanager
 
-from solver import solve
+#from solver import solve
 from datastore import DataStore
 
 
@@ -100,6 +100,15 @@ async def setph(request):
                 return web.json_response({'status':'ok'})
             case _:
                 return web.json_response({'error':'setph must be a boolean or None'},status=400)
+            
+@routes.get('/test')
+async def testroute(request:web.Request):
+    if request.if_modified_since:
+        print(request.if_modified_since)
+        raise web.HTTPNotModified()
+    r= web.json_response(list(request.headers.items()))
+    r.last_modified=datetime.today()
+    return r
 
 @routes.get('/')
 async def index(request):
@@ -112,7 +121,7 @@ async def main():
     app = web.Application()
     app['abort']=asyncio.Event()
     app.add_routes(routes)
-    app.router.add_static('/static',os.path.join(os.getcwd(),'web'))
+    app.router.add_static('/static',os.path.join(os.getcwd(),'..','web'))
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, 'localhost', 8080)

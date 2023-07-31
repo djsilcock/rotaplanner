@@ -7,10 +7,10 @@ import { useMemo, useRef, useCallback, useEffect, Suspense, useReducer, createCo
 import {useQuery,useMutation,useQueryClient} from '@tanstack/react-query'
 import useLocalConfig from "./localconfig"
 
-const genericFetch = ({queryKey}) => (
-  fetch(`/${queryKey.join('/')}`)
-    .then(result => result.json())
-)
+const genericFetch = async ({queryKey}) => {
+  const fetchresult=await fetch(`/${queryKey.join('/')}`)
+    return await fetchresult.json()
+  }
 
 const getDutySelector = (name, date,session) => {
   const cellid = `${date}|${name}|${session}`

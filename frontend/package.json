@@ -1,7 +1,7 @@
 {
   "name": "@rotaplanner/frontend",
   "scripts": {
-    "dev": "esbuild --bundle --watch --jsx=automatic --outfile=../web/jsfile.js app.jsx"
+    "dev": "esbuild --bundle --sourcemap --watch --jsx=automatic --outfile=../web/jsfile.js app.jsx"
   },
   "dependencies": {
     "@emotion/css": "^11.10.6",
