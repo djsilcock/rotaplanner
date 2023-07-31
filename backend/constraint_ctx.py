@@ -69,7 +69,7 @@ class BaseConstraintConfig():
         "modify result sessionduty inplace"
 
     @classmethod
-    def validate_frontend_json(cls,json_config,old_config):
+    def validate_frontend_json(cls,json_config,orig_config):
         """validate json config from frontend. Return picklable object or raise ValueError()"""
         raise NotImplementedError
 

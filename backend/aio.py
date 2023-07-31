@@ -4,11 +4,12 @@ from typing import cast
 from aiohttp import web
 import asyncio
 from datetime import date, timedelta,datetime
+from io import TextIOWrapper
 import json
 import subprocess
 from contextlib import contextmanager
 
-#from solver import solve
+from solver import async_solver_ctx
 from datastore import DataStore
 
 
@@ -46,12 +47,9 @@ async def duty_click(request:web.Request):
 async def handle_clw(request:web.Request):
     try:
         data = await request.post()
-
         clw = cast(web.FileField,data['clw'])
-        csvfile = clw.file
-
-        datastore.import_clw_csv(csvfile.readlines())
-
+        csvfile = TextIOWrapper(clw.file)
+        datastore.import_clw_csv(csvfile)
         return web.json_response({'response':'ok'})
     except Exception as e:
         return web.json_response({'error':str(e)},status=400)

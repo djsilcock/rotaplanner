@@ -15,7 +15,6 @@ class DataStore:
 
     def __init__(self, storage_type='filesystem'):
         self.data: dict[tuple, SessionDuty] = {}
-        self.dates = []
         self.sessions = ('am', 'pm', 'eve', 'night')
         self.storage = storage_type
         self.config = {}
@@ -26,9 +25,9 @@ class DataStore:
         return self.config.get(None, {}).get('names', ())
 
     @property
-    def pubhols(self) -> tuple[date]:
-        "get tuple of public holidays"
-        return self.config.get(None, {}).get('pubhols', set())
+    def pubhols(self) -> set[date]:
+        "get tuple of public holidays "
+        return set(self.config.get(None, {}).get('pubhols', ()))
 
     def get_storage_class(self):
         "get current storage backend"
@@ -49,17 +48,24 @@ class DataStore:
             self.data.clear()
         self.data.update({key: val if isinstance(val, SessionDuty)
                          else SessionDuty(**val) for key, val in data.items()})
-        mindate = min((key[1] for key in self.data),
-                      default=date.today())
-        maxdate = max((key[1] for key in self.data),
-                      default=date.today())
-        self.dates = [mindate+timedelta(days=i)
-                      for i in range((maxdate-mindate).days+1)]
         for day in self.dates:
             for name in self.names:
                 for sess in self.sessions:
                     self.data.setdefault((name, day, sess), SessionDuty())
 
+    @property
+    def daterange(self):
+        mindate = min((key[1] for key in self.data),
+                      default=date.today())
+        maxdate = max((key[1] for key in self.data),
+                      default=date.today())
+        return (mindate,maxdate)
+    
+    @property
+    def dates(self):
+        mindate,maxdate=self.daterange
+        return [mindate+timedelta(days=i)
+                      for i in range((maxdate-mindate).days+1)]
     def get_config(self):
         "return configuration options as dict"
         return {

@@ -27,6 +27,7 @@ class CoreConfig:
     shifts: tuple
     staff: set[str]
     locations: set[str]
+    pubhols:set[date]
 
 
 class SolutionPrinter(cp_model.CpSolverSolutionCallback):
@@ -41,7 +42,7 @@ class SolutionPrinter(cp_model.CpSolverSolutionCallback):
         self.callback(self)
 
 
-async def solve_async(datastore, config, result_queue:asyncio.Queue):
+async def solve_async(datastore:DataStore, config, result_queue:asyncio.Queue):
     """Solve rota
     data: initial duty data as dict of (name,date):duties
     config: configuration for constraints
@@ -49,15 +50,17 @@ async def solve_async(datastore, config, result_queue:asyncio.Queue):
     """
 
     data = datastore.data
+    pubhols=datastore.pubhols
     ctx = ConstraintContext(
-        core_config=CoreConfig(
+        {'core':CoreConfig(
             days=sorted({d[1] for d in data}),
             minimize_targets=[],
             constraint_atoms=[],
             shifts=('am', 'pm', 'oncall'),
             staff={n[0] for n in data},
             locations=set(('ICU', 'Theatre')),
-        ),**config)
+            pubhols=pubhols
+        ),**config})
 
     await ctx.apply_constraints()
     ctx.model.Minimize(sum(ctx.core_config.minimize_targets))

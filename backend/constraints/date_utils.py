@@ -1,6 +1,11 @@
 
-from datetime import date
+from datetime import date,datetime
 
+def convert_isodate(d:date|str):
+    if isinstance(d,(date,datetime)):
+        return d
+    if isinstance(d,str):
+        return date.fromisoformat(d)
 
 def nth_of_month(week_no:int,target_weekday:int,month:int,year:int):
     match (week_no,target_weekday,month,year):

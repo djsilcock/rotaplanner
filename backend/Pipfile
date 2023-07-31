@@ -5,11 +5,11 @@ name = "pypi"
 
 [packages]
 ortools = "==9.6.2534"
-pywebview = "==4.0.2"
-eel = "*"
 aiohttp = "*"
 pytest = "*"
 pytest-asyncio = "*"
+attrs = "*"
+python-benedict = "*"
 
 [dev-packages]
 
