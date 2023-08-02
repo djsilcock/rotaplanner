@@ -2,33 +2,4 @@
   "search.exclude": {
     "**/.yarn": true,
     "**/.pnp.*": true
-  },
-  "eslint.nodePath": ".yarn/sdks",
-  "python.linting.pylintEnabled": true,
-  "python.linting.pylamaEnabled": false,
-  "python.linting.enabled": true,
-  "python.analysis.typeCheckingMode": "basic",
-  "python.testing.pytestArgs": [
-    "backend/tests"
-  ],
-  "python.testing.unittestEnabled": false,
-  "python.testing.pytestEnabled": true,
-  "python.analysis.autoImportCompletions": true,
-  "python.analysis.autoImportUserSymbols": true,
-  "python.analysis.completeFunctionParens": true,
-  "python.analysis.diagnosticMode": "openFilesOnly",
-  "eslint.packageManager": "yarn",
-  "eslint.workingDirectories": [
-    "./frontend"
-  ],
-  "typescript.tsdk": ".yarn/sdks/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true,
-  "[python]": {
-    "editor.defaultFormatter": "ms-python.python"
-  },
-  "python.formatting.provider": "none",
-  "python.analysis.extraPaths": [
-    "/workspaces/rotaplanner/backend"
-  ],
-  "python.linting.cwd": "/workspaces/rotaplanner/backend"
-}
+  }}

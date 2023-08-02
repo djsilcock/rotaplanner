@@ -1,11 +1,12 @@
 /*eslint-disable react/prop-types */
-
-import { css, cx } from '@emotion/css'
+import { cx } from '@emotion/css'
 import { useMemo, useRef, useCallback, useEffect, Suspense, useReducer, createContext, useContext, memo } from "react"
 
-
+import {useInView} from 'react-intersection-observer'
 import {useQuery,useMutation,useQueryClient} from '@tanstack/react-query'
 import useLocalConfig from "./localconfig"
+
+import './component.css'
 
 const genericFetch = async ({queryKey}) => {
   const fetchresult=await fetch(`/${queryKey.join('/')}`)
@@ -13,15 +14,16 @@ const genericFetch = async ({queryKey}) => {
   }
 
 const getDutySelector = (name, date,session) => {
-  const cellid = `${date}|${name}|${session}`
+  const cellid = `${date.toISOString().slice(0,10)}|${name}|${session}`
+  //return (data)=>{console.log(data,cellid);return {duty:'ICU',flags:[]}}
   return (data)=>data?.[cellid]
 }
 
-
+const dutyCSS='duty',mainTableCSS='main-table',containerCSS='container'
 function DutyButton({ name, date, session, rowNo, colNo, sessionNo,isFocussed}) {
-  const selector = useMemo(() => getDutySelector(name, date))
+  const selector = useMemo(() => getDutySelector(name, date,session))
   const { data:duty } = useQuery({queryKey:['data'], queryFn:genericFetch, select: selector,staleTime:3600000 })
-  const dutylabel = dutylabels[duty.duty ?? '-'] ?? { classname: 'unallocated', label: duty.duty ?? '?' }
+  const dutylabel = dutylabels[duty?.duty ?? '-'] ?? { classname: 'unallocated', label: duty?.duty ?? '?' }
   const dutyflags = duty?.flags ?? {}
   const focusDispatch = useContext(FocusDispatchContext)
   const { data:localconfig}=useQuery({queryKey:['localconfig'],queryFn:()=>Promise.resolve({'duty':'ICU'}),staleTime:Infinity,cacheTime:Infinity,suspense:true})  
@@ -30,7 +32,7 @@ function DutyButton({ name, date, session, rowNo, colNo, sessionNo,isFocussed}) 
     mutationFn:(vars)=>fetch('/click',{method:'POST',body:JSON.stringify(vars)}).then(r=>r.json()),
     onSettled:()=>queryClient.invalidateQueries({queryKey:['data']})})
   const onClick = useCallback(() => {
-    mutate({ name, date, session,duty:localconfig.duty })
+    mutate({ name, date:date.toISOString().slice(0,10), session,duty:localconfig.duty })
     divRef.current.focus()
     focusDispatch({type:'click',cell:{ row: rowNo, col: colNo,shift:sessionNo }})
   })
@@ -40,15 +42,20 @@ function DutyButton({ name, date, session, rowNo, colNo, sessionNo,isFocussed}) 
     }
   }, [isFocussed])
   const divRef = useRef()
-  const className = cx(dutyCSS, dutylabel.classname, isFocussed ? 'selected' : '')
-  return <div tabIndex={-1} ref={divRef} key={session} className={className} {...{ onClick }}>
+  const className = `${dutyCSS} ${dutylabel.classname} ${isFocussed ? 'selected' : ''}`
+  return <div tabIndex={-1} ref={divRef} title={JSON.stringify({name,date,session})} key={session} className={className} {...{ onClick }}>
     {session}:{dutylabel.label}
     {dutyflags.confirmed ? '🔒' : ''}{dutyflags.locum ? '💷' : ''}
   </div>
 }
 
-const TableCell=memo(function TableCell({ name, date, rowNo, colNo,highlightShift }) {
-  return <td>
+const TableCell=memo(function TableCell({ name, dateOffset, startDate,rowNo, colNo,highlightShift,isLast }) {
+  const {inView,ref}=useInView()
+  const dispatch=useContext(IntersectionDispatchContext)
+  useEffect(()=>{
+      dispatch({type:'trailerVisible',rowNo,colNo,inView})
+  },[isLast,inView])
+  return <td ref={ref}>
       {['am', 'pm', 'oncall'].map(
         (session, i) => 
           <DutyButton 
@@ -58,87 +65,10 @@ const TableCell=memo(function TableCell({ name, date, rowNo, colNo,highlightShif
             colNo={colNo}
             sessionNo={i} 
             name={name} 
-            date={date} 
+            date={new Date(startDate.valueOf()+86400000*colNo)} 
             session={session} 
             />)}</td>
 })
-const containerCSS = css`
-  display:grid;
-  grid-template-columns: 1fr;
-  grid-template-rows:min-content 1fr;
-  max-height: calc(100vh - 20px);
-  max-width: 100vw;
-  overflow: auto;
-  `
-const mainTableCSS = css`
-  white-space: nowrap;
-  font-family: Verdana;
-  font-size: 50%;
-  margin: 0;
-  border: none;
-  border-collapse: separate;
-  border-spacing: 0;
-  table-layout: fixed;
-  border: 1px solid black;
-
-  & td, & th {
-    border: 1px solid black;
-    padding: 0.5rem 1rem;
-  }
-
-  & thead th {
-    padding: 3px;
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    width: 25vw;
-    background: white;
-  }
-  & td {
-    background: #fff;
-    padding: 4px 5px;
-    text-align: left;
-  }
-
-  & table.hscroll tbody th {
-    font-weight: 100;
-    text-align: left;
-    position: relative;
-  }
-  & thead th:first-child {
-    position: sticky;
-    left: 0;
-    z-index: 2;
-  }
-  
-  & tbody th {
-    position: sticky;
-    left: 0;
-    background: white;
-    z-index: 1;
-  }
-
-  `
-
-const dutyCSS = css`
-    width:100%;
-    &:hover {
-      background-color: #EEEEFF;
-    }
-    &.selected:focus {
-      background-color: #EEFFFF;
-    }
-    &.icu {
-      color: #0000DD;
-    }
-    &.theatre {
-      color: #00DD00
-    }
-    &.unallocated {
-      color: #DD0DDD
-    }
-
-    `
 
 const dutylabels = {
   '-': { classname: 'unallocated', label: '-' },
@@ -150,7 +80,6 @@ const dutylabels = {
 function makeGridMovementReducer(MAX_ROW_INDEX) {
   return function gridMovementReducer(state, action) {
     const MAX_SHIFT_INDEX = 2
-    console.log({state,action})
     switch (action.type){
       case 'keypress':
     switch (action.keyPressed) {
@@ -182,12 +111,53 @@ function makeGridMovementReducer(MAX_ROW_INDEX) {
 }
 
 const FocusDispatchContext=createContext()
+const IntersectionDispatchContext=createContext()
+function TrailerColumnCell({length}){
+  const {ref,inView}=useInView()
+  const dispatch=useContext(IntersectionDispatchContext)
+  useEffect(()=>{
+    if (inView){
+      setTimeout(()=>{
+      dispatch({type:'trailer',minLength:length+1})
+    },5)}
+  },[inView,length])
+  return <td ref={ref}>{inView}X</td>
+}
 function MainTable() {
   const { data:config } = useQuery({queryKey:['gridconfig'], queryFn:genericFetch, suspense: true })
   const reducer=useMemo(()=>makeGridMovementReducer(config.names.length),[config.names.length])
   const [focusLocation, dispatch] = useReducer(reducer, { row: 0, col: 0, shift: 0 })
-  const rows = config.names
-  const cols = config.dates
+  const rows = ['fred']//config.names
+  const [{cols},intersectionDispatch]=useReducer((oldstate,a)=>{
+    let state=oldstate
+    if (a.type=='trailer'){
+      if (state.cols.length<a.minLength || state.cols.length<state.knownMax){
+        state={
+          ...state,
+          cols:[...state.cols,state.cols.length],
+          rowmaps:[...state.rowmaps,new Map(rows.map((x,i)=>[i,undefined]))]}
+    }}
+    if (a.type=='trailerVisible'){
+        if (a.colNo>state.knownMax){
+        state.rowmaps[a.colNo].set(a.rowNo,a.inView)
+        }
+        if (a.inView) return state
+        for (let i=state.rowmaps.length-1;i>state.knownMax;i--){
+
+        for (let v of state.rowmaps[i].values()){
+          if (v!==false) {
+            return state}
+        }
+        state={...state,cols:state.cols.slice(0,i),rowmaps:state.rowmaps.slice(0,i)}
+      }
+        }
+      
+    return state
+  },{
+    knownMax:config.knownDays,
+    cols:Array.from({ length:config.knownDays }, (v, i) => i),
+    rowmaps:Array.from({ length: config.knownDays },()=>new Map(rows.map((x,i)=>[i,undefined]))),
+    })
   const keyDown = useCallback(e => {
     switch (e.key) {
       case 'ArrowUp':
@@ -201,7 +171,9 @@ function MainTable() {
         break;
     }
   })
-  const headrow = <tr><th>First</th>{cols.map(x => <th key={x}>{x}</th>)}</tr>
+
+  const startDate=Date.parse(config.minDate)
+  const headrow = <tr><th>First</th>{cols.map(x => <th key={x}>{new Date(startDate.valueOf()+86400000*x).toISOString().slice(0,10)}</th>)}<th></th></tr>
   const tblrows = rows.map((r, rowNo) => 
     <tr key={r}>
         <th>{r}</th>
@@ -212,14 +184,18 @@ function MainTable() {
             colNo={i} 
             key={x} 
             name={r} 
-            date={x} />)}
+            dateOffset={x}
+            startDate={startDate}
+            />)}
+        <TrailerColumnCell length={cols.length}/>
       </tr>)
   return <FocusDispatchContext.Provider value={dispatch}>
+    <IntersectionDispatchContext.Provider value={intersectionDispatch}>
     <div className='bottom-panel' style={{ overflow: 'auto' }}>
     <table onKeyDown={keyDown} tabIndex={0} className={mainTableCSS}>
       <thead>{headrow}</thead>
       <tbody>{tblrows}</tbody>
-    </table></div></FocusDispatchContext.Provider>
+    </table></div></IntersectionDispatchContext.Provider></FocusDispatchContext.Provider>
 }
 
 function ConstraintDialog(props){
@@ -229,13 +205,14 @@ function ConstraintDialog(props){
 }
 
 function Component(props) {
-  const {setQueryData,data:localconfig}=useLocalConfig()
+  const {setConfig,data:localconfig}=useLocalConfig()
   return <>
     <div><select value={localconfig?.duty} onChange={
-        (e)=>{setQueryData(old=>({...old,duty:e.target.value}))}}>
+        (e)=>{setConfig(old=>({...old,duty:e.target.value}))}}>
       <option value={'ICU'}>ICU</option>
       <option value={'Th'}>Theatre</option>
       </select></div>
+      <hr/>
     <Suspense fallback={<span>Loading...</span>}>
       <div className={containerCSS}>
         <div></div>
@@ -243,7 +220,7 @@ function Component(props) {
       </div>
     </Suspense>
   </>
-}
+} 
 
 
 export {Component }

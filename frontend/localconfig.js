@@ -7,9 +7,9 @@ const localConfigDefault={
   function useLocalConfig(){
     const queryClient=useQueryClient()
     function setConfig(val){
-      queryClient.setQueryData('localconfig',val)
+      queryClient.setQueryData(['localconfig'],val)
     }
-    const uq=useQuery({queryKey:'localconfig',initialData:localConfigDefault,queryFn:()=>Promise.resolve(localConfigDefault),staleTime:Infinity,cacheTime:Infinity})
+    const uq=useQuery({queryKey:['localconfig'],initialData:localConfigDefault,queryFn:()=>Promise.resolve(localConfigDefault),staleTime:Infinity,cacheTime:Infinity})
     return {
       setConfig,
       config:uq.data}

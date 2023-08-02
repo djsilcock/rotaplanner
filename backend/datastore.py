@@ -59,20 +59,21 @@ class DataStore:
                       default=date.today())
         maxdate = max((key[1] for key in self.data),
                       default=date.today())
-        return (mindate,maxdate)
-    
+        return (mindate, maxdate)
+
     @property
     def dates(self):
-        mindate,maxdate=self.daterange
+        mindate, maxdate = self.daterange
         return [mindate+timedelta(days=i)
-                      for i in range((maxdate-mindate).days+1)]
+                for i in range((maxdate-mindate).days+1)]
+
     def get_config(self):
         "return configuration options as dict"
         return {
             'names': self.names,
-            'minDate': min(self.dates,default=date.today()).isoformat(),
-            'maxDate': max(self.dates,default=date.today()).isoformat(),
-            'dates': [d.isoformat() for d in (self.dates if self.dates else [date.today()])],
+            'minDate': self.daterange[0].isoformat(),
+            'maxDate': self.daterange[1].isoformat(),
+            'knownDays': max(30, (self.daterange[1]-self.daterange[0]).days+1),
             'pubhols': [ph.isoformat() for ph in self.pubhols]
         }
 
@@ -80,12 +81,14 @@ class DataStore:
         "return datastore as JSON-serializable data"
         data = {}
         for (name, day, sess), sessionduty in self.data.items():
-            data[f'{day.isoformat()[0:10]}|{name}|{sess}'] = asdict(sessionduty)
+            key=f'{day.isoformat()[0:10]}|{name}|{sess}'
+            data[key] = {'duty':sessionduty.duty, 'flags': list(sessionduty.flags)}
         return data
 
     def setduty(self, name, duty_date, session, duty):
         "Set duty as determined by menu"
-        cell = self.data.get((name, date.fromisoformat(duty_date), session))
+        cell = self.data.setdefault(
+            (name, date.fromisoformat(duty_date), session), SessionDuty())
         if isinstance(cell, SessionDuty):
             cell.duty = duty
         else:
