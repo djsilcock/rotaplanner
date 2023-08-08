@@ -49,7 +49,7 @@ async def handle_clw(request: web.Request):
         datastore.import_clw_csv(csvfile)
         return web.json_response({'response': 'ok'})
     except Exception as e:
-        return web.json_response({'error': str(e)}, status=400)
+        return web.json_response({'error': str(e)}, status=500)
 
 
 @routes.post('/solve')
