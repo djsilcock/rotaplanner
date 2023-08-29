@@ -22,7 +22,7 @@ class CoreDuties(BaseConstraintConfig):
     tags: tuple[str, ...]
     rules: list[tuple | dict]
 
-    def configure(self):
+    def setup(self):
         self.dutystore = DutyStore(self.model)
         self.locations = ('NA', 'ICU', 'THEATRE', 'LEAVE', 'TIMEBACK')
         self.tags = ('CLINICAL', 'NONCLINICAL',
@@ -45,7 +45,6 @@ class CoreDuties(BaseConstraintConfig):
             ('== 1', ('LEAVE', 'NOT_LEAVE')),
             ('== 1', ('NOT_EXTRA', '*EXTRA')),
             ('== 1', ('EXTRA', 'NOT_EXTRA'))
-
         ]
 
     def allocated_for_duty(self, shift: str, day: date, staff: str, location: str):
@@ -128,7 +127,19 @@ class RequiredCoverage(BaseConstraintConfig):
           for day in (SATURDAY, SUNDAY) for shift in ('am', 'pm')),
         *((day, shift, 'THEATRE', ">=", 1) for day in range(5) for shift in ('am', 'pm'))
     ]
+    @classmethod
+    def validate_frontend_json(cls, json_config, orig_config):
+        match json_config:
+            case {'constraint':'required_coverage','requirements':[*requirements]}:
+                for (weekday,shift,duty,op,req) in requirements:
+                    
 
+            case _:
+                return None
+
+            
+        return super().validate_frontend_json(json_config, orig_config)
+    
     def apply_constraint(self):
         cdctx = CoreDuties.from_context(self.ctx)
         for day in self.ctx.core_config.days:

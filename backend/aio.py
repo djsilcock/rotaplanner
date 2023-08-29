@@ -1,10 +1,12 @@
 
 import os
 from typing import cast
-from aiohttp import web
+
 import asyncio
 from datetime import date, datetime
 from io import TextIOWrapper
+
+from aiohttp import web
 
 from solver import async_solver_ctx
 from datastore import DataStore
@@ -21,20 +23,23 @@ routes = web.RouteTableDef()
 
 @routes.get('/data')
 async def get_data(_):
+    "get all data"
     return web.json_response(datastore.as_dict())
 
 
 @routes.get('/gridconfig')
 async def get_grid_config(_):
+    "get configuration for grid layout"
     return web.json_response(datastore.get_config())
 
 
 @routes.post('/click')
 async def duty_click(request: web.Request):
+    "handle click on duty cell"
     data = await request.json()
     match data:
-        case {'name': name, 'date': d, 'session': sess, 'duty': duty}:
-            datastore.setduty(name, d, sess, duty)
+        case {'name': name, 'date': dutydate, 'session': sess, 'duty': duty}:
+            datastore.setduty(name, dutydate, sess, duty)
             return web.json_response({'response': 'ok'})
         case _:
             return web.json_response({'error': f'wrong data shape: received {data}'}, status=400)
@@ -42,14 +47,15 @@ async def duty_click(request: web.Request):
 
 @routes.post('/handle_clw')
 async def handle_clw(request: web.Request):
+    "for uploading csv from clwrota"
     try:
         data = await request.post()
         clw = cast(web.FileField, data['clw'])
         csvfile = TextIOWrapper(clw.file)
         datastore.import_clw_csv(csvfile)
         return web.json_response({'response': 'ok'})
-    except Exception as e:
-        return web.json_response({'error': str(e)}, status=500)
+    except Exception as exc:
+        return web.json_response({'error': str(exc)}, status=500)
 
 
 @routes.post('/solve')
@@ -68,8 +74,8 @@ async def solve_rota(request:web.Request):
 async def setlocum(request: web.Request):
     "Set duty as determined by menu"
     match await request.json():
-        case {'name': name, 'date': d, 'session': session, 'locumtype': locumtype}:
-            datastore.setflag(name, d, session, locumtype)
+        case {'name': name, 'date': dutydate, 'session': session, 'locumtype': locumtype}:
+            datastore.setflag(name, dutydate, session, locumtype)
             return web.json_response({'status': 'ok'})
         case _:
             return web.json_response({'error': 'bad request format'}, status=400)
@@ -79,8 +85,8 @@ async def setlocum(request: web.Request):
 async def setlock(request):
     "Set lock as determined by menu"
     match await request.json():
-        case {'name': name, 'date': d, 'session': session, 'locktype': locktype}:
-            datastore.setflag(name, d, session, locktype)
+        case {'name': name, 'date': dutydate, 'session': session, 'locktype': locktype}:
+            datastore.setflag(name, dutydate, session, locktype)
             return web.json_response({'status': 'ok'})
         case _:
             return web.json_response({'error': 'bad request format'}, status=400)
@@ -90,29 +96,21 @@ async def setlock(request):
 async def setph(request):
     "Menu command to toggle day as public holiday"
     match await request.json:
-        case {'date': d, 'value': True}:
-            datastore.pubhols.add(d)
+        case {'date': dutydate, 'value': True}:
+            datastore.pubhols.add(dutydate)
             return web.json_response({'status': 'ok'})
-        case {'date': d, 'value': False}:
-            if d in datastore.pubhols:
-                datastore.pubhols.remove(d)
+        case {'date': dutydate, 'value': False}:
+            if dutydate in datastore.pubhols:
+                datastore.pubhols.remove(dutydate)
             return web.json_response({'status': 'ok'})
         case _:
             return web.json_response({'error': 'setph must be a boolean or None'}, status=400)
 
 
-@routes.get('/test')
-async def testroute(request: web.Request):
-    if request.if_modified_since:
-        print(request.if_modified_since)
-        raise web.HTTPNotModified()
-    r = web.json_response(list(request.headers.items()))
-    r.last_modified = datetime.today()
-    return r
-
 
 @routes.get('/')
 async def index(_):
+    "base route"
     return web.Response(content_type="text/html",
                         body="""<html>
         <head>
@@ -124,7 +122,7 @@ async def index(_):
 
 @routes.post('/abort')
 async def abort(request: web.Request):
-    request.app['abort'].set()
+    await request.app['cancel']()
     return web.Response(text='bye')
 
 
@@ -132,6 +130,7 @@ async def main():
     app = web.Application()
     app['abort'] = asyncio.Event()
     app.add_routes(routes)
+    app.cleanup_ctx.append(async_solver_ctx)
     app.router.add_static('/static', os.path.join(os.getcwd(), '..', 'web'))
     runner = web.AppRunner(app)
     await runner.setup()

@@ -1,6 +1,5 @@
 "Data storage class"
 
-from dataclasses import asdict
 from typing import Iterable
 from warnings import warn
 from datetime import date, timedelta
@@ -14,7 +13,7 @@ class DataStore:
     "datastore class"
 
     def __init__(self, storage_type='filesystem'):
-        self.data: dict[tuple, SessionDuty] = {}
+        self.data: dict[tuple[str,date,str], SessionDuty] = {}
         self.sessions = ('am', 'pm', 'eve', 'night')
         self.storage = storage_type
         self.config = {}
@@ -54,7 +53,8 @@ class DataStore:
                     self.data.setdefault((name, day, sess), SessionDuty())
 
     @property
-    def daterange(self):
+    def daterange(self)->tuple[date,date]:
+        "get range of dates of known duties"
         mindate = min((key[1] for key in self.data),
                       default=date.today())
         maxdate = max((key[1] for key in self.data),
@@ -63,6 +63,7 @@ class DataStore:
 
     @property
     def dates(self):
+        "return list of all dates"
         mindate, maxdate = self.daterange
         return [mindate+timedelta(days=i)
                 for i in range((maxdate-mindate).days+1)]

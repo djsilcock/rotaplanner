@@ -3,6 +3,7 @@
 
 from enum import Flag, StrEnum
 from config import Shifts, Staff
+from constraint_ctx import BaseConstraintConfig
 from constraints.utils import BaseConstraint
 from constraints.core_duties import leave, icu
 from constraints.some_shifts_are_locum import quota_icu, locum_icu
@@ -15,13 +16,14 @@ LeavebookDuties=StrEnum('LeavebookDuties',
     'LEAVE TS NOC ICU THEATRE')
 
 
-class Constraint(BaseConstraint):
+class Constraint(BaseConstraintConfig):
     """Leavebook entry"""
 
     def __init__(self, solver_context):
         super().__init__(solver_context)
         self.leavebook = {}
 
+    def confi
     async def apply_constraint(self):
         data = []  # TODO: get data from database
         config: GenericConfig = self.ctx[None]

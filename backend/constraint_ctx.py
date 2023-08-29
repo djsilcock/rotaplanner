@@ -45,7 +45,6 @@ class BaseConstraintConfig():
         "configuration options for constraint"
     def config(self) ->dict:
         return self.ctx.config.setdefault(self.constraint_name,{})
-
     @property
     def model(self) -> cp_model.CpModel:
         "return currently used model"

@@ -48,55 +48,57 @@ async def solve_async(datastore:DataStore, config, result_queue:asyncio.Queue):
     config: configuration for constraints
     callback:feed results back to main thread
     """
-
-    data = datastore.data
-    pubhols=datastore.pubhols
-    ctx = ConstraintContext(
-        {'core':CoreConfig(
-            days=sorted({d[1] for d in data}),
-            minimize_targets=[],
-            constraint_atoms=[],
-            shifts=('am', 'pm', 'oncall'),
-            staff={n[0] for n in data},
-            locations=set(('ICU', 'Theatre')),
-            pubhols=pubhols
-        ),**config})
-
-    await ctx.apply_constraints()
-    ctx.model.Minimize(sum(ctx.core_config.minimize_targets))
-
-    async def process_result(solution):
-        outputdict = {}
-        assert ctx.core_config.days is not None
-        for day in ctx.core_config.days:
-            for staff in ctx.core_config.staff:
-                for shift in ctx.core_config.shifts:
-                    sd = SessionDuty()
-                    await ctx.result(
-                        staff=staff,
-                        day=day,
-                        shift=shift,
-                        sessionduty=sd,
-                        solution=solution
-                        )
-                    outputdict[(day, staff, shift)] = sd
-        await result_queue.put(outputdict)
-
-    loop=asyncio.get_running_loop()
-    def post_result(solution: cp_model.CpSolver|cp_model.CpSolverSolutionCallback):
-        asyncio.run_coroutine_threadsafe(process_result(solution),loop)
-
-    print('starting solver')
-    printer = SolutionPrinter(post_result)
-    solver = cp_model.CpSolver()
     try:
-        await asyncio.to_thread(lambda: solver.Solve(ctx.model, printer))
-    finally:
-        solver.StopSearch()
-    status = solver.StatusName()
-    if status in ['FEASIBLE', 'OPTIMAL']:
-        await process_result(solver)
-    return status
+        data = datastore.data
+        pubhols=datastore.pubhols
+        ctx = ConstraintContext(
+            {'core':CoreConfig(
+                days=sorted({d[1] for d in data}),
+                minimize_targets=[],
+                constraint_atoms=[],
+                shifts=('am', 'pm', 'oncall'),
+                staff={n[0] for n in data},
+                locations=set(('ICU', 'Theatre')),
+                pubhols=pubhols
+            ),**config})
+
+        await ctx.apply_constraints()
+        ctx.model.Minimize(sum(ctx.core_config.minimize_targets))
+
+        async def process_result(solution):
+            outputdict = {}
+            assert ctx.core_config.days is not None
+            for day in ctx.core_config.days:
+                for staff in ctx.core_config.staff:
+                    for shift in ctx.core_config.shifts:
+                        sd = SessionDuty()
+                        await ctx.result(
+                            staff=staff,
+                            day=day,
+                            shift=shift,
+                            sessionduty=sd,
+                            solution=solution
+                            )
+                        outputdict[(day, staff, shift)] = sd
+            await result_queue.put(outputdict)
+
+        loop=asyncio.get_running_loop()
+        def post_result(solution: cp_model.CpSolver|cp_model.CpSolverSolutionCallback):
+            asyncio.run_coroutine_threadsafe(process_result(solution),loop)
+
+        print('starting solver')
+        printer = SolutionPrinter(post_result)
+        solver = cp_model.CpSolver()
+        try:
+            await asyncio.to_thread(lambda: solver.Solve(ctx.model, printer))
+        finally:
+            solver.StopSearch()
+        status = solver.StatusName()
+        if status in ['FEASIBLE', 'OPTIMAL']:
+            await process_result(solver)
+        return status
+    except asyncio.CancelledError:
+        pass
 
 
 async def solver_runner(solver_queue: asyncio.Queue[tuple | None]):
@@ -107,10 +109,11 @@ async def solver_runner(solver_queue: asyncio.Queue[tuple | None]):
             solver_args = await solver_queue.get()
             if current_solver:
                 current_solver.cancel()
-                with suppress(asyncio.CancelledError):
-                    await current_solver
+                await current_solver
             if solver_args is not None:
                 current_solver = asyncio.create_task(solve_async(*solver_args))
+    except asyncio.CancelledError:
+        pass
     finally:
         if current_solver:
             current_solver.cancel()
@@ -127,7 +130,10 @@ async def async_solver_ctx(app):
         progress_callback: Callable
     ):
         await solver_queue.put((datastore, config, progress_callback))
+    async def cancel():
+        await solver_queue.put(None)
     app['solve'] = solve
+    app['cancel']= cancel
     yield
     runner.cancel()
     with suppress(asyncio.CancelledError):
