@@ -3,7 +3,7 @@
 from datetime import date
 import operator
 from calendar import SATURDAY, SUNDAY
-
+from typing import NamedTuple,Callable
 
 from signals import signal
 from constraint_ctx import BaseConstraintConfig, DutyStore
@@ -14,38 +14,54 @@ apply_constraint = signal('apply_constraint')
 build_output = signal('build_output')
 register_urls = signal('register_urls')
 
+class CoreDutiesConfig(NamedTuple):
+    locations:tuple[str,...]
+    tags:tuple[str,...]
+    groups:dict[str,tuple[str,...]]
+    rules:list[tuple|dict]
 
 class CoreDuties(BaseConstraintConfig):
     constraint_name = 'core_duties'
     dutystore: DutyStore[tuple[str, date, str, str]]
     locations: tuple[str, ...]
     tags: tuple[str, ...]
+    groups:dict[str,tuple[str,...]]
     rules: list[tuple | dict]
+
+    @staticmethod
+    def load_config():
+        return CoreDutiesConfig(
+            locations=('NA', 'ICU', 'THEATRE', 'LEAVE', 'TIMEBACK'),
+            tags = ('CLINICAL', 'NONCLINICAL',
+                     'JOBPLANNED', 'NOTJOBPLANNED',
+                     'LEAVE_JP', 'LEAVE_NJP', 'NOT_LEAVE',
+                     'EXTRA', 'QUOTA', 'LOCUM_PAY', 'TIMESHIFT'),
+            groups = {
+                '*EXTRA': ('LOCUM_PAY', 'TIMESHIFT'),
+                '*CLINICAL': ('ICU', 'THEATRE'),
+                '*NONCLINICAL': ('LEAVE', 'NA', 'TIMEBACK'),
+                    },
+            rules = [
+                ('== 1', ('*CLINICAL', 'NONCLINICAL')),
+                ('== 1', ('*NONCLINICAL', 'CLINICAL')),
+                ('== 1', ('CLINICAL', 'NONCLINICAL')),
+                ('== 1', ('NOTJOBPLANNED', 'LEAVE_JP', 'CLINICAL', 'TIMEBACK')),
+                ('== 1', ('JOBPLANNED', 'NA', 'LEAVE_NJP', 'EXTRA', 'QUOTA')),
+                ('== 1', ('JOBPLANNED', 'NOTJOBPLANNED')),
+                ('== 1', ('LEAVE_JP', 'LEAVE_NJP', 'NOT_LEAVE')),
+                ('== 1', ('LEAVE', 'NOT_LEAVE')),
+                ('== 1', ('NOT_EXTRA', '*EXTRA')),
+                ('== 1', ('EXTRA', 'NOT_EXTRA'))
+            ]
+            )
 
     def setup(self):
         self.dutystore = DutyStore(self.model)
-        self.locations = ('NA', 'ICU', 'THEATRE', 'LEAVE', 'TIMEBACK')
-        self.tags = ('CLINICAL', 'NONCLINICAL',
-                     'JOBPLANNED', 'NOTJOBPLANNED',
-                     'LEAVE_JP', 'LEAVE_NJP', 'NOT_LEAVE',
-                     'EXTRA', 'QUOTA', 'LOCUM_PAY', 'TIMESHIFT')
-        self.groups = {
-            '*EXTRA': ('LOCUM_PAY', 'TIMESHIFT'),
-            '*CLINICAL': ('ICU', 'THEATRE'),
-            '*NONCLINICAL': ('LEAVE', 'NA', 'TIMEBACK'),
-        }
-        self.rules = [
-            ('== 1', ('*CLINICAL', 'NONCLINICAL')),
-            ('== 1', ('*NONCLINICAL', 'CLINICAL')),
-            ('== 1', ('CLINICAL', 'NONCLINICAL')),
-            ('== 1', ('NOTJOBPLANNED', 'LEAVE_JP', 'CLINICAL', 'TIMEBACK')),
-            ('== 1', ('JOBPLANNED', 'NA', 'LEAVE_NJP', 'EXTRA', 'QUOTA')),
-            ('== 1', ('JOBPLANNED', 'NOTJOBPLANNED')),
-            ('== 1', ('LEAVE_JP', 'LEAVE_NJP', 'NOT_LEAVE')),
-            ('== 1', ('LEAVE', 'NOT_LEAVE')),
-            ('== 1', ('NOT_EXTRA', '*EXTRA')),
-            ('== 1', ('EXTRA', 'NOT_EXTRA'))
-        ]
+        config=self.load_config()
+        self.locations = config.locations
+        self.tags = config.tags
+        self.groups = config.groups
+        self.rules = config.rules
 
     def allocated_for_duty(self, shift: str, day: date, staff: str, location: str):
         "is allocated for a given duty"
@@ -87,10 +103,10 @@ class CoreDuties(BaseConstraintConfig):
                         sum(self.allocated_for_duty(shift, day, staff, loc) for loc in expand(grp)) == len(grp))
                 case {'IF': if_condition}:
                     if 'THEN' in rule:
-                        self.add_conditions(rule['THEN'], self.allocated_for_duty(
+                        self.add_conditions(shift,day,staff,rule['THEN'], self.allocated_for_duty(
                             shift, day, staff, if_condition) == 1, *conditions)
                     if 'ELSE' in rule:
-                        self.add_conditions(rule['ELSE'], self.allocated_for_duty(
+                        self.add_conditions(shift,day,staff,rule['ELSE'], self.allocated_for_duty(
                             shift, day, staff, if_condition) == 0, *conditions)
                     continue
                 case _:
@@ -116,41 +132,74 @@ class CoreDuties(BaseConstraintConfig):
             if solution.Value(self.allocated_for_duty(shift, day, staff, loc)):
                 sessionduty.duty = loc
 
+class RequiredCoverageConfig(NamedTuple):
+    day:int
+    shift:str
+    duty:str
+    op:Callable
+    value:int
+
+op_symbols={
+            "==": operator.eq,
+            ">=": operator.ge,
+            "<=": operator.le,
+            ">": operator.gt,
+            "<": operator.lt
+            }
 
 class RequiredCoverage(BaseConstraintConfig):
     constraint_name = "required_coverage"
-    cover_requirements = [
-        *((day, shift, 'ICU', "==", 1) for day in range(7)
+
+    @classmethod
+    def load_config(cls):
+        return [
+        *(RequiredCoverageConfig(day, shift, 'ICU', operator.eq, 1) for day in range(7)
           for shift in ('am', 'pm', 'oncall')),
-        *((day, 'oncall', 'THEATRE', "==", 1) for day in range(7)),
-        *((day, shift, 'THEATRE', "==", 1)
+        *(RequiredCoverageConfig(day, 'oncall', 'THEATRE', operator.eq, 1) for day in range(7)),
+        *(RequiredCoverageConfig(day, shift, 'THEATRE', operator.eq, 1)
           for day in (SATURDAY, SUNDAY) for shift in ('am', 'pm')),
-        *((day, shift, 'THEATRE', ">=", 1) for day in range(5) for shift in ('am', 'pm'))
-    ]
+        *(RequiredCoverageConfig(day, shift, 'THEATRE', operator.ge, 1) for day in range(5) for shift in ('am', 'pm'))
+        ]
     @classmethod
     def validate_frontend_json(cls, json_config, orig_config):
         match json_config:
             case {'constraint':'required_coverage','requirements':[*requirements]}:
-                for (weekday,shift,duty,op,req) in requirements:
-                    
-
+                coreconfig=CoreDuties.load_config()
+                all_errors={}
+                config:list[RequiredCoverageConfig]=[]
+                for idx,(weekday,shift,duty,op,req) in enumerate(requirements):
+                    errors={}
+                    if weekday not in range(7):
+                        errors['weekday']='Weekday must be in range 0-6'
+                    if shift not in ('am','pm','oncall','eve','night'):
+                        errors['shift']='Unrecognised shift name'
+                    if duty not in (*coreconfig.locations,*coreconfig.tags,*coreconfig.groups):
+                        errors['duty']=f'Unrecognised duty name:{duty}'
+                    if op not in op_symbols:
+                        errors['op']=f'Unrecognised operator:{op}'
+                    if not isinstance(req,int):
+                        errors['req']='Must be a number'
+                    if len(errors)>0:
+                        all_errors[idx]=errors
+                    else:
+                        config.append(RequiredCoverageConfig(
+                            day=weekday,
+                            shift=shift,
+                            duty=duty,
+                            op=op_symbols[op],
+                            value=req
+                        ))
+                if len(all_errors)>0:
+                    raise ValueError(all_errors)
+                return config
             case _:
                 return None
 
-            
-        return super().validate_frontend_json(json_config, orig_config)
     
     def apply_constraint(self):
         cdctx = CoreDuties.from_context(self.ctx)
         for day in self.ctx.core_config.days:
-            for (weekday, shift, dutytype, op, requirement) in self.cover_requirements:
+            for (weekday, shift, dutytype, oper, requirement) in self.load_config():
                 if day.weekday() == weekday:
-                    oper = {
-                        "==": operator.eq,
-                        ">=": operator.ge,
-                        "<=": operator.le,
-                        ">": operator.gt,
-                        "<": operator.lt
-                    }[op]
                     self.model.Add(oper(sum(cdctx.allocated_for_duty(shift, day, staff, dutytype)
                                             for staff in self.core_config.staff), requirement))

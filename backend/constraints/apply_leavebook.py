@@ -23,7 +23,6 @@ class Constraint(BaseConstraintConfig):
         super().__init__(solver_context)
         self.leavebook = {}
 
-    def confi
     async def apply_constraint(self):
         data = []  # TODO: get data from database
         config: GenericConfig = self.ctx[None]
