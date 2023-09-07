@@ -2,9 +2,7 @@
 
 
 from enum import Flag, StrEnum
-from config import Shifts, Staff
 from constraint_ctx import BaseConstraintConfig
-from constraints.utils import BaseConstraint
 from constraints.core_duties import leave, icu
 from constraints.some_shifts_are_locum import quota_icu, locum_icu
 from solver import GenericConfig
@@ -19,7 +17,7 @@ LeavebookDuties=StrEnum('LeavebookDuties',
 class Constraint(BaseConstraintConfig):
     """Leavebook entry"""
 
-    def __init__(self, solver_context):
+    def setup(self, solver_context):
         super().__init__(solver_context)
         self.leavebook = {}
 

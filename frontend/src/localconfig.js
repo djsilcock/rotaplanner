@@ -1,4 +1,4 @@
-import {useQuery,useQueryClient} from '@tanstack/react-query'
+import {createQuery,useQueryClient} from '@tanstack/solid-query'
 
 const localConfigDefault={
       duty:'ICU',
@@ -9,10 +9,10 @@ const localConfigDefault={
     function setConfig(val){
       queryClient.setQueryData(['localconfig'],val)
     }
-    const uq=useQuery({queryKey:['localconfig'],initialData:localConfigDefault,queryFn:()=>Promise.resolve(localConfigDefault),staleTime:Infinity,cacheTime:Infinity})
+    const query=createQuery({queryKey:()=>['localconfig'],initialData:localConfigDefault,queryFn:()=>Promise.resolve(localConfigDefault),staleTime:Infinity,cacheTime:Infinity})
     return {
       setConfig,
-      config:uq.data}
+      config:()=>q.data}
   }
 
   export default useLocalConfig
