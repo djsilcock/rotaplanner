@@ -1,5 +1,5 @@
 
-import { createEffect, createSignal, on, createResource, createMemo, Suspense, createContext, For } from "solid-js"
+import { createEffect, createSignal, createResource, createMemo, Suspense, For } from "solid-js"
 import { createStore } from 'solid-js/store'
 
 import useLocalConfig from "./localconfig"
@@ -20,39 +20,31 @@ const dutylabels = {
 const focusElements=[]
 
 function handleKeyPress(keyPressed) {
-  const MAX_SHIFT_INDEX = 2
   const currentElement=document.activeElement
-  const activeRow=currentElement.dataset.rowno
-  const activeCol=currentElement.dataset.colno
+  const output={current:currentElement}
+  const activeRow=Number(currentElement.dataset.rowno)
+  const activeCol=Number(currentElement.dataset.colno)
+  
   console.log(activeRow,activeCol) 
-  //console.log(focusElements[Number(activeCol)+1][Number(activeRow)+1])
+  try{
   switch (keyPressed) {
     case 'ArrowUp':
-      return (state) => {
-        if (state.shift == 0) {
-          if (state.row == 0) return state
-          return { ...state, row: state.row - 1, shift: MAX_SHIFT_INDEX }
-        }
-        return { ...state, shift: state.shift - 1 }
-      }
+      focusElements[activeRow-1][activeCol].focus()
+      break
     case 'ArrowDown':
-      return (state) => {
-        if (state.shift == MAX_SHIFT_INDEX) {
-          if (state.row == state.maxRow) return state
-          return { ...state, row: state.row + 1, shift: 0 }
-        }
-        return { ...state, shift: state.shift + 1 }
-      }
+      focusElements[activeRow+1][activeCol].focus()
+      break
     case 'ArrowLeft':
-      return (state) => {
-        if (state.col == 0) return state
-        return { ...state, col: state.col - 1 }
-      }
+      focusElements[activeRow][activeCol-1].focus()
+      break    
     case 'ArrowRight':
-      return (state) => {
-        return { ...state, col: state.col + 1 }
-      }
+      focusElements[Number(activeRow)][Number(activeCol)+1].focus()
+      break
   }
+  console.log(output)
+} catch (e){
+  //
+}
 }
 
 
@@ -72,18 +64,18 @@ function handleKeyPress(keyPressed) {
 }
 */
 function MainTable() {
-  const remoteData = createResource(() => fetch('/api/data').then(r => r.json())
+  const remoteData = createResource(
+    //() => fetch('/api/data').then(r => r.json())
+    ()=>(new Promise((res)=>{setTimeout(res,5000)}))
   .catch(r=>r)
-  .then(r=>({minDate:'2022-01-01',maxDataDate:'2023-01-01',names:[],data:{}})))
-  const minDate = createMemo(() => remoteData.latest?.minDate ?? '2022-02-01')
-  const maxDataDate = createMemo(() => remoteData.latest?.maxDate ?? '2023-01-01')
-  const names = createMemo(() => remoteData.latest?.names ?? ['fred','barney'])
+  .then(()=>({minDate:'2022-01-01',maxDataDate:'2023-01-01',names:['fred','barney'],data:{}})))
+  const minDate = createMemo(() => remoteData.latest?.minDate)
+  const maxDataDate = createMemo(() => remoteData.latest?.maxDate)
+  const names = createMemo(() => remoteData.latest?.names)
   const [displayedDates, doupdateDisplayedDates] = createSignal([])
   const dateVisibility = new Map()
   createEffect(()=>console.log(minDate()))
   const updateDisplayedDates = ()=>doupdateDisplayedDates(oldDisplayedDates => {
-    console.log('updating')
-
     const newDisplayedDates = [...oldDisplayedDates]
     const prevDisplayedDates = new Set(oldDisplayedDates)
     function addDayToISODate(d) {
@@ -91,11 +83,9 @@ function MainTable() {
       }
     let currentDate = minDate()
     let ctr=0
-    console.log(currentDate,minDate(),maxDataDate())
-    
     while (currentDate <= maxDataDate()) {
       
-      if (!prevDisplayedDates.has(currentDate)) {newDisplayedDates.push(currentDate)};
+      if (!prevDisplayedDates.has(currentDate)) {newDisplayedDates.push(currentDate)}
       currentDate = addDayToISODate(currentDate)
       ctr++
       if (ctr>1000) break
@@ -117,7 +107,6 @@ function MainTable() {
           break
       }
     }
-    console.log(visibleDates)
     if (lastdateisVisible) {
       newDisplayedDates.push(addDayToISODate(displayedDate))
     }
@@ -149,21 +138,10 @@ function MainTable() {
     if (typeof focusElements[rowNo] =='undefined') {focusElements[rowNo]=[]}
     focusElements[rowNo][colNo]=el
   }
-  const keyDown = (e => {
-    switch (e.key) {
-      case 'ArrowUp':
-      case 'ArrowDown':
-      case 'ArrowLeft':
-      case 'ArrowRight':
+  const keyDown = e => {
         e.preventDefault()
-        console.log(document.activeElement)
-        console.log(focusElements)
         handleKeyPress(e.key)
-        break;
-      default:
-        break;
-    }
-  })
+  }
 
   return <div class='bottom-panel' ref={registerIntersectionObserver} style={{ overflow: 'auto' }}>
       <For each={names()}>{(i)=><span>{i()}</span>}</For>
@@ -189,7 +167,6 @@ function MainTable() {
                             const data=createMemo(()=>remoteData[cellDate]?.[staffName]?.[session] ?? {duty:'-',flags:{}})
                             const dutylabel = () => (dutylabels[data.duty] ?? { classname: 'unallocated', label: data.data?.duty ?? '?' })
                             const dutyflags = () => (data.flags ?? {})
-                            let divRef
                             return <div
                               tabIndex={-1}
                               use:observe={[rowNo()*3+sessionNo(),colNo()]}
@@ -225,10 +202,9 @@ function ConstraintDialog(props) {
 }
 
 function Component(props) {
-  const { setConfig, data: localconfig } = useLocalConfig()
   return <>
-    <div><select value={localconfig?.duty} onChange={
-      (e) => { setConfig(old => ({ ...old, duty: e.target.value })) }}>
+    <div><select onChange={
+      (e) => { console.log(e.target.value)}}>
       <option value={'ICU'}>ICU</option>
       <option value={'Th'}>Theatre</option>
     </select></div>
