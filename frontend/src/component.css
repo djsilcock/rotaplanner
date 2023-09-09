@@ -62,7 +62,7 @@
     &:hover {
       background-color: #EEEEFF;
     }
-    &.selected:focus {
+    &:focus {
       background-color: #EEFFFF;
     }
     &.icu {

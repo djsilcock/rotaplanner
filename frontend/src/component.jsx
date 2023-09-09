@@ -1,5 +1,5 @@
 
-import { createEffect, createSignal, createResource, createMemo, Suspense, For } from "solid-js"
+import { createSignal, createResource, createMemo, Suspense, For } from "solid-js"
 import { createStore } from 'solid-js/store'
 
 import useLocalConfig from "./localconfig"
@@ -19,33 +19,6 @@ const dutylabels = {
 }
 const focusElements=[]
 
-function handleKeyPress(keyPressed) {
-  const currentElement=document.activeElement
-  const output={current:currentElement}
-  const activeRow=Number(currentElement.dataset.rowno)
-  const activeCol=Number(currentElement.dataset.colno)
-  
-  console.log(activeRow,activeCol) 
-  try{
-  switch (keyPressed) {
-    case 'ArrowUp':
-      focusElements[activeRow-1][activeCol].focus()
-      break
-    case 'ArrowDown':
-      focusElements[activeRow+1][activeCol].focus()
-      break
-    case 'ArrowLeft':
-      focusElements[activeRow][activeCol-1].focus()
-      break    
-    case 'ArrowRight':
-      focusElements[Number(activeRow)][Number(activeCol)+1].focus()
-      break
-  }
-  console.log(output)
-} catch (e){
-  //
-}
-}
 
 
 
@@ -63,8 +36,9 @@ function handleKeyPress(keyPressed) {
   }
 }
 */
-function MainTable() {
-  const [remoteData,{}] = createResource(
+
+function MainTable(props) {
+  const [remoteData,{mutate}] = createResource(
     //() => fetch('/api/data').then(r => r.json())
     ()=>(Promise.resolve({minDate:'2022-01-01',maxDate:'2023-01-01',names:['fred','barney'],data:{}})))
 
@@ -122,6 +96,52 @@ function MainTable() {
     if (typeof focusElements[rowNo] =='undefined') {focusElements[rowNo]=[]}
     focusElements[rowNo][colNo]=el
   }
+  function doclick(target,duty){mutate(oldData=>{
+    const dateSlice=oldData[target.dataset.celldate]||{}
+    const nameSlice=dateSlice[target.dataset.staffname]||{}
+    const sessSlice=nameSlice[target.dataset.session]||{}
+    return {...oldData,
+      [target.dataset.celldate]:{
+        ...dateSlice,
+        [target.dataset.staffname]:{
+          ...nameSlice,
+          [target.dataset.session]:{
+            ...sessSlice,
+            duty:duty??props.duty
+          }
+        }}}
+  })}
+  function handleKeyPress(keyPressed) {
+    const currentElement=document.activeElement
+    const activeRow=Number(currentElement.dataset.rowno)
+    const activeCol=Number(currentElement.dataset.colno)
+    
+    try{
+    switch (keyPressed) {
+      case 'ArrowUp':
+        focusElements[activeRow-1][activeCol].focus()
+        break
+      case 'ArrowDown':
+        focusElements[activeRow+1][activeCol].focus()
+        break
+      case 'ArrowLeft':
+        focusElements[activeRow][activeCol-1].focus()
+        break    
+      case 'ArrowRight':
+        focusElements[Number(activeRow)][Number(activeCol)+1].focus()
+        break
+      case ' ':
+        doclick(currentElement)
+        break
+      case 'Delete':
+      case 'Backspace':
+        doclick(currentElement,false)
+    }
+  } catch (e){
+    //
+  }
+  }
+  
   const keyDown = e => {
         e.preventDefault()
         handleKeyPress(e.key)
@@ -130,7 +150,8 @@ function MainTable() {
     e.preventDefault()
     const target=e.target.closest('.duty')
     if (target){
-      console.log(target.dataset.celldate)
+      target.focus()
+      doclick(target)
     }
   }
 
@@ -155,9 +176,9 @@ function MainTable() {
                     <td >
                       <For each={['am', 'pm', 'oncall']}>
                         {(session, sessionNo) =>{
-                            const data=createMemo(()=>remoteData[cellDate]?.[staffName]?.[session] ?? {duty:'-',flags:{}})
-                            const dutylabel = () => (dutylabels[data.duty] ?? { classname: 'unallocated', label: data.data?.duty ?? '?' })
-                            const dutyflags = () => (data.flags ?? {})
+                            const data=createMemo(()=>remoteData.latest[cellDate]?.[staffName]?.[session] ?? {duty:'-',flags:{}})
+                            const dutylabel = () => (dutylabels[data().duty] ?? { classname: 'unallocated', label: data().data?.duty ?? '?' })
+                            const dutyflags = () => (data().flags ?? {})
                             return <div
                               tabIndex={-1}
                               use:observe={[rowNo()*3+sessionNo(),colNo()]}
@@ -193,9 +214,10 @@ function ConstraintDialog(props) {
 }
 
 function Component(props) {
+  const [duty,setDuty]=createSignal()
   return <>
-    <div><select onChange={
-      (e) => { console.log(e.target.value)}}>
+    <div><select ref={(el)=>{setDuty(el.value)}} onChange={
+      (e) => {setDuty(e.target.value)}}>
       <option value={'ICU'}>ICU</option>
       <option value={'Th'}>Theatre</option>
     </select></div>
@@ -203,7 +225,7 @@ function Component(props) {
     <Suspense fallback={<span>Loading...</span>}>
       <div class={containerCSS}>
         <div />
-        <MainTable />
+        <MainTable duty={duty()}/>
       </div>
     </Suspense>
   </>
