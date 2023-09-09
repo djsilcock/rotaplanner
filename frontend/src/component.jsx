@@ -64,40 +64,32 @@ function handleKeyPress(keyPressed) {
 }
 */
 function MainTable() {
-  const remoteData = createResource(
+  const [remoteData,{}] = createResource(
     //() => fetch('/api/data').then(r => r.json())
-    ()=>(new Promise((res)=>{setTimeout(res,5000)}))
-  .catch(r=>r)
-  .then(()=>({minDate:'2022-01-01',maxDataDate:'2023-01-01',names:['fred','barney'],data:{}})))
+    ()=>(Promise.resolve({minDate:'2022-01-01',maxDate:'2023-01-01',names:['fred','barney'],data:{}})))
+
   const minDate = createMemo(() => remoteData.latest?.minDate)
   const maxDataDate = createMemo(() => remoteData.latest?.maxDate)
   const names = createMemo(() => remoteData.latest?.names)
-  const [displayedDates, doupdateDisplayedDates] = createSignal([])
-  const dateVisibility = new Map()
-  createEffect(()=>console.log(minDate()))
-  const updateDisplayedDates = ()=>doupdateDisplayedDates(oldDisplayedDates => {
+  const [dateVisibility,setDateVisibility]=createStore({})
+  const displayedDates=createMemo(oldDisplayedDates => {
     const newDisplayedDates = [...oldDisplayedDates]
     const prevDisplayedDates = new Set(oldDisplayedDates)
     function addDayToISODate(d) {
       return  (new Date(Date.parse(d)+86400000)).toISOString().slice(0,10)
       }
     let currentDate = minDate()
-    let ctr=0
     while (currentDate <= maxDataDate()) {
-      
       if (!prevDisplayedDates.has(currentDate)) {newDisplayedDates.push(currentDate)}
       currentDate = addDayToISODate(currentDate)
-      ctr++
-      if (ctr>1000) break
     }
-    //console.log(newDisplayedDates)
   
     let displayedDate
     let lastdateisVisible
     let passedvisiblezone = false
     const visibleDates=[]
     for (displayedDate of newDisplayedDates) {
-      lastdateisVisible = dateVisibility.get(displayedDate)
+      lastdateisVisible = (dateVisibility[displayedDate]!=false)
       if (lastdateisVisible) { 
         passedvisiblezone = true
         visibleDates.push(displayedDate)
@@ -111,23 +103,15 @@ function MainTable() {
       newDisplayedDates.push(addDayToISODate(displayedDate))
     }
     return newDisplayedDates.filter((d) => d <= addDayToISODate(displayedDate))
-  })
-  createEffect(()=>{
-    minDate()
-    maxDataDate()
-    updateDisplayedDates()
-  })
-  createEffect(()=>{console.log(names())})
+  },[])
   let intersectionObserver
   function registerIntersectionObserver(el) {
-    console.log('register observer',el)
     intersectionObserver = new IntersectionObserver(
       entries => {
         for (let entry of entries) {
           //if (entry.isIntersecting) console.log(entry)
-          dateVisibility.set(entry.target.dataset.celldate, entry.isIntersecting)
+          setDateVisibility(entry.target.dataset.celldate, entry.isIntersecting)
         }
-        updateDisplayedDates()
       },
       { root: el })
   }
@@ -142,8 +126,15 @@ function MainTable() {
         e.preventDefault()
         handleKeyPress(e.key)
   }
+  const onclick=e=>{
+    e.preventDefault()
+    const target=e.target.closest('.duty')
+    if (target){
+      console.log(target.dataset.celldate)
+    }
+  }
 
-  return <div class='bottom-panel' ref={registerIntersectionObserver} style={{ overflow: 'auto' }}>
+  return <div class='bottom-panel' ref={registerIntersectionObserver} onClick={onclick} style={{ overflow: 'auto' }}>
       <For each={names()}>{(i)=><span>{i()}</span>}</For>
       <table onKeyDown={keyDown} tabIndex={0} class={mainTableCSS}>
         <thead>
