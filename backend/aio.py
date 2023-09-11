@@ -18,22 +18,22 @@ pubhols = {date(2022, 1, 1)}
 datastore.pubhols.update(pubhols)
 dutytypes = {}
 editsession = {}
-routes = web.RouteTableDef()
+apiroutes = web.RouteTableDef()
 
 
-@routes.get('/data')
+@apiroutes.get('/data')
 async def get_data(_):
     "get all data"
     return web.json_response(datastore.as_dict())
 
 
-@routes.get('/gridconfig')
+@apiroutes.get('/gridconfig')
 async def get_grid_config(_):
     "get configuration for grid layout"
     return web.json_response(datastore.get_config())
 
 
-@routes.post('/click')
+@apiroutes.post('/click')
 async def duty_click(request: web.Request):
     "handle click on duty cell"
     data = await request.json()
@@ -45,7 +45,7 @@ async def duty_click(request: web.Request):
             return web.json_response({'error': f'wrong data shape: received {data}'}, status=400)
 
 
-@routes.post('/handle_clw')
+@apiroutes.post('/handle_clw')
 async def handle_clw(request: web.Request):
     "for uploading csv from clwrota"
     try:
@@ -58,7 +58,7 @@ async def handle_clw(request: web.Request):
         return web.json_response({'error': str(exc)}, status=500)
 
 
-@routes.post('/solve')
+@apiroutes.post('/solve')
 async def solve_rota(request:web.Request):
     "launch solver in background thread"
     def callback(result):
@@ -70,7 +70,7 @@ async def solve_rota(request:web.Request):
 # TODO: implement menu items
 
 
-@routes.post('/setlocum')
+@apiroutes.post('/setlocum')
 async def setlocum(request: web.Request):
     "Set duty as determined by menu"
     match await request.json():
@@ -81,7 +81,7 @@ async def setlocum(request: web.Request):
             return web.json_response({'error': 'bad request format'}, status=400)
 
 
-@routes.post('/setlock')
+@apiroutes.post('/setlock')
 async def setlock(request):
     "Set lock as determined by menu"
     match await request.json():
@@ -92,7 +92,7 @@ async def setlock(request):
             return web.json_response({'error': 'bad request format'}, status=400)
 
 
-@routes.post('/setph')
+@apiroutes.post('/setph')
 async def setph(request):
     "Menu command to toggle day as public holiday"
     match await request.json:
@@ -108,7 +108,7 @@ async def setph(request):
 
 
 
-@routes.get('/')
+@apiroutes.get('/')
 async def index(_):
     "base route"
     return web.Response(content_type="text/html",
@@ -120,7 +120,7 @@ async def index(_):
         </html>""")
 
 
-@routes.post('/abort')
+@apiroutes.post('/abort')
 async def abort(request: web.Request):
     await request.app['cancel']()
     return web.Response(text='bye')
@@ -128,15 +128,17 @@ async def abort(request: web.Request):
 
 async def main():
     app = web.Application()
-    app['abort'] = asyncio.Event()
-    app.add_routes(routes)
-    app.cleanup_ctx.append(async_solver_ctx)
-    app.router.add_static('/static', os.path.join(os.getcwd(), '..', 'web'))
+    api = web.Application()
+    api['abort'] = asyncio.Event()
+    api.add_routes(apiroutes)
+    api.cleanup_ctx.append(async_solver_ctx)
+    app.add_subapp('/api',api)
+    app.router.add_static('/static', os.path.join(os.getcwd(), '..', 'frontend','dist'))
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, 'localhost', 8080)
     await site.start()
-    await app['abort'].wait()
+    await api['abort'].wait()
     await runner.cleanup()
 
 asyncio.run(main())

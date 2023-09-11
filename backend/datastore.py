@@ -16,7 +16,7 @@ class DataStore:
         self.data: dict[tuple[str,date,str], SessionDuty] = {}
         self.sessions = ('am', 'pm', 'eve', 'night')
         self.storage = storage_type
-        self.config = {}
+        self.config = {None:{'names':['Fred','Barney']}}
 
     @property
     def names(self) -> tuple[str]:
@@ -74,7 +74,6 @@ class DataStore:
             'names': self.names,
             'minDate': self.daterange[0].isoformat(),
             'maxDate': self.daterange[1].isoformat(),
-            'knownDays': max(30, (self.daterange[1]-self.daterange[0]).days+1),
             'pubhols': [ph.isoformat() for ph in self.pubhols]
         }
 
@@ -82,9 +81,14 @@ class DataStore:
         "return datastore as JSON-serializable data"
         data = {}
         for (name, day, sess), sessionduty in self.data.items():
-            key=f'{day.isoformat()[0:10]}|{name}|{sess}'
-            data[key] = {'duty':sessionduty.duty, 'flags': list(sessionduty.flags)}
-        return data
+            data.setdefault(day.isoformat()[0:10],{}).setdefault(name,{})[sess] = {'duty':sessionduty.duty, 'flags': list(sessionduty.flags)}
+        return {
+            'names': self.names,
+            'minDate': self.daterange[0].isoformat(),
+            'maxDate': self.daterange[1].isoformat(),
+            'pubhols': [ph.isoformat() for ph in self.pubhols],
+            'data':data
+        }
 
     def setduty(self, name, duty_date, session, duty):
         "Set duty as determined by menu"

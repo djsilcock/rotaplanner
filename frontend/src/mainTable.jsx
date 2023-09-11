@@ -39,8 +39,9 @@ const focusElements=[]
 
 function MainTable(props) {
   const [remoteData,{mutate}] = createResource(
-    //() => fetch('/api/data').then(r => r.json())
-    ()=>(Promise.resolve({minDate:'2022-01-01',maxDate:'2023-01-01',names:['fred','barney'],data:{}})))
+    () => fetch('/api/data').then(r => r.json())
+    //()=>(Promise.resolve({minDate:'2022-01-01',maxDate:'2023-01-01',names:['fred','barney'],data:{}}))
+    )
 
   const minDate = createMemo(() => remoteData.latest?.minDate)
   const maxDataDate = createMemo(() => remoteData.latest?.maxDate)
@@ -73,11 +74,14 @@ function MainTable(props) {
           break
       }
     }
-    if (lastdateisVisible) {
-      newDisplayedDates.push(addDayToISODate(displayedDate))
+    while (dateVisibility[displayedDate]==true) {
+      displayedDate=addDayToISODate(displayedDate)
+      newDisplayedDates.push(displayedDate)
     }
-    return newDisplayedDates.filter((d) => d <= addDayToISODate(displayedDate))
+    return newDisplayedDates.filter((d) => d <= displayedDate)
   },[])
+  
+  
   let intersectionObserver
   function registerIntersectionObserver(el) {
     intersectionObserver = new IntersectionObserver(

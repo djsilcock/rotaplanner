@@ -1,6 +1,6 @@
 import './App.css'
 
-import {Component} from './component'
+import {Component} from './mainTable'
 import {QueryClient,QueryClientProvider} from '@tanstack/solid-query'
 
 
