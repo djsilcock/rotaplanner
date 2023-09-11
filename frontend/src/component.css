@@ -29,6 +29,12 @@
     z-index: 1;
     width: 25vw;
     background: white;
+    &.wkend{
+      background: lightgray;
+    }
+    &.pubhol{
+      background:yellow
+    }
   }
   & td {
     background: #fff;

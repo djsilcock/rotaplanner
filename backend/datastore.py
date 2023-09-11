@@ -26,7 +26,7 @@ class DataStore:
     @property
     def pubhols(self) -> set[date]:
         "get tuple of public holidays "
-        return set(self.config.get(None, {}).get('pubhols', ()))
+        return set(self.config.get(None, {}).get('pubhols', (date(2023,9,25),)))
 
     def get_storage_class(self):
         "get current storage backend"

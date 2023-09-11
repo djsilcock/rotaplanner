@@ -1,5 +1,5 @@
 
-import { createSignal, createResource, createMemo, Suspense, For } from "solid-js"
+import { createSignal, createResource, createMemo, createEffect,Suspense, For } from "solid-js"
 import { createStore } from 'solid-js/store'
 
 import useLocalConfig from "./localconfig"
@@ -17,7 +17,7 @@ const dutylabels = {
   'TH': { classname: 'theatre', label: 'Th' },
   'LEAVE': { classname: 'unallocated', label: 'Leave' }
 }
-const focusElements=[]
+const focusElements = []
 
 
 
@@ -36,36 +36,48 @@ const focusElements=[]
   }
 }
 */
-
+function isweekend(isodate){
+  const d=new Date(isodate)
+  return d.getDay()==0 || d.getDay()==6
+}
 function MainTable(props) {
-  const [remoteData,{mutate}] = createResource(
-    () => fetch('/api/data').then(r => r.json())
+  const [remoteData, { mutate,refetch }] = createResource(
+    (_, { refetching }) => ((console.log(refetching)||!refetching || refetching === true) ? fetch('/api/data') :
+      fetch('/api/data', {body: JSON.stringify(refetching), method: 'post' }))
+      .then(r => r.json())
     //()=>(Promise.resolve({minDate:'2022-01-01',maxDate:'2023-01-01',names:['fred','barney'],data:{}}))
-    )
+  )
 
   const minDate = createMemo(() => remoteData.latest?.minDate)
   const maxDataDate = createMemo(() => remoteData.latest?.maxDate)
   const names = createMemo(() => remoteData.latest?.names)
-  const [dateVisibility,setDateVisibility]=createStore({})
-  const displayedDates=createMemo(oldDisplayedDates => {
-    const newDisplayedDates = [...oldDisplayedDates]
+  const pubhols=createMemo(()=>remoteData.latest?.pubhols)
+  createEffect(()=>console.log(remoteData.latest))
+  const [dateVisibility, setDateVisibility] = createStore({})
+  const displayedDates = createMemo(oldDisplayedDates => {
+    const newDisplayedDates = []//...oldDisplayedDates]
     const prevDisplayedDates = new Set(oldDisplayedDates)
+    if (typeof minDate() == 'undefined') return oldDisplayedDates
     function addDayToISODate(d) {
-      return  (new Date(Date.parse(d)+86400000)).toISOString().slice(0,10)
+      try{
+      return (new Date(Date.parse(d) + 86400000)).toISOString().slice(0, 10)
+      }catch(e){
+        console.error(e,d)
       }
+    }
     let currentDate = minDate()
-    while (currentDate <= maxDataDate()) {
-      if (!prevDisplayedDates.has(currentDate)) {newDisplayedDates.push(currentDate)}
+    while (currentDate <= maxDataDate() || newDisplayedDates.length<30) {
+      newDisplayedDates.push(currentDate)
       currentDate = addDayToISODate(currentDate)
     }
-  
+
     let displayedDate
     let lastdateisVisible
     let passedvisiblezone = false
-    const visibleDates=[]
+    const visibleDates = []
     for (displayedDate of newDisplayedDates) {
-      lastdateisVisible = (dateVisibility[displayedDate]!=false)
-      if (lastdateisVisible) { 
+      lastdateisVisible = (dateVisibility[displayedDate] != false)
+      if (lastdateisVisible) {
         passedvisiblezone = true
         visibleDates.push(displayedDate)
       }
@@ -74,14 +86,14 @@ function MainTable(props) {
           break
       }
     }
-    while (dateVisibility[displayedDate]==true) {
-      displayedDate=addDayToISODate(displayedDate)
+    while (dateVisibility[displayedDate] == true) {
+      displayedDate = addDayToISODate(displayedDate)
       newDisplayedDates.push(displayedDate)
     }
     return newDisplayedDates.filter((d) => d <= displayedDate)
-  },[])
-  
-  
+  }, [])
+
+
   let intersectionObserver
   function registerIntersectionObserver(el) {
     intersectionObserver = new IntersectionObserver(
@@ -93,122 +105,132 @@ function MainTable(props) {
       },
       { root: el })
   }
-  function observe(el,data) 
-  {
-    const [rowNo,colNo]=data()
+  function observe(el, data) {
+    const [rowNo, colNo] = data()
     intersectionObserver.observe(el)
-    if (typeof focusElements[rowNo] =='undefined') {focusElements[rowNo]=[]}
-    focusElements[rowNo][colNo]=el
+    if (typeof focusElements[rowNo] == 'undefined') { focusElements[rowNo] = [] }
+    focusElements[rowNo][colNo] = el
   }
-  function doclick(target,duty){mutate(oldData=>{
-    const dateSlice=oldData[target.dataset.celldate]||{}
-    const nameSlice=dateSlice[target.dataset.staffname]||{}
-    const sessSlice=nameSlice[target.dataset.session]||{}
-    return {...oldData,
-      [target.dataset.celldate]:{
-        ...dateSlice,
-        [target.dataset.staffname]:{
-          ...nameSlice,
-          [target.dataset.session]:{
-            ...sessSlice,
-            duty:duty??props.duty
+  function doclick(target, duty) {
+    mutate(oldData => {
+      const dateSlice = oldData[target.dataset.celldate] || {}
+      const nameSlice = dateSlice[target.dataset.staffname] || {}
+      const sessSlice = nameSlice[target.dataset.session] || {}
+      return {
+        ...oldData,
+        [target.dataset.celldate]: {
+          ...dateSlice,
+          [target.dataset.staffname]: {
+            ...nameSlice,
+            [target.dataset.session]: {
+              ...sessSlice,
+              duty: duty ?? props.duty
+            }
           }
-        }}}
-  })}
+        }
+      }
+    })
+    refetch({
+      dutydate: target.dataset.celldate,
+      name: target.dataset.staffname,
+      session: target.dataset.session,
+      duty: duty ?? props.duty
+    })
+  }
   function handleKeyPress(keyPressed) {
-    const currentElement=document.activeElement
-    const activeRow=Number(currentElement.dataset.rowno)
-    const activeCol=Number(currentElement.dataset.colno)
-    
-    try{
-    switch (keyPressed) {
-      case 'ArrowUp':
-        focusElements[activeRow-1][activeCol].focus()
-        break
-      case 'ArrowDown':
-        focusElements[activeRow+1][activeCol].focus()
-        break
-      case 'ArrowLeft':
-        focusElements[activeRow][activeCol-1].focus()
-        break    
-      case 'ArrowRight':
-        focusElements[Number(activeRow)][Number(activeCol)+1].focus()
-        break
-      case ' ':
-        doclick(currentElement)
-        break
-      case 'Delete':
-      case 'Backspace':
-        doclick(currentElement,false)
+    const currentElement = document.activeElement
+    const activeRow = Number(currentElement.dataset.rowno)
+    const activeCol = Number(currentElement.dataset.colno)
+
+    try {
+      switch (keyPressed) {
+        case 'ArrowUp':
+          focusElements[activeRow - 1][activeCol].focus()
+          break
+        case 'ArrowDown':
+          focusElements[activeRow + 1][activeCol].focus()
+          break
+        case 'ArrowLeft':
+          focusElements[activeRow][activeCol - 1].focus()
+          break
+        case 'ArrowRight':
+          focusElements[Number(activeRow)][Number(activeCol) + 1].focus()
+          break
+        case ' ':
+          doclick(currentElement)
+          break
+        case 'Delete':
+        case 'Backspace':
+          doclick(currentElement, false)
+      }
+    } catch (e) {
+      //
     }
-  } catch (e){
-    //
   }
-  }
-  
+
   const keyDown = e => {
-        e.preventDefault()
-        handleKeyPress(e.key)
-  }
-  const onclick=e=>{
     e.preventDefault()
-    const target=e.target.closest('.duty')
-    if (target){
+    handleKeyPress(e.key)
+  }
+  const onclick = e => {
+    e.preventDefault()
+    const target = e.target.closest('.duty')
+    if (target) {
       target.focus()
       doclick(target)
     }
   }
 
   return <div class='bottom-panel' ref={registerIntersectionObserver} onClick={onclick} style={{ overflow: 'auto' }}>
-      <For each={names()}>{(i)=><span>{i()}</span>}</For>
-      <table onKeyDown={keyDown} tabIndex={0} class={mainTableCSS}>
-        <thead>
-          <tr>
-            <th>First</th>
-            <For each={displayedDates()}>
-              {x => <th >{x}</th>}
-            </For>
-          </tr>
-          </thead>
-          <tbody>
-          <For each={names()}>
-            {(staffName, rowNo) =>
-              <tr>
-                <th>{staffName}</th>
-                <For each={displayedDates()}>
-                  {(cellDate, colNo) =>
-                    <td >
-                      <For each={['am', 'pm', 'oncall']}>
-                        {(session, sessionNo) =>{
-                            const data=createMemo(()=>remoteData.latest[cellDate]?.[staffName]?.[session] ?? {duty:'-',flags:{}})
-                            const dutylabel = () => (dutylabels[data().duty] ?? { classname: 'unallocated', label: data().data?.duty ?? '?' })
-                            const dutyflags = () => (data().flags ?? {})
-                            return <div
-                              tabIndex={-1}
-                              use:observe={[rowNo()*3+sessionNo(),colNo()]}
-                              title={JSON.stringify({ staffName, cellDate, session })}
-                              data-rowNo={rowNo()*3+sessionNo()}
-                              data-colNo={colNo()}
-                              data-cellDate={cellDate}
-                              data-staffName={staffName}
-                              data-session={session}
-                              classList={{
-                                duty: true,
-                                [dutylabel().classname]: true
-                              }}>
-                              {session}:{dutylabel().label}
-                              {dutyflags().confirmed ? '🔒' : ''}{dutyflags().locum ? '💷' : ''}
-                            </div>;
-                          }}
-                      </For></td>
-                  }
-                </For>
-
-              </tr>}
+    <For each={names()}>{(i) => <span>{i()}</span>}</For>
+    <table onKeyDown={keyDown} tabIndex={0} class={mainTableCSS}>
+      <thead>
+        <tr>
+          <th>First</th>
+          <For each={displayedDates()}>
+            {x => <th classList={{pubhol:pubhols().indexOf(x)>=0,wkend:isweekend(x)}}>{x}</th>}
           </For>
-        </tbody>
-        
-      </table></div>
+        </tr>
+      </thead>
+      <tbody>
+        <For each={names()}>
+          {(staffName, rowNo) =>
+            <tr>
+              <th>{staffName}</th>
+              <For each={displayedDates()}>
+                {(cellDate, colNo) =>
+                  <td >
+                    <For each={['am', 'pm', 'oncall']}>
+                      {(session, sessionNo) => {
+                        const data = createMemo(() => remoteData.latest.data?.[cellDate]?.[staffName]?.[session] ?? { duty: '-', flags: {} })
+                        const dutylabel = () => (dutylabels[data().duty] ?? { classname: 'unallocated', label: data().data?.duty ?? '?' })
+                        const dutyflags = () => (data().flags ?? {})
+                        return <div
+                          tabIndex={-1}
+                          use: observe={[rowNo() * 3 + sessionNo(), colNo()]}
+                          title={JSON.stringify({ staffName, cellDate, session })}
+                          data-rowNo={rowNo() * 3 + sessionNo()}
+                          data-colNo={colNo()}
+                          data-cellDate={cellDate}
+                          data-staffName={staffName}
+                          data-session={session}
+                          classList={{
+                            duty: true,
+                            [dutylabel().classname]: true
+                          }}>
+                          {session}:{dutylabel().label}
+                          {dutyflags().confirmed ? '🔒' : ''}{dutyflags().locum ? '💷' : ''}
+                        </div>;
+                      }}
+                    </For></td>
+                }
+              </For>
+
+            </tr>}
+        </For>
+      </tbody>
+
+    </table></div>
 }
 
 function ConstraintDialog(props) {
@@ -218,18 +240,18 @@ function ConstraintDialog(props) {
 }
 
 function Component(props) {
-  const [duty,setDuty]=createSignal()
+  const [duty, setDuty] = createSignal()
   return <>
-    <div><select ref={(el)=>{setDuty(el.value)}} onChange={
-      (e) => {setDuty(e.target.value)}}>
+    <div><select ref={(el) => { setDuty(el.value) }} onChange={
+      (e) => { setDuty(e.target.value) }}>
       <option value={'ICU'}>ICU</option>
-      <option value={'Th'}>Theatre</option>
+      <option value={'TH'}>Theatre</option>
     </select></div>
     <hr />
     <Suspense fallback={<span>Loading...</span>}>
       <div class={containerCSS}>
         <div />
-        <MainTable duty={duty()}/>
+        <MainTable duty={duty()} />
       </div>
     </Suspense>
   </>

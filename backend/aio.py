@@ -26,6 +26,17 @@ async def get_data(_):
     "get all data"
     return web.json_response(datastore.as_dict())
 
+@apiroutes.post('/data')
+async def set_data(request:web.Request):
+    data=await request.json()
+    print(data)
+    name=data['name']
+    dutydate=data['dutydate']
+    session=data['session']
+    duty=data['duty']
+    datastore.setduty(name,dutydate,session,duty)
+    return web.json_response(datastore.as_dict())
+
 
 @apiroutes.get('/gridconfig')
 async def get_grid_config(_):
