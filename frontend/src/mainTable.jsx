@@ -1,6 +1,7 @@
 
-import { createSignal, createResource, createMemo, createEffect,Suspense, For } from "solid-js"
+import { createSignal, createResource, createMemo, createEffect,Suspense, For} from "solid-js"
 import { createStore } from 'solid-js/store'
+import {Portal} from 'solid-js/web'
 
 import useLocalConfig from "./localconfig"
 
@@ -41,18 +42,13 @@ function isweekend(isodate){
   return d.getDay()==0 || d.getDay()==6
 }
 function MainTable(props) {
-  const [remoteData, { mutate,refetch }] = createResource(
-    (_, { refetching }) => ((console.log(refetching)||!refetching || refetching === true) ? fetch('/api/data') :
-      fetch('/api/data', {body: JSON.stringify(refetching), method: 'post' }))
-      .then(r => r.json())
-    //()=>(Promise.resolve({minDate:'2022-01-01',maxDate:'2023-01-01',names:['fred','barney'],data:{}}))
-  )
+  
 
-  const minDate = createMemo(() => remoteData.latest?.minDate)
-  const maxDataDate = createMemo(() => remoteData.latest?.maxDate)
-  const names = createMemo(() => remoteData.latest?.names)
-  const pubhols=createMemo(()=>remoteData.latest?.pubhols)
-  createEffect(()=>console.log(remoteData.latest))
+  const minDate = createMemo(() => props.remoteData.latest?.minDate)
+  const maxDataDate = createMemo(() => props.remoteData.latest?.maxDate)
+  const names = createMemo(() => props.remoteData.latest?.names)
+  const pubhols=createMemo(()=>props.remoteData.latest?.pubhols)
+  createEffect(()=>console.log(props.remoteData.latest))
   const [dateVisibility, setDateVisibility] = createStore({})
   const displayedDates = createMemo(oldDisplayedDates => {
     const newDisplayedDates = []//...oldDisplayedDates]
@@ -112,7 +108,7 @@ function MainTable(props) {
     focusElements[rowNo][colNo] = el
   }
   function doclick(target, duty) {
-    mutate(oldData => {
+    props.mutate(oldData => {
       const dateSlice = oldData[target.dataset.celldate] || {}
       const nameSlice = dateSlice[target.dataset.staffname] || {}
       const sessSlice = nameSlice[target.dataset.session] || {}
@@ -130,7 +126,7 @@ function MainTable(props) {
         }
       }
     })
-    refetch({
+    props.refetch({
       dutydate: target.dataset.celldate,
       name: target.dataset.staffname,
       session: target.dataset.session,
@@ -182,7 +178,6 @@ function MainTable(props) {
   }
 
   return <div class='bottom-panel' ref={registerIntersectionObserver} onClick={onclick} style={{ overflow: 'auto' }}>
-    <For each={names()}>{(i) => <span>{i()}</span>}</For>
     <table onKeyDown={keyDown} tabIndex={0} class={mainTableCSS}>
       <thead>
         <tr>
@@ -199,10 +194,10 @@ function MainTable(props) {
               <th>{staffName}</th>
               <For each={displayedDates()}>
                 {(cellDate, colNo) =>
-                  <td >
+                  <td classList={{pubhol:pubhols().indexOf(cellDate)>=0,wkend:isweekend(cellDate)}}>
                     <For each={['am', 'pm', 'oncall']}>
                       {(session, sessionNo) => {
-                        const data = createMemo(() => remoteData.latest.data?.[cellDate]?.[staffName]?.[session] ?? { duty: '-', flags: {} })
+                        const data = createMemo(() => props.remoteData.latest.data?.[cellDate]?.[staffName]?.[session] ?? { duty: '-', flags: {} })
                         const dutylabel = () => (dutylabels[data().duty] ?? { classname: 'unallocated', label: data().data?.duty ?? '?' })
                         const dutyflags = () => (data().flags ?? {})
                         return <div
@@ -241,17 +236,38 @@ function ConstraintDialog(props) {
 
 function Component(props) {
   const [duty, setDuty] = createSignal()
+  const [remoteData, { mutate,refetch }] = createResource(
+    (_, { refetching }) => ((console.log(refetching)||!refetching || refetching === true) ? fetch('/api/data') :
+      fetch('/api/data', {body: JSON.stringify(refetching), method: 'post' }))
+      .then(r => r.json())
+    //()=>(Promise.resolve({minDate:'2022-01-01',maxDate:'2023-01-01',names:['fred','barney'],data:{}}))
+  )
   return <>
     <div><select ref={(el) => { setDuty(el.value) }} onChange={
       (e) => { setDuty(e.target.value) }}>
       <option value={'ICU'}>ICU</option>
       <option value={'TH'}>Theatre</option>
     </select></div>
+    
+    <Portal>
+      <dialog ref={el=>setTimeout(()=>el.showModal(),5000)}>
+        <table>
+          <thead>
+            <tr><th>Staff members</th></tr>
+          </thead>
+          <tbody>
+            <For each={remoteData.latest?.names}>
+              {n=><tr><td><input name={n} value={n}/></td></tr>}
+            </For>
+          </tbody>
+          </table>
+      </dialog>
+    </Portal>
     <hr />
     <Suspense fallback={<span>Loading...</span>}>
       <div class={containerCSS}>
         <div />
-        <MainTable duty={duty()} />
+        <MainTable duty={duty()} remoteData={remoteData} mutate={mutate} refetch={refetch} />
       </div>
     </Suspense>
   </>

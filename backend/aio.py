@@ -5,6 +5,7 @@ from typing import cast
 import asyncio
 from datetime import date, datetime
 from io import TextIOWrapper
+import subprocess
 
 from aiohttp import web
 
@@ -136,6 +137,24 @@ async def abort(request: web.Request):
     await request.app['cancel']()
     return web.Response(text='bye')
 
+@apiroutes.get('/quit')
+async def quit(request:web.Request):
+    close_event:asyncio.Event=request.app['abort']
+    close_event.set()
+    return web.Response(text='bye')
+
+async def yarn_runner(app):
+    process=await asyncio.create_subprocess_shell(
+        'yarn dev --open',
+        stdin=subprocess.PIPE,
+        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+        cwd=os.path.join(os.getcwd(),'..','frontend'),
+        )
+    yield
+    process.terminate()
+    await process.wait()
+
+
 
 async def main():
     app = web.Application()
@@ -143,13 +162,16 @@ async def main():
     api['abort'] = asyncio.Event()
     api.add_routes(apiroutes)
     api.cleanup_ctx.append(async_solver_ctx)
+    api.cleanup_ctx.append(yarn_runner)
     app.add_subapp('/api',api)
     app.router.add_static('/static', os.path.join(os.getcwd(), '..', 'frontend','dist'))
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, 'localhost', 8080)
     await site.start()
+    print('wait for exit signal')
     await api['abort'].wait()
+    print('exit signal received')
     await runner.cleanup()
 
 asyncio.run(main())

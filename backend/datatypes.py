@@ -1,6 +1,7 @@
 "various datatypes"
 from dataclasses import dataclass, field
 
+
 @dataclass
 class SessionDuty:
     "Session information"

@@ -1,6 +1,6 @@
 "Data storage class"
 
-from typing import Iterable
+from typing import Iterable,TypedDict,Literal
 from warnings import warn
 from datetime import date, timedelta
 from datatypes import SessionDuty
@@ -9,30 +9,33 @@ import storage.filesystem
 storages = {'filesystem': storage.filesystem}
 
 
+
+class Config(TypedDict):
+    names:list[str]
+    pubhols:set[date]
+
+
 class DataStore:
     "datastore class"
 
     def __init__(self, storage_type='filesystem'):
         self.data: dict[tuple[str,date,str], SessionDuty] = {}
         self.sessions = ('am', 'pm', 'eve', 'night')
-        self.storage = storage_type
-        self.config = {None:{'names':['Fred','Barney']}}
+        self.storage = storages[storage_type]
+        self.config:Config = {'names':['Fred','Barney'],'pubhols':set()}
+
 
     @property
     def names(self) -> tuple[str]:
         "names of staff members"
-        return self.config.get(None, {}).get('names', ())
+        return self.config.get('names', ())
 
     @property
     def pubhols(self) -> set[date]:
         "get tuple of public holidays "
-        return set(self.config.get(None, {}).get('pubhols', (date(2023,9,25),)))
+        return self.config.get('pubhols', {date(2023,9,25)})
 
-    def get_storage_class(self):
-        "get current storage backend"
-        return storages[self.storage]
-
-    def update_config(self, config: dict, overwrite=False):
+    def update_config(self, config: Config, overwrite=False):
         "update configuration information"
         if overwrite:
             self.config = config.copy()
@@ -77,18 +80,24 @@ class DataStore:
             'pubhols': [ph.isoformat() for ph in self.pubhols]
         }
 
-    def as_dict(self):
+    def as_dict_by_name(self):
         "return datastore as JSON-serializable data"
         data = {}
         for (name, day, sess), sessionduty in self.data.items():
             data.setdefault(day.isoformat()[0:10],{}).setdefault(name,{})[sess] = {'duty':sessionduty.duty, 'flags': list(sessionduty.flags)}
-        return {
-            'names': self.names,
-            'minDate': self.daterange[0].isoformat(),
-            'maxDate': self.daterange[1].isoformat(),
-            'pubhols': [ph.isoformat() for ph in self.pubhols],
-            'data':data
-        }
+        return {**self.get_config(),'data':data}
+    
+    def as_dict_by_location(self):
+        "return data by location"
+        data={}
+        for (name, day, sess), sessionduty in self.data.items():
+            (data.setdefault(day.isoformat()[0:10],{})
+                .setdefault(sessionduty.duty,{})
+                .setdefault(sess,[])
+                .append({'name':name, 'flags': list(sessionduty.flags)}))
+        return {**self.get_config(),'data':data}
+    
+
 
     def setduty(self, name, duty_date, session, duty):
         "Set duty as determined by menu"
@@ -99,30 +108,33 @@ class DataStore:
         else:
             raise TypeError('not a dutycell instance')
 
-    def setflag(self, name, duty_date, session, flag, mutex=()):
+    def setflag(self, name, duty_date, session, *flags):
         "set flag for duty"
         try:
             cell = self.data[(name, duty_date, session)]
+            cell.flags.update(flags)
         except KeyError:
             return
-        cell.flags.add(flag)
-        cell.flags.difference_update(mutex)
+        
+        
 
-    def delflag(self, name, duty_date, session, flag):
+    def delflag(self, name, duty_date, session, *flags):
         "remove flag for duty"
         try:
             cell = self.data[(name, duty_date, session)]
-            cell.flags.discard(flag)
+            cell.flags.difference_update(flags)
         except KeyError:
             return
+        
 
-    def toggleflag(self, name, duty_date, session, flag):
+    def toggleflag(self, name, duty_date, session, flags):
         "toggle flag for duty"
         try:
             cell = self.data[(name, duty_date, session)]
-            cell.flags.symmetric_difference_update((flag,))
+            cell.flags.symmetric_difference_update(flags)
         except KeyError:
             return
+        
 
     def set_public_holiday(self, _date, is_holiday=True):
         "set or unset public holiday"
