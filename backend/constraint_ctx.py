@@ -69,8 +69,8 @@ class BaseConstraintConfig():
 
     @classmethod
     def validate_frontend_json(cls,json_config,orig_config):
-        """validate json config from frontend. Return picklable object or raise ValueError()"""
-        raise NotImplementedError
+        """validate json config from frontend. Return picklable object,None, or raise ValueError()"""
+        return None
 
 
 class ConstraintContext:
