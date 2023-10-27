@@ -49,17 +49,7 @@ class TemplateEntry:
     start:datetime.datetime
     finish:datetime.datetime
     tag: str
-    ph_action: PHAction
-
-    @classmethod
-    def from_dict_list(cls, dict_list):
-        "generate template entry from json"
-        newlist = []
-        for json_template in dict_list:
-            if isinstance(json_template, dict):
-                newlist.append(cls(**json_template))
-            newlist.append(json_template)
-        return tuple(newlist)
+    ph_action: PHAction        
 
 
 @attrs.frozen
@@ -70,7 +60,7 @@ class BaseTemplate:
     anchor_type: AnchorType
     repeat_period: int
     template_entries: tuple[TemplateEntry, ...] = attrs.field(
-        converter=TemplateEntry.from_dict_list)
+        converter=lambda dct_list:tuple(TemplateEntry(**tmp) for tmp in dct_list))
 
 
 @attrs.define
