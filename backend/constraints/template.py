@@ -2,9 +2,11 @@
 import datetime
 from collections import defaultdict
 from contextvars import ContextVar
+from itertools import pairwise
 from typing import Any, Literal, TypedDict, cast
 
 import attrs
+from ortools.sat.python.cp_model import IntVar,IntervalVar
 
 from constraint_ctx import BaseConstraintConfig, DutyStore
 from constraints.core_duties import CoreDuties
@@ -15,7 +17,7 @@ AnchorType = Literal['MONTH'] | Literal['WEEK']
 
 #template_store: ContextVar[dict] = ContextVar('template_store')
 
-shift_splits=[datetime.timedelta(hours=h) for h in (8,13,17,21)]
+
 
 PHAction = Literal[
     'ignore',  # ignore PH and treat as normal day
@@ -49,7 +51,14 @@ class TemplateEntry:
     start:datetime.datetime
     finish:datetime.datetime
     tag: str
-    ph_action: PHAction        
+    ph_action: PHAction
+    @classmethod
+    def create(cls,definition):
+        if isinstance(definition,cls):
+            return definition
+        if isinstance(definition,dict):
+            return cls(**definition)
+        raise ValueError
 
 
 @attrs.frozen
@@ -60,11 +69,36 @@ class BaseTemplate:
     anchor_type: AnchorType
     repeat_period: int
     template_entries: tuple[TemplateEntry, ...] = attrs.field(
-        converter=lambda dct_list:tuple(TemplateEntry(**tmp) for tmp in dct_list))
-
+        converter=lambda dct_list:tuple(TemplateEntry.create(tmp) for tmp in dct_list))
 
 @attrs.define
-class Template:
+class Staffing:
+    "staffing demand in an activity"
+    maximum:int
+    minimum:int
+    acceptable_staff:set[str]
+    staff_in_place:dict[str,IntVar]
+
+@attrs.define
+class DemandTemplate:
+    "config class for demand at a location"
+    start_date: datetime.date = attrs.field(converter=convert_isodate)
+    end_date: datetime.date = attrs.field(converter=convert_isodate)
+    staff_demands:set[Staffing]
+    base_template:BaseTemplate
+
+@attrs.define
+class Activity:
+    "concrete activity to generate demand"
+    source_template:DemandTemplate
+    activity_name:str
+    location:str
+    start_time:datetime.datetime
+    finish_time:datetime.datetime
+    staff_demands:set[Staffing]
+
+@attrs.define
+class SupplyTemplate:
     "configuration class for template"
     start_date: datetime.date = attrs.field(converter=convert_isodate)
     end_date: datetime.date = attrs.field(converter=convert_isodate)
@@ -96,28 +130,34 @@ class Template:
                 tag=te.tag,
                 ph_action=te.ph_action) for te in self.base_template.template_entries
             ))
-
+    
 
 class TemplateConfigEntry(TypedDict):
     "entry in config"
     template_store: dict[str, BaseTemplate]
-    templates: list
+    demand_templates: list
+    supply_templates:list
 
 
 class TemplateConstraint(BaseConstraintConfig):
     "applies templates to rota"
     dutystore: DutyStore[BoundTemplate]
-    templates: list[Template]
-    #template_store: dict[str, BaseTemplate]
+    demand_templates: list[DemandTemplate]
+    supply_templates: list[SupplyTemplate]
     constraint_name = 'template'
 
     def setup(self):
         config = cast(TemplateConfigEntry, self.config())
         template_store:dict[str, BaseTemplate] = config.get('template_store', {}).copy()
-        self.templates = [
-            Template(base_template=template_store[t['template_id']], **t)
-            for t in config.setdefault('templates', [])
+        self.demand_templates = [
+            DemandTemplate(base_template=template_store[t['template_id']], **t)
+            for t in config.setdefault('demand_templates', [])
             if t['template_id'] in template_store]
+        self.supply_templates = [
+            SupplyTemplate(base_template=template_store[t['template_id']], **t)
+            for t in config.setdefault('supply_templates', [])
+            if t['template_id'] in template_store]
+        
 
     def apply_constraint(self):
         core_duties = CoreDuties.from_context(self.ctx)
@@ -129,7 +169,7 @@ class TemplateConstraint(BaseConstraintConfig):
         self.dutystore = DutyStore(self.ctx.model)
         for day in core.days:
             for staff in core.staff:
-                for template in self.templates:
+                for template in self.supply_templates:
                     if (bound := template.bind(day, staff)):
                         entries_to_add = cast(
                             TemplateDict, defaultdict(default_factory=set))
@@ -144,7 +184,6 @@ class TemplateConstraint(BaseConstraintConfig):
                             else:
                                 if entry.ph_action == 'must_be':
                                     break
-
                             key = (staff, entry.start, entry.finish, entry.tag)
                             entries_to_add[key].add(bound)
                         else:

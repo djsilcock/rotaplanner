@@ -63,7 +63,6 @@ class CoreDuties(BaseConstraintConfig):
 
     def add_conditions(self, shift_start, shift_finish, staff, rules, *conditions):
         def expand(group,parents=()):
-            
             for g in group:
                 if g in parents:
                     raise ValueError('infinite expansion!')
@@ -124,10 +123,10 @@ class CoreDuties(BaseConstraintConfig):
                         )
                     self.add_conditions(shift_start, shift_finish, staff, self.rules)
 
-    def result(self, staff, day, shift, sessionduty, solution):
+    def result(self, staff, shift_start,shift_finish, sessionduty, solution):
         "core duties output"
         for loc in self.locations:
-            if solution.Value(self.allocated_for_duty(shift, day, staff, loc)):
+            if solution.Value(self.allocated_for_duty(shift_start, shift_finish, staff, loc)):
                 sessionduty.duty = loc
 
 class RequiredCoverageConfig(NamedTuple):

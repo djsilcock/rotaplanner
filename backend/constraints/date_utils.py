@@ -7,6 +7,19 @@ def convert_isodate(d:date|str):
     if isinstance(d,str):
         return date.fromisoformat(d)
 
+def nth_of_every_month(week_no:int,target_weekday:int,start_date:date,finish_date:date):
+    if finish_date<start_date:
+        raise ValueError('finish must not be before start')
+    current_year=start_date.year
+    current_month=start_date.month
+    while (current_date:=nth_of_month(week_no,target_weekday,current_month,current_year))<=finish_date:
+        if current_date>=start_date:
+            yield current_date
+        current_month+=1
+        if current_month>12:
+            current_month=1
+            current_year+=1
+
 def nth_of_month(week_no:int,target_weekday:int,month:int,year:int):
     match (week_no,target_weekday,month,year):
         case (int(),int(),int(),int()):
