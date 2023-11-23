@@ -3,7 +3,7 @@ import datetime
 from collections import defaultdict
 from contextvars import ContextVar
 from itertools import pairwise
-from typing import Any, Literal, TypedDict, cast
+from typing import Any, Literal, TypedDict, cast,TypeVar,Callable,Sequence,overload
 
 import attrs
 from ortools.sat.python.cp_model import IntVar,IntervalVar
@@ -52,24 +52,108 @@ class TemplateEntry:
     finish:datetime.datetime
     tag: str
     ph_action: PHAction
-    @classmethod
-    def create(cls,definition):
-        if isinstance(definition,cls):
-            return definition
-        if isinstance(definition,dict):
-            return cls(**definition)
-        raise ValueError
+    
+def validate_weekday(self,attrib,weekday):
+    if weekday not in {0,1,2,3,4,5,6}:
+        raise ValueError('weekday invalid')
+    
+def validate_weekdays(self,attrib,weekdays):
+    for w in weekdays:
+        validate_weekday(self,attrib,w)
+
+@attrs.define
+class NthOfMonth:
+    days:set[int]=attrs.field(converter=set)
+    repeat_type='nth_of_month'
+    def generate(self,start:datetime.date,finish:datetime.date):
+
+        if finish<start:
+            return
+        month=start.month
+        year=start.year
+        days=sorted(self.days)
+        current=start
+        while current<=finish:
+            for d in days:
+                yield datetime.date(year,month,d)
+            month+=1
+            if month>12:
+                month=1
+                year+=1
+
+
+@attrs.define
+class NthWeekOfMonth:
+    weekdays:set[int]=attrs.field(converter=set)
+    weeks:set[int]=attrs.field(converter=set)
+    repeat_type='nth_week_of_month'
+    def generate(self,start:datetime.date,finish:datetime.date):
+        for day in range(start.toordinal(),finish.toordinal()):
+            date=datetime.date.fromordinal(day)
+            if date.weekday in self.weekdays and (date.day//7)+1 in self.weeks:
+                yield date
+
+        
+
+@attrs.define
+class EveryNthWeek:
+    cycle_length:int
+    weeks:set[int]=attrs.field(converter=set)
+    weekday:int=attrs.field()
+    anchor_date:datetime.date=attrs.field(converter=convert_isodate)
+    repeat_type='every_nth_week'
+    def generate(self,start:datetime.date,finish:datetime.date):
+        anchor_ord=self.anchor_date.toordinal()+(7+self.weekday-self.anchor_date.weekday())%7
+        start_ord=start.toordinal()-(start.toordinal()-anchor_ord)%(self.cycle_length*7)
+        cycles=(finish.toordinal()-start_ord)//(self.cycle_length*7)+1
+        for cycle in range(cycles):
+            for week in range(self.cycle_length):
+                if (week+1) in self.weeks:
+                    day= start_ord+(cycle*self.cycle_length*7)+(week*7)
+                    if finish.toordinal()>=day>=start.toordinal():
+                        yield datetime.date.fromordinal(day)
+        
+        
+
+repeat_types={
+    'nth_of_month':NthOfMonth,
+    'nth_week_of_month':NthWeekOfMonth,
+    'every_nth_week':EveryNthWeek}
+
+RepeatType=NthOfMonth|NthWeekOfMonth|EveryNthWeek
+
+def make_repeat_type(rpt):
+    match rpt:
+        case {'repeat_type':repeat_type}:
+            return repeat_types[repeat_type](**rpt)
+    if isinstance(rpt,RepeatType):
+        return rpt
+    raise TypeError
+
+def from_dict(cls):
+    def inner(dct_or_inst):
+        if isinstance(dct_or_inst,cls):
+            return dct_or_inst
+        if isinstance(dct_or_inst,dict):
+            return cls(dct_or_inst)
+    return inner
+
+G=TypeVar('G')
+
+def for_each(converter:Callable[[Any],G])->Callable[[Sequence],list[G]]:
+    def inner(sequence:Sequence):
+        return [converter(v) for v in sequence]
+    return inner
 
 
 @attrs.frozen
 class BaseTemplate:
     "base template"
     template_id: Any
-    anchor_date: datetime.date = attrs.field(converter=convert_isodate)
-    anchor_type: AnchorType
-    repeat_period: int
+    anchor_date: datetime.date=attrs.field(converter=convert_isodate)
+    repeat:RepeatType=attrs.field(converter=make_repeat_type)
     template_entries: tuple[TemplateEntry, ...] = attrs.field(
-        converter=lambda dct_list:tuple(TemplateEntry.create(tmp) for tmp in dct_list))
+        converter=attrs.converters.pipe(for_each(from_dict(TemplateEntry)),tuple))
 
 @attrs.define
 class Staffing:

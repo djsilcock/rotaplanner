@@ -28,8 +28,6 @@ def nth_of_month(week_no:int,target_weekday:int,month:int,year:int):
             raise TypeError (f'nth of month takes four int arguments (got {(target_weekday,month,year)})')
     if target_weekday<0 or target_weekday>6:
         raise ValueError(f'Weekday must be between 0 and 6 (got "{target_weekday}")')
-    if month<1 or month>12:
-        raise ValueError(f'Month must be between 1 and 12 (got "{month}")')
     first_of_month=date(year,month,1)
     first_weekday=first_of_month.weekday()
     if first_weekday>target_weekday:
