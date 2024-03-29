@@ -11,7 +11,6 @@
 }
 .main-table {
   white-space: nowrap;
-  font-family: Verdana;
   font-size: 50%;
   margin: 0;
   border: none;
@@ -20,9 +19,17 @@
   table-layout: fixed;
   border: 1px solid black;
 
+  & button.has-rules {
+    background-color: navy;
+  }
+
+  &.template td{
+    width: 12.5vw
+  }
   & td, & th {
     border: 1px solid black;
     padding: 0.5rem 1rem;
+    
   }
 
   & thead th {
@@ -49,6 +56,12 @@
     &.pubhol{
       background:yellow
     }
+    &.addrow{
+      text-align: center;
+    }
+    & dialog {
+      font-size: 1rem;
+    }
   }
 
   & table.hscroll tbody th {
@@ -70,16 +83,20 @@
   }
 
 }
-
+.anchor,.edit-template,.duty {
+  width: 100%;
+  cursor: pointer;
+  &:hover {
+    background-color: #EEEEFF;
+  }
+  &:focus {
+    background-color: #EEFFFF;
+  }
+}
 .duty {
     width:100%;
     cursor:pointer;
-    &:hover {
-      background-color: #EEEEFF;
-    }
-    &:focus {
-      background-color: #EEFFFF;
-    }
+    
     &.icu {
       color: #0000DD;
     }

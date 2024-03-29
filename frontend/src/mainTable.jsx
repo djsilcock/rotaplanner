@@ -1,11 +1,10 @@
 
-import { createSignal, createResource, createMemo, createEffect,Suspense, For} from "solid-js"
-import { createStore } from 'solid-js/store'
-import {Portal} from 'solid-js/web'
+import { createSignal, 
+  createResource, createMemo,
+  Suspense,  For} from "solid-js"
+import { createStore} from 'solid-js/store'
 
-import useLocalConfig from "./localconfig"
-
-import './component.css'
+import './maintable.css'
 
 
 const dutyCSS = 'duty', mainTableCSS = 'main-table', containerCSS = 'container'
@@ -20,10 +19,6 @@ const dutylabels = {
 }
 const focusElements = []
 
-
-
-
-
 /* expected data shape
 { minDate:string,
   maxDate:string,
@@ -37,22 +32,22 @@ const focusElements = []
   }
 }
 */
+
 function isweekend(isodate){
   const d=new Date(isodate)
   return d.getDay()==0 || d.getDay()==6
 }
-function MainTable(props) {
-  
 
-  const minDate = createMemo(() => props.remoteData.latest?.minDate)
-  const maxDataDate = createMemo(() => props.remoteData.latest?.maxDate)
-  const names = createMemo(() => props.remoteData.latest?.names)
-  const pubhols=createMemo(()=>props.remoteData.latest?.pubhols)
-  createEffect(()=>console.log(props.remoteData.latest))
+function MainTable(props) {  
+  const minDate = () => props.remoteData.latest?.minDate
+  const maxDataDate = () => props.remoteData.latest?.maxDate
+  const names = () => props.remoteData.latest?.names
+  const pubhols=()=>props.remoteData.latest?.pubhols
+  //createEffect(()=>console.log(props.remoteData.latest))
   const [dateVisibility, setDateVisibility] = createStore({})
+
   const displayedDates = createMemo(oldDisplayedDates => {
     const newDisplayedDates = []//...oldDisplayedDates]
-    const prevDisplayedDates = new Set(oldDisplayedDates)
     if (typeof minDate() == 'undefined') return oldDisplayedDates
     function addDayToISODate(d) {
       try{
@@ -82,8 +77,14 @@ function MainTable(props) {
           break
       }
     }
+    while ((dateVisibility[displayedDate]==false)&&!passedvisiblezone){
+      //extra dates which are now off the left of the screen
+      displayedDate=addDayToISODate(displayedDate)
+      newDisplayedDates.push(displayedDate)
+    }
     while (dateVisibility[displayedDate] == true) {
       displayedDate = addDayToISODate(displayedDate)
+      visibleDates.push(displayedDate)
       newDisplayedDates.push(displayedDate)
     }
     return newDisplayedDates.filter((d) => d <= displayedDate)
@@ -96,6 +97,7 @@ function MainTable(props) {
       entries => {
         for (let entry of entries) {
           //if (entry.isIntersecting) console.log(entry)
+          
           setDateVisibility(entry.target.dataset.celldate, entry.isIntersecting)
         }
       },
@@ -109,11 +111,11 @@ function MainTable(props) {
   }
   function doclick(target, duty) {
     props.mutate(oldData => {
-      const dateSlice = oldData[target.dataset.celldate] || {}
+      const dataSlice = oldData.data
+      const dateSlice = dataSlice[target.dataset.celldate] || {}
       const nameSlice = dateSlice[target.dataset.staffname] || {}
       const sessSlice = nameSlice[target.dataset.session] || {}
-      return {
-        ...oldData,
+      const newSlice= {
         [target.dataset.celldate]: {
           ...dateSlice,
           [target.dataset.staffname]: {
@@ -125,6 +127,7 @@ function MainTable(props) {
           }
         }
       }
+      return {...oldData,data:{oldData,...newSlice}}
     })
     props.refetch({
       dutydate: target.dataset.celldate,
@@ -181,9 +184,9 @@ function MainTable(props) {
     <table onKeyDown={keyDown} tabIndex={0} class={mainTableCSS}>
       <thead>
         <tr>
-          <th>First</th>
+          <th></th>
           <For each={displayedDates()}>
-            {x => <th classList={{pubhol:pubhols().indexOf(x)>=0,wkend:isweekend(x)}}>{x}</th>}
+            {x => <th classList={{pubhol:pubhols()?.indexOf(x)>=0,wkend:isweekend(x)}}>{x}</th>}
           </For>
         </tr>
       </thead>
@@ -194,12 +197,13 @@ function MainTable(props) {
               <th>{staffName}</th>
               <For each={displayedDates()}>
                 {(cellDate, colNo) =>
-                  <td classList={{pubhol:pubhols().indexOf(cellDate)>=0,wkend:isweekend(cellDate)}}>
+                  <td classList={{pubhol:pubhols()?.indexOf(cellDate)>=0,wkend:isweekend(cellDate)}}>
                     <For each={['am', 'pm', 'oncall']}>
                       {(session, sessionNo) => {
                         const data = createMemo(() => props.remoteData.latest.data?.[cellDate]?.[staffName]?.[session] ?? { duty: '-', flags: {} })
-                        const dutylabel = () => (dutylabels[data().duty] ?? { classname: 'unallocated', label: data().data?.duty ?? '?' })
+                        const dutylabel = () => (dutylabels[data().duty] ?? { classname: 'unallocated', label: data()?.duty ?? '?' })
                         const dutyflags = () => (data().flags ?? {})
+                        //createEffect(()=>console.log(cellDate,data()))
                         return <div
                           tabIndex={-1}
                           use: observe={[rowNo() * 3 + sessionNo(), colNo()]}
@@ -228,41 +232,25 @@ function MainTable(props) {
     </table></div>
 }
 
-function ConstraintDialog(props) {
-  const { data: localconfig } = useLocalConfig()
-  const constraintShown = localconfig.configEdit
 
-}
 
-function Component(props) {
+
+function RotaView(props){
   const [duty, setDuty] = createSignal()
   const [remoteData, { mutate,refetch }] = createResource(
-    (_, { refetching }) => ((console.log(refetching)||!refetching || refetching === true) ? fetch('/api/data') :
+    (_, { value,refetching }) => ((console.log(refetching)||!refetching || refetching === true) ? fetch('/api/data') :
       fetch('/api/data', {body: JSON.stringify(refetching), method: 'post' }))
       .then(r => r.json())
-    //()=>(Promise.resolve({minDate:'2022-01-01',maxDate:'2023-01-01',names:['fred','barney'],data:{}}))
+      .catch(e=>(value?value:{minDate:'2022-01-01',maxDate:'2023-01-01',names:['fred','barney'],data:{}}))
   )
   return <>
-    <div><select ref={(el) => { setDuty(el.value) }} onChange={
+    
+      Change to:<select ref={(el) => { setDuty(el.value) }} onChange={
       (e) => { setDuty(e.target.value) }}>
       <option value={'ICU'}>ICU</option>
       <option value={'TH'}>Theatre</option>
-    </select></div>
+    </select>
     
-    <Portal>
-      <dialog ref={el=>setTimeout(()=>el.showModal(),5000)}>
-        <table>
-          <thead>
-            <tr><th>Staff members</th></tr>
-          </thead>
-          <tbody>
-            <For each={remoteData.latest?.names}>
-              {n=><tr><td><input name={n} value={n}/></td></tr>}
-            </For>
-          </tbody>
-          </table>
-      </dialog>
-    </Portal>
     <hr />
     <Suspense fallback={<span>Loading...</span>}>
       <div class={containerCSS}>
@@ -274,4 +262,4 @@ function Component(props) {
 }
 
 
-export { Component }
+export { RotaView }
