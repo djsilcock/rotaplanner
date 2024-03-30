@@ -133,14 +133,41 @@ function AnchorElement(props) {
 }
 
 function EditElement(props){
+    const [duties,setDuties]=createStore(['add'])
+    function makeSetDuty(idx){
+        return function(newduty){
+            setDuties(idx,newduty)
+            if (idx==0){
+                setDuties((old)=>['add',...old])
+            }
+        }
+    }
+    return <For each={duties}>
+        {(duty,idx)=><DutyCell duty={duty} setDuty={makeSetDuty(idx())}/>}
+    </For>
+    
+}
+function DutyCell(props){
     let dialog
+    const checkboxes={}
+    createEffect(()=>{console.log(checkboxes)})
     return <>
-        <div class="edit-template"><button type="button" onClick={()=>dialog.showModal()}>✏️</button></div>
+        <div style={{cursor:'pointer'}} onClick={()=>dialog.showModal()}>
+        <Switch>
+            <Match when={props.duty=='add'}>
+                <div onClick={()=>dialog.showModal()}>Add ➕</div>
+            </Match>
+            <Match when={props.duty!='add'}>
+                {props.duty.startTime}-{props.duty.finishTime}:props.duty.locations.join(',')
+            </Match>
+        </Switch>
+        </div>
         <dialog ref={dialog}>
             <h4>Acceptable duties</h4>
             <For each={availableDuties}>
-                {(duty)=><div><input type="checkbox"/>{duty}</div>}
+                {(duty)=><div><input ref={checkboxes[duty]} type="checkbox"/>{duty}</div>}
             </For>
+            <button type="button" onClick={()=>console.log(availableDuties.filter(d=>checkboxes[d].checked))}>ok</button>
             <button type="button" onClick={()=>dialog.close()}>Close</button>
         </dialog>
         </>
