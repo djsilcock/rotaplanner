@@ -144,10 +144,14 @@ async def quit(request:web.Request):
     return web.Response(text='bye')
 
 async def yarn_runner(app):
+    try:
+        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+    except AttributeError:
+        creationflags=0
     process=await asyncio.create_subprocess_shell(
         'yarn dev --open',
         stdin=subprocess.PIPE,
-        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+        creationflags=creationflags,
         cwd=os.path.join(os.getcwd(),'..','frontend'),
         )
     yield
