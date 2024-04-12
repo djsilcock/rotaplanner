@@ -1,8 +1,10 @@
 
-import { createSignal, 
+import {
+  createSignal,
   createResource, createMemo,
-  Suspense,  For} from "solid-js"
-import { createStore} from 'solid-js/store'
+  Suspense, For
+} from "solid-js"
+import { createStore } from 'solid-js/store'
 
 import './maintable.css'
 
@@ -33,16 +35,16 @@ const focusElements = []
 }
 */
 
-function isweekend(isodate){
-  const d=new Date(isodate)
-  return d.getDay()==0 || d.getDay()==6
+function isweekend(isodate) {
+  const d = new Date(isodate)
+  return d.getDay() == 0 || d.getDay() == 6
 }
 
-function MainTable(props) {  
+function MainTable(props) {
   const minDate = () => props.remoteData.latest?.minDate
   const maxDataDate = () => props.remoteData.latest?.maxDate
   const names = () => props.remoteData.latest?.names
-  const pubhols=()=>props.remoteData.latest?.pubhols
+  const pubhols = () => props.remoteData.latest?.pubhols
   //createEffect(()=>console.log(props.remoteData.latest))
   const [dateVisibility, setDateVisibility] = createStore({})
 
@@ -50,14 +52,14 @@ function MainTable(props) {
     const newDisplayedDates = []//...oldDisplayedDates]
     if (typeof minDate() == 'undefined') return oldDisplayedDates
     function addDayToISODate(d) {
-      try{
-      return (new Date(Date.parse(d) + 86400000)).toISOString().slice(0, 10)
-      }catch(e){
-        console.error(e,d)
+      try {
+        return (new Date(Date.parse(d) + 86400000)).toISOString().slice(0, 10)
+      } catch (e) {
+        console.error(e, d)
       }
     }
     let currentDate = minDate()
-    while (currentDate <= maxDataDate() || newDisplayedDates.length<30) {
+    while (currentDate <= maxDataDate() || newDisplayedDates.length < 30) {
       newDisplayedDates.push(currentDate)
       currentDate = addDayToISODate(currentDate)
     }
@@ -77,9 +79,9 @@ function MainTable(props) {
           break
       }
     }
-    while ((dateVisibility[displayedDate]==false)&&!passedvisiblezone){
+    while ((dateVisibility[displayedDate] == false) && !passedvisiblezone) {
       //extra dates which are now off the left of the screen
-      displayedDate=addDayToISODate(displayedDate)
+      displayedDate = addDayToISODate(displayedDate)
       newDisplayedDates.push(displayedDate)
     }
     while (dateVisibility[displayedDate] == true) {
@@ -97,7 +99,7 @@ function MainTable(props) {
       entries => {
         for (let entry of entries) {
           //if (entry.isIntersecting) console.log(entry)
-          
+
           setDateVisibility(entry.target.dataset.celldate, entry.isIntersecting)
         }
       },
@@ -110,12 +112,12 @@ function MainTable(props) {
     focusElements[rowNo][colNo] = el
   }
   function doclick(target, duty) {
-    props.mutate(oldData => {
+    /*props.mutate(oldData => {
       const dataSlice = oldData.data
       const dateSlice = dataSlice[target.dataset.celldate] || {}
       const nameSlice = dateSlice[target.dataset.staffname] || {}
       const sessSlice = nameSlice[target.dataset.session] || {}
-      const newSlice= {
+      const newSlice = {
         [target.dataset.celldate]: {
           ...dateSlice,
           [target.dataset.staffname]: {
@@ -127,14 +129,18 @@ function MainTable(props) {
           }
         }
       }
-      return {...oldData,data:{oldData,...newSlice}}
-    })
-    props.refetch({
+      return { ...oldData, data: { oldData, ...newSlice } }
+    })*/
+    const newdata = {
       dutydate: target.dataset.celldate,
       name: target.dataset.staffname,
-      session: target.dataset.session,
+      sessionStart: props.start()*3600,
+      sessionFinish: props.finish()*3600,
       duty: duty ?? props.duty
-    })
+    }
+    console.log(newdata)
+    props.submit(newdata)
+      .then(() => props.refetch())
   }
   function handleKeyPress(keyPressed) {
     const currentElement = document.activeElement
@@ -186,7 +192,7 @@ function MainTable(props) {
         <tr>
           <th></th>
           <For each={displayedDates()}>
-            {x => <th classList={{pubhol:pubhols()?.indexOf(x)>=0,wkend:isweekend(x)}}>{x}</th>}
+            {x => <th classList={{ pubhol: pubhols()?.indexOf(x) >= 0, wkend: isweekend(x) }}>{x}</th>}
           </For>
         </tr>
       </thead>
@@ -197,27 +203,29 @@ function MainTable(props) {
               <th>{staffName}</th>
               <For each={displayedDates()}>
                 {(cellDate, colNo) =>
-                  <td classList={{pubhol:pubhols()?.indexOf(cellDate)>=0,wkend:isweekend(cellDate)}}>
-                    <For each={['am', 'pm', 'oncall']}>
+                  <td classList={{ pubhol: pubhols()?.indexOf(cellDate) >= 0, wkend: isweekend(cellDate),duty:true }}
+                      data-cellDate={cellDate}
+                      data-staffName={staffName}>
+                    <For each={props.remoteData.latest.data?.[cellDate]?.[staffName] || []}>
                       {(session, sessionNo) => {
-                        const data = createMemo(() => props.remoteData.latest.data?.[cellDate]?.[staffName]?.[session] ?? { duty: '-', flags: {} })
-                        const dutylabel = () => (dutylabels[data().duty] ?? { classname: 'unallocated', label: data()?.duty ?? '?' })
-                        const dutyflags = () => (data().flags ?? {})
+                        const dutylabel = () => (dutylabels[session.duty] ?? { classname: 'unallocated', label: session.duty ?? '?' })
+                        const dutyflags = () => (session.flags ?? {})
                         //createEffect(()=>console.log(cellDate,data()))
                         return <div
                           tabIndex={-1}
-                          use: observe={[rowNo() * 3 + sessionNo(), colNo()]}
-                          title={JSON.stringify({ staffName, cellDate, session })}
+                          use:observe={[rowNo() * 3 + sessionNo(), colNo()]}
+                          title={JSON.stringify({ staffName, cellDate, start:session.start, finish:session.finish })}
                           data-rowNo={rowNo() * 3 + sessionNo()}
                           data-colNo={colNo()}
                           data-cellDate={cellDate}
                           data-staffName={staffName}
-                          data-session={session}
+                          data-sessionStart={session.start}
+                          data-sessionFinish={session.finish}
                           classList={{
                             duty: true,
                             [dutylabel().classname]: true
                           }}>
-                          {session}:{dutylabel().label}
+                          {session.start % 24}-{session.finish % 24}:{dutylabel().label}
                           {dutyflags().confirmed ? '🔒' : ''}{dutyflags().locum ? '💷' : ''}
                         </div>;
                       }}
@@ -235,27 +243,45 @@ function MainTable(props) {
 
 
 
-function RotaView(props){
+function RotaView(props) {
   const [duty, setDuty] = createSignal()
-  const [remoteData, { mutate,refetch }] = createResource(
-    (_, { value,refetching }) => ((console.log(refetching)||!refetching || refetching === true) ? fetch('/api/data') :
-      fetch('/api/data', {body: JSON.stringify(refetching), method: 'post' }))
+  const [remoteData, { mutate, refetch }] = createResource(
+    (_, { value, refetching }) => console.log('fetching...') || fetch('/api/by_name')
       .then(r => r.json())
-      .catch(e=>(value?value:{minDate:'2022-01-01',maxDate:'2023-01-01',names:['fred','barney'],data:{}}))
   )
+
+  function submit(data) {
+    return fetch('/api/update_duty', { method: 'POST', body: JSON.stringify(data) })
+  }
+
+  const [start,setStart]=createSignal(8)
+  const [finish,setFinish]=createSignal(17)
+
   return <>
-    
-      Change to:<select ref={(el) => { setDuty(el.value) }} onChange={
+
+    Change to:<select ref={(el) => { setDuty(el.value) }} onChange={
       (e) => { setDuty(e.target.value) }}>
       <option value={'ICU'}>ICU</option>
       <option value={'TH'}>Theatre</option>
     </select>
-    
+
+    Start:<select value={start()} onChange={(e) => { setStart(Number(e.target.value)) }}>
+      <For each={Array(48)}>
+        {(hr, i) => <option disabled={i() > finish() } value={i()}>{String(i() % 24).padStart(2, '0')}{i()>23?'(+1)':''}</option>}
+      </For>
+    </select>
+    Finish:<select value={finish()} onChange={(e) => { setFinish(Number(e.target.value)) }}>
+      <For each={Array(48)}>
+        {(hr, i) => <option disabled={i() < start()} value={i()}>{String(i() % 24).padStart(2, '0')}{i()>23?'(+1)':''}</option>}
+      </For>
+    </select>
+
+
     <hr />
     <Suspense fallback={<span>Loading...</span>}>
       <div class={containerCSS}>
         <div />
-        <MainTable duty={duty()} remoteData={remoteData} mutate={mutate} refetch={refetch} />
+        <MainTable duty={duty()} remoteData={remoteData} mutate={mutate} submit={submit} refetch={refetch} start={start} finish={finish}/>
       </div>
     </Suspense>
   </>

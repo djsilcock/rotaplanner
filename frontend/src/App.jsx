@@ -6,8 +6,15 @@ import {RotaView} from './mainTable'
 import TemplateEditor from './templateEditor'
 
 
+
+
 function App() {
   const [page,setPage]=createSignal('rota')
+
+  var eventSource = new EventSource("/api/logging");
+                    eventSource.addEventListener("message", event => {
+                         console.log(event.data)
+                    });
   return <>
     <div>
       <select name="page" value={page()} onChange={e=>{setPage(e.target.value)}}>

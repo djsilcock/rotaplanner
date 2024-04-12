@@ -9,8 +9,12 @@ import subprocess
 
 from aiohttp import web
 
+from logger import log_queue,log
 from solver import async_solver_ctx
 from datastore import DataStore
+
+
+from aiohttp_sse import sse_response
 
 
 datastore = DataStore()
@@ -21,22 +25,36 @@ dutytypes = {}
 editsession = {}
 apiroutes = web.RouteTableDef()
 
+@apiroutes.get('/logging')
+async def hello(request: web.Request) -> web.StreamResponse:
+    async with sse_response(request) as resp:
+        while resp.is_connected():
+            await resp.send(await log_queue.get())
+    return resp
 
-@apiroutes.get('/data')
+
+@apiroutes.get('/by_name')
 async def get_data(_):
     "get all data"
-    return web.json_response(datastore.as_dict())
+    return web.json_response(datastore.as_dict_by_name())
 
-@apiroutes.post('/data')
+@apiroutes.get('/by_location')
+async def get_data_location(_):
+    "get data by location"
+    return web.json_response(datastore.as_dict_by_location())
+
+@apiroutes.post('/update_duty')
 async def set_data(request:web.Request):
     data=await request.json()
-    print(data)
+
+    log(data)
     name=data['name']
     dutydate=data['dutydate']
-    session=data['session']
+    session_start=data['sessionStart']
+    session_finish=data['sessionFinish']
     duty=data['duty']
-    datastore.setduty(name,dutydate,session,duty)
-    return web.json_response(datastore.as_dict())
+    datastore.setduty(name,dutydate,session_start,session_finish,duty)
+    return web.json_response({'response':'OK'})
 
 
 @apiroutes.get('/gridconfig')
@@ -44,17 +62,6 @@ async def get_grid_config(_):
     "get configuration for grid layout"
     return web.json_response(datastore.get_config())
 
-
-@apiroutes.post('/click')
-async def duty_click(request: web.Request):
-    "handle click on duty cell"
-    data = await request.json()
-    match data:
-        case {'name': name, 'date': dutydate, 'session': sess, 'duty': duty}:
-            datastore.setduty(name, dutydate, sess, duty)
-            return web.json_response({'response': 'ok'})
-        case _:
-            return web.json_response({'error': f'wrong data shape: received {data}'}, status=400)
 
 
 @apiroutes.post('/handle_clw')

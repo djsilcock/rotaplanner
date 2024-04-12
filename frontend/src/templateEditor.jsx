@@ -48,7 +48,7 @@ function AnchorElement(props) {
                 }
             }}).join(',')}
             >
-                ⚓
+                ⚓ Day {props.day+1}
         </button>
         </div>
         <dialog ref={dialog}>
@@ -133,17 +133,36 @@ function AnchorElement(props) {
 }
 
 function EditElement(props){
-    const [duties,setDuties]=createStore(['add'])
-    function makeSetDuty(idx){
-        return function(newduty){
-            setDuties(idx,newduty)
-            if (idx==0){
-                setDuties((old)=>['add',...old])
-            }
+    const [duties,setDuties]=createStore([])
+    function makeSetDuty(idx,splice=1){
+        return function(...newduty){
+            console.log(newduty)
+            setDuties(old=>old.toSpliced(idx,splice,...newduty))
+            setDuties((old)=>{
+                const newduties=[]
+                let prevduty={finishTime:0}
+                let currentduty
+                for (let duty of old){
+                    currentduty={...duty,gapStart:prevduty.finishTime}
+                    prevduty.gapFinish=duty.startTime                    
+                    newduties.push(currentduty)
+                    prevduty=currentduty
+                }
+                currentduty.gapFinish=24
+                return newduties
+            })
+            
         }
     }
-    return <For each={duties}>
-        {(duty,idx)=><DutyCell duty={duty} setDuty={makeSetDuty(idx())}/>}
+    return <For each={duties} fallback={<DutyCell duty={{placeholder:true,gapStart:0,gapFinish:24}} setDuty={makeSetDuty(0,0)}/>}>
+        {(duty,idx)=><>
+        <Show when={idx()==0 && duty.startTime>0}>
+            <DutyCell duty={{placeholder:true,gapStart:0,gapFinish:duty.startTime}} setDuty={makeSetDuty(0,0)}/>
+        </Show>
+        <DutyCell duty={duty} setDuty={makeSetDuty(idx(),1)}/>
+        <Show when={duty.finishTime!=duty.gapFinish}>
+        <DutyCell duty={{placeholder:true,gapStart:duty.finishTime,gapFinish:duty.gapFinish}} setDuty={makeSetDuty(idx()+1,0)}/>
+        </Show></>}
     </For>
     
 }
@@ -151,23 +170,46 @@ function DutyCell(props){
     let dialog
     const checkboxes={}
     createEffect(()=>{console.log(checkboxes)})
+    let startref,finishref
+    function saveDuty(){
+        props.setDuty({
+            startTime:Number(startref.value),
+            finishTime:Number(finishref.value),
+            locations:availableDuties.filter(d=>checkboxes[d].checked),
+            gapStart:props.duty.gapStart,
+            gapFinish:props.duty.gapFinish})
+        dialog.close()
+    }
+
     return <>
         <div style={{cursor:'pointer'}} onClick={()=>dialog.showModal()}>
-        <Switch>
-            <Match when={props.duty=='add'}>
-                <div onClick={()=>dialog.showModal()}>Add ➕</div>
-            </Match>
-            <Match when={props.duty!='add'}>
-                {props.duty.startTime}-{props.duty.finishTime}:props.duty.locations.join(',')
-            </Match>
-        </Switch>
+            <Switch>
+                <Match when={props.duty.placeholder}>
+                    Add +
+                </Match>
+                <Match when={!props.duty.placeholder}>
+                    {(props.duty.startTime+8)%24}-{(props.duty.finishTime+8)%24}:{props.duty.locations.join(',')}
+                </Match>
+            </Switch>
+        
         </div>
         <dialog ref={dialog}>
+            Start:<select ref={startref} value={props.duty.startTime}>
+            <For each={Array(25)}>
+                    {(hr,i)=><option disabled={i()<props.duty.gapStart || i()>props.duty.gapFinish} value={i()}>{String((i()+8)%24).padStart(2,'0')}</option>}
+                </For>
+            </select>
+            Finish:<select ref={finishref} value={props.duty.finishTime}>
+                <For each={Array(25)}>
+                    {(hr,i)=><option disabled={i()<props.duty.gapStart || i()>props.duty.gapFinish} value={i()}>{String((i()+8)%24).padStart(2,'0')}</option>}
+                </For>
+            </select>
             <h4>Acceptable duties</h4>
             <For each={availableDuties}>
-                {(duty)=><div><input ref={checkboxes[duty]} type="checkbox"/>{duty}</div>}
+                {(duty)=><div><input ref={checkboxes[duty]} type="checkbox" checked={props.duty?.locations?.includes(duty)}/>{duty}</div>}
             </For>
-            <button type="button" onClick={()=>console.log(availableDuties.filter(d=>checkboxes[d].checked))}>ok</button>
+            <button type="button" onClick={saveDuty}>ok</button>
+            <button type="button" onClick={()=>{props.setDuty();dialog.close()}}>Delete</button>
             <button type="button" onClick={()=>dialog.close()}>Close</button>
         </dialog>
         </>
@@ -210,11 +252,11 @@ export default function TemplateEditor() {
                     </tr>
                 </Show>
                 <For each={template()}>
-                    {(row, idx) => (<tr>
-                        <td><button onClick={() => deleteRow(idx)}>❌ Delete</button></td>
+                    {(row, weekNo) => (<tr>
+                        <td><button onClick={() => deleteRow(weekNo)}>❌ Delete</button></td>
                         <For each={row}>
-                            {x => <td>
-                                <AnchorElement cell={x} />
+                            {(x,dayNo) => <td>
+                                <AnchorElement cell={x} day={weekNo()*7+dayNo()}/>
                                 <EditElement cell={x} />
                                 </td>}
                         </For>

@@ -8,6 +8,7 @@ from warnings import warn
 
 import storage.filesystem
 from datatypes import SessionDuty
+from logger import log
 
 storages = {'filesystem': storage.filesystem}
 
@@ -110,8 +111,8 @@ class DataStore:
         data = {}
         for (name, day), sessionduties in self.data.items():
             data.setdefault(day.isoformat()[0:10], {})[name] = [
-                {'start': sessionduty.start.seconds/3600,
-                 'finish': sessionduty.finish.seconds/3600,
+                {'start': sessionduty.start.seconds//3600,
+                 'finish': sessionduty.finish.seconds//3600,
                  'duty': sessionduty.duty,
                  'flags': list(sessionduty.flags)}
                 for sessionduty in sessionduties]
@@ -133,7 +134,13 @@ class DataStore:
 
     def setduty(self, name, duty_date, start, finish, duty):
         "Set duty as determined by menu"
+        log((name,duty,date,start,finish,duty))
         cell = self.data.setdefault((name, date.fromisoformat(duty_date)), [])
+        if isinstance(start,int):
+            start=timedelta(seconds=start)
+        if isinstance(finish,int):
+            finish=timedelta(seconds=finish)
+            
         for sessionduty in list(cell):
             if start <= sessionduty.start and finish >= sessionduty.finish:
                 cell.remove(sessionduty)
