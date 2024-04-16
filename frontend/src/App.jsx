@@ -1,6 +1,5 @@
 import {Switch,Match,createSignal} from 'solid-js'
 
-import './App.css'
 
 import {RotaView} from './mainTable'
 import TemplateEditor from './templateEditor'

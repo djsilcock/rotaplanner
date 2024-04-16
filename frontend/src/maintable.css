@@ -9,6 +9,9 @@
 .popup{
   background-color: aqua;
 }
+.template-editor-settings {
+
+}
 .main-table {
   white-space: nowrap;
   font-size: 50%;
@@ -82,6 +85,11 @@
     z-index: 1;
   }
 
+}
+
+.rule-group{
+  border: 1px black solid;
+  margin: 0.5em;
 }
 .anchor,.edit-template,.duty {
   width: 100%;
