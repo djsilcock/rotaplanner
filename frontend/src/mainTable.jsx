@@ -112,25 +112,6 @@ function MainTable(props) {
     focusElements[rowNo][colNo] = el
   }
   function doclick(target, duty) {
-    /*props.mutate(oldData => {
-      const dataSlice = oldData.data
-      const dateSlice = dataSlice[target.dataset.celldate] || {}
-      const nameSlice = dateSlice[target.dataset.staffname] || {}
-      const sessSlice = nameSlice[target.dataset.session] || {}
-      const newSlice = {
-        [target.dataset.celldate]: {
-          ...dateSlice,
-          [target.dataset.staffname]: {
-            ...nameSlice,
-            [target.dataset.session]: {
-              ...sessSlice,
-              duty: duty ?? props.duty
-            }
-          }
-        }
-      }
-      return { ...oldData, data: { oldData, ...newSlice } }
-    })*/
     const newdata = {
       dutydate: target.dataset.celldate,
       name: target.dataset.staffname,

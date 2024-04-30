@@ -6,13 +6,20 @@ import asyncio
 from datetime import date, datetime
 from io import TextIOWrapper
 import subprocess
+import random
+import string
+from json import JSONEncoder
+import datetime
+from dataclasses import is_dataclass,asdict
 
 from aiohttp import web
+import humps
 
 from logger import log_queue,log
 from solver import async_solver_ctx
 from datastore import DataStore
 
+import templating
 
 from aiohttp_sse import sse_response
 
@@ -24,6 +31,14 @@ datastore.pubhols.update(pubhols)
 dutytypes = {}
 editsession = {}
 apiroutes = web.RouteTableDef()
+
+class DateJSONEncoder(JSONEncoder):
+    def default(self, o):
+        if isinstance(o,datetime.date):
+            return o.isoformat()
+        if is_dataclass(o):
+            return asdict(o)
+        return super().default(o)
 
 @apiroutes.get('/logging')
 async def hello(request: web.Request) -> web.StreamResponse:
@@ -56,6 +71,44 @@ async def set_data(request:web.Request):
     datastore.setduty(name,dutydate,session_start,session_finish,duty)
     return web.json_response({'response':'OK'})
 
+templates=[]
+demand_templates=[]
+
+staff=['fred','barney','wilma','betty','pebbles','bambam']
+@apiroutes.get('/getTemplates')
+async def get_templates(request):
+    return web.json_response(
+        humps.camelize({'default':{'id':None,
+        'name':'Untitled',
+        'appliesToStaff':{k:False for k in staff},
+        'templates': [''.join([random.choice(string.ascii_letters) for x in range(7)]) for y in range(7)],
+        'templateContent':{},
+        'rules':{ 'root': { 'ruleId': 'root', 'ruleType': 'group', 'groupType': 'and', 'rules': [] } }
+        },'templates':templates}))
+
+@apiroutes.get('/getDemandTemplates')
+async def get_demand_templates(request):
+    return web.json_response(humps.camelize(
+        {'default':{'id':None,
+        'name':'Untitled',
+        'start':8,
+        'finish':17,
+        'activity':None,
+        'rules':{ 'root': { 'ruleId': 'root', 'ruleType': 'group', 'groupType': 'and', 'rules': [] } }
+        },'templates':list(templating.get_demand_templates(asdict=True))}),dumps=DateJSONEncoder().encode)
+
+@apiroutes.get('/getDemandTemplatesForWeek')
+async def get_demand_templates_for_day(request):
+    date=datetime.date.fromisoformat(request.query['date'])
+    return web.json_response(
+        humps.camelize([list(templating.get_templates_for_day(date+datetime.timedelta(days=i),asdict=True)) for i in range(7)]),dumps=DateJSONEncoder().encode)
+
+
+@apiroutes.post('/updateDemandTemplates')
+async def update_templates(request):
+    data=humps.decamelize(await request.json())
+    templating.update_demand_template(data)
+    return await get_demand_templates(request)
 
 @apiroutes.get('/gridconfig')
 async def get_grid_config(_):
@@ -162,6 +215,7 @@ async def yarn_runner(app):
         cwd=os.path.join(os.getcwd(),'..','frontend'),
         )
     yield
+    print ('attempting to shut down dev server')
     process.terminate()
     await process.wait()
 
@@ -173,7 +227,7 @@ async def main():
     api['abort'] = asyncio.Event()
     api.add_routes(apiroutes)
     api.cleanup_ctx.append(async_solver_ctx)
-    api.cleanup_ctx.append(yarn_runner)
+    #api.cleanup_ctx.append(yarn_runner)
     app.add_subapp('/api',api)
     app.router.add_static('/static', os.path.join(os.getcwd(), '..', 'frontend','dist'))
     runner = web.AppRunner(app)

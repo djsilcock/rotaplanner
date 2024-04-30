@@ -11,6 +11,7 @@ pytest-asyncio = "*"
 attrs = "*"
 python-benedict = "*"
 aiohttp-sse = "*"
+pyhumps = "*"
 
 [dev-packages]
 flake8 = "*"

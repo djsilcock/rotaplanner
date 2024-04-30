@@ -16,7 +16,6 @@
   white-space: nowrap;
   font-size: 50%;
   margin: 0;
-  border: none;
   border-collapse: separate;
   border-spacing: 0;
   table-layout: fixed;
@@ -27,7 +26,7 @@
   }
 
   &.template td{
-    width: 12.5vw
+    width: 12.5%
   }
   & td, & th {
     border: 1px solid black;
@@ -115,4 +114,12 @@
       color: #DD0DDD
     }
 
+}
+
+div.submenu,input.submenu {
+  background-color: white;
+}
+
+input.submenu:checked ~ div.submenu{
+  background-color: lightblue;
 }
