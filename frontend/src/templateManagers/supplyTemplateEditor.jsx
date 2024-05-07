@@ -1,9 +1,9 @@
 
-import { For, Index, Show, Switch, Match, createSignal, createEffect, createContext, useContext, createMemo, createResource, Suspense } from 'solid-js'
+import { For, Show, Switch, Match, createSignal, createEffect, createMemo, createResource, Suspense } from 'solid-js'
 
-import { addDays, addWeeks, differenceInCalendarDays, differenceInCalendarMonths, startOfWeek, parseISO, setMonth, setYear, startOfMonth } from 'date-fns'
-import './maintable.css'
-import { RuleGroup,RulesContext,dateMatches } from './common'
+import { addDays, addWeeks, startOfWeek, setMonth, setYear, startOfMonth } from 'date-fns'
+import '../maintable.css'
+import { CheckDates, RuleGroup, RulesContext, dateMatches } from './common'
 
 const staff = ['fred', 'barney', 'wilma', 'betty']
 const availableDuties = ['Theatre', 'ICU', 'Non clinical', 'Zero', 'Leave']
@@ -15,34 +15,19 @@ const ruleClasses = {
 
 
 function EditElement(props) {
-    const duties = () => props.templateContent[props.cell]
+    const duties = () => props.templateContent[props.cell]??[]
     function setDuty(idx, splice, newduty) {
-        props.editTemplateContent((old) => {
-            const newduties = []
-            let prevduty = { finishTime: 0 }
-            let currentduty
-            for (let duty of (old ?? []).toSpliced(idx, splice, newduty)) {
-                currentduty = { ...duty, gapStart: prevduty.finishTime }
-                prevduty.gapFinish = duty.startTime
-                newduties.push(currentduty)
-                prevduty = currentduty
-            }
-            currentduty.gapFinish = 24
-            return newduties
-        })
+        props.editTemplateContent((old) => (old ?? []).toSpliced(idx, splice, newduty))
     }
-    return <div title={JSON.stringify(duties())}>
-        <div style={{ 'font-size': '25%' }}>{props.cell}</div>
-        <For each={duties()} fallback={<DutyCell duty={{ placeholder: true, gapStart: 0, gapFinish: 24 }} setDuty={(newduty) => setDuty(0, 0, newduty)} />}>
-            {(duty, idx) => <>
-                <Show when={idx() == 0 && duty.startTime > 0}>
-                    <DutyCell duty={{ placeholder: true, gapStart: 0, gapFinish: duty.startTime }} setDuty={(newduty) => setDuty(0, 0, newduty)} />
-                </Show>
-                <DutyCell duty={duty} setDuty={newduty => setDuty(idx(), 1, newduty)} />
-                <Show when={duty.finishTime != duty.gapFinish}>
-                    <DutyCell duty={{ placeholder: true, gapStart: duty.finishTime, gapFinish: duty.gapFinish }} setDuty={(newduty) => setDuty(idx() + 1, 0, newduty)} />
-                </Show></>}
-        </For></div>
+    
+    return <div title={JSON.stringify({duties:duties(),cell:props.cell})}>
+        <div style={{ 'font-size': '25%',padding:'4px' }}>{props.cell}</div>
+        <For each={duties()} >
+            {(duty, idx) => <DutyCell duty={duty} setDuty={newduty => setDuty(idx(), 1, newduty)} />
+            }  
+        </For>
+        <DutyCell duty={null} setDuty={(newduty) => setDuty(duties().length, 0, newduty)} />
+        </div>
 
 }
 function DutyCell(props) {
@@ -51,60 +36,69 @@ function DutyCell(props) {
     let startref, finishref
     function saveDuty() {
         props.setDuty({
-            startTime: Number(startref.value),
-            finishTime: Number(finishref.value),
-            locations: availableDuties.filter(d => checkboxes[d].checked),
-            gapStart: props.duty.gapStart,
-            gapFinish: props.duty.gapFinish
+            startTime: start(),
+            finishTime: finish(),
+            locations: Object.keys(allowedActivities()).filter(v=>allowedActivities()[v]),
         })
         dialog.close()
     }
-    
+
     const [allowedActivities, setAllowedActivities] = createSignal({})
-    const [start,setStart]=createSignal(0)
-    const [finish,setFinish]=createSignal(0)
-    const activityTree=createMemo(()=>{
-        const buildTree=(node)=>{
-            return{
-                name:node.name,
-                children:[
+    const [start, setStart] = createSignal(0)
+    const [finish, setFinish] = createSignal(0)
+    const activityTree = createMemo(() => {
+        const buildTree = (node) => {
+            return {
+                name: node.name,
+                children: [
                     ...node.children.map(buildTree),
-                    ...activities.filter((activity)=>(activity.type==node.name)),
+                    ...activities.filter((activity) => (activity.type == node.name)),
 
                 ]
             }
         }
         return activityTypes.map(buildTree)
     })
-    createEffect(()=>{
-        setStart(props.duty.startTime)
-        setFinish(props.duty.finishTime)
+    createEffect(() => {
+        setStart(props.duty?.startTime ?? 8)
+        setFinish(props.duty?.finishTime ?? 18)
     })
-    createEffect(()=>console.log({start:start(),finish:finish()}))
     return <>
-        <div style={{ cursor: 'pointer' }} onClick={() => dialog.showModal()}>
+        <div style={{ cursor: 'pointer'}} onClick={() => dialog.showModal()} title={JSON.stringify(props.duty)}>
             <Switch>
-                <Match when={props.duty.placeholder}>
-                    Add +
+                <Match when={props.duty==null}>
+                    <button style={{margin:'4px'}}>Add ➕</button>
                 </Match>
-                <Match when={!props.duty.placeholder}>
-                    {(props.duty.startTime + 8) % 24}-{(props.duty.finishTime + 8) % 24}:{props.duty.locations.join(',')}
+                <Match when={props.duty}>
+                    <div style={{ cursor: 'pointer',margin:'4px',border:'1px solid black',display:'grid','grid-template-columns':'1fr auto' }}>
+                    <div>
+                    <For each={props.duty.locations}>
+                        {location=><div>{location}</div>}
+                    </For>
+                    </div>
+                    <button>❌</button>
+                    </div>
                 </Match>
             </Switch>
 
         </div>
         <dialog ref={dialog}>
             <DemandActivityMenu activities={activityTree()} start={start()} finish={finish()} value={allowedActivities()} setValue={setAllowedActivities} />
-            Start:<select ref={startref} onChange={e=>{setStart(e.target.value)}} value={props.duty.startTime}>
-                <For each={Array(25)}>
-                    {(hr, i) => <option disabled={i() < props.duty.gapStart || i() > props.duty.gapFinish} value={i()}>{String((i() + 8) % 24).padStart(2, '0')}</option>}
-                </For>
-            </select>
-            Finish:<select ref={finishref} value={props.duty.finishTime} onChange={e=>{setFinish(e.target.value)}}>
-                <For each={Array(25)}>
-                    {(hr, i) => <option disabled={i() < props.duty.gapStart || i() > props.duty.gapFinish} value={i()}>{String((i() + 8) % 24).padStart(2, '0')}</option>}
-                </For>
-            </select>
+            <hr />
+            <fieldset>
+                <legend>Filter activities</legend>
+                Start:<select ref={startref} onChange={e => { setStart(e.target.value) }} value={start()}>
+                    <For each={Array(25)}>
+                        {(hr, i) => <option disabled={i()> finish()} value={i()}>{String(i()% 24).padStart(2, '0')}</option>}
+                    </For>
+                </select>
+                Finish:<select ref={finishref} value={finish()} onChange={e => { setFinish(e.target.value) }}>
+                    <For each={Array(25)}>
+                        {(hr, i) => <option disabled={i()<start()} value={i()}>{String(i() % 24).padStart(2, '0')}</option>}
+                    </For>
+                </select>
+            </fieldset>
+
             <h4>Acceptable duties</h4>
             <For each={availableDuties}>
                 {(duty) => <div><input ref={checkboxes[duty]} type="checkbox" checked={props.duty?.locations?.includes(duty)} />{duty}</div>}
@@ -194,20 +188,18 @@ const activities = [
 
 function DemandActivityMenu(props) {
 
-    
+
     function setAllChildren(tree, value) {
         const newState = {}
-        for (let [key, branch] of Object.entries(tree)) {
-            switch (branch.type) {
-                case 'activity':
-                    newState[key] = value
-                    break
-                case 'category':
-                    Object.assign(newState, setAllChildren(branch.children, value))
+        for (let branch of tree) {
+            if (branch.type) {
+
+                newState[branch.name] = value
+            } else {
+                Object.assign(newState, setAllChildren(branch.children, value))
 
             }
         }
-        console.log(tree, value, newState)
         return newState
     }
 
@@ -216,27 +208,28 @@ function DemandActivityMenu(props) {
             {(activity) => <Switch>
                 <Match when={activity.type}>
                     <li><label>
-                        <input 
-                            type='checkbox' 
-                            value={activity.name} 
-                            onChange={e => props.setValue(old => ({ ...old, [activity.name]: e.target.checked }))} 
-                            checked={props.value[activity.name]} 
-                            disabled={activity.start<props.start||activity.finish>props.finish}/> 
+                        <input
+                            type='checkbox'
+                            value={activity.name}
+                            onChange={e => props.setValue(old => ({ ...old, [activity.name]: e.target.checked }))}
+                            checked={props.value[activity.name]}
+                            disabled={activity.start < props.start || activity.finish > props.finish} />
                         {activity.name} ({activity.start}-{activity.finish})
-            
-                        </label></li>
+
+                    </label></li>
                 </Match>
-                <Match when={activity.children}>
+                <Match when={activity.children && hasLeaf(activity.children)}>
                     <li><details>
                         <summary>
                             <input
                                 type='checkbox'
                                 indeterminate={someAreTrue(props.value, activity.children) && someAreFalse(props.value, activity.children)}
-                                checked={!someAreFalse(props.value, activity.children)}
+                                checked={!someAreFalse(props.value, activity.children)&&hasLeaf(activity.children)}
                                 onChange={(e) => props.setValue(old => ({ ...old, ...setAllChildren(activity.children, e.target.checked) }))}
                             />
                             {activity.name}
                         </summary>
+
                         <div>
                             <DemandActivityMenu activities={activity.children} start={props.start} finish={props.finish} value={props.value} setValue={props.setValue} />
                         </div>
@@ -252,14 +245,12 @@ function DemandActivityMenu(props) {
 function someAreTrue(selected, tree) {
     if (typeof tree == 'undefined') return false
 
-    for (let [key, value] of Object.entries(tree)) {
-        switch (typeof value) {
-            case 'string':
-                if (selected[key]) return true
-                break
-            case 'object':
-                if (someAreTrue(selected, value)) {
-                    return true
+    for (let branch of tree) {
+        if (branch.type) {
+            if (selected[branch.name]) return true
+        } else {
+            if (someAreTrue(selected, branch.children)) {
+                return true
                 }
         }
     }
@@ -268,15 +259,28 @@ function someAreTrue(selected, tree) {
 function someAreFalse(selected, tree) {
     if (typeof tree == 'undefined') return false
 
-    for (let [key, value] of Object.entries(tree)) {
-        switch (typeof value) {
-            case 'string':
-                if (!selected[key]) return true
-                break
-            case 'object':
-                if (someAreFalse(selected, value)) {
-                    return true
-                }
+    for (let branch of tree) {
+        if (branch.type) {
+            if (!selected[branch.name]) return true
+        } else {
+            if (someAreFalse(selected, branch.children)) {
+                return true
+            }
+        }
+    }
+    return false
+}
+
+function hasLeaf(tree) {
+    if (typeof tree == 'undefined') return false
+
+    for (let branch of tree) {
+        if (branch.type) {
+            return true
+        } else {
+            if (hasLeaf(branch.children)) {
+                return true
+            }
         }
     }
     return false
@@ -328,7 +332,6 @@ export function EditTemplateDialog(props) {
     const [name, setName] = createSignal('Untitled')
 
     createEffect(() => {
-        console.log(props.template)
         setAppliesToStaff(props.template.appliesToStaff)
         editTemplates(props.template.templates)
         editTemplateContent(props.template.templateContent)
@@ -347,7 +350,9 @@ export function EditTemplateDialog(props) {
         })
     }
 
-
+    createEffect(()=>{
+        console.log({templates:templates(),templateContent:templateContent()})
+    })
 
 
     let dialog
@@ -407,54 +412,55 @@ export function EditTemplateDialog(props) {
                     <hr />
                     This template is valid when:
                     <RulesContext.Provider value={{ rules, setRule, templates: templates }}>
-                        <RuleGroup ruleId='root' />
+                        <RuleGroup rule={rules().root} />
                     </RulesContext.Provider>
 
-                    <select valuex={cal().getMonth()} onChange={(e) => setCal(old => setMonth(old, Number(e.target.value)))}>
-                        <option value="0">Jan</option>
-                        <option value="1">Feb</option>
-                        <option value="2">Mar</option>
-                        <option value="3">Apr</option>
-                        <option value="4">May</option>
-                        <option value="5">Jun</option>
-                        <option value="6">Jul</option>
-                        <option value="7">Aug</option>
-                        <option value="8">Sep</option>
-                        <option value="9">Oct</option>
-                        <option value="10">Nov</option>
-                        <option value="11">Dec</option>
-                    </select>
-                    <input type='number' value={cal().getFullYear()} onChange={(e) => setCal((old) => setYear(old, e.target.value))} />
-                    <table style={{ border: '1px solid black', 'border-collapse': 'collapse', 'text-align': 'center' }}>
-                        <thead>
-                            <tr>
-                                <th>Su</th><th>Mo</th><th>Tu</th><th>We</th><th>Th</th><th>Fr</th><th>Sa</th>
-                            </tr>
-                        </thead>
-                        <For each={[0, 1, 2, 3, 4, 5].map(i => addWeeks(startOfWeek(startOfMonth(cal())), i))}>
-                            {weekStart =>
-                                <tr>
-                                    <For each={[0, 1, 2, 3, 4, 5, 6].map(i => addDays(weekStart, i))}>
-                                        {day => <td style={
-                                            {
-                                                border: '1px solid black',
-                                                padding: '2px',
-                                                color: dateMatches(day, 'root', rules, templates) ? 'black' : 'gray',
-                                                'text-decoration': dateMatches(day, 'root', rules, templates) ? 'none' : 'line-through'
-                                            }}>{day.getDate()}</td>}
-                                    </For>
-                                </tr>}
-                        </For>
-                    </table>
+                    <CheckDates rules={rules}/>
                 </div>
-                <span title={JSON.stringify(templates())}>hover</span>
-                <TemplateGrid templates={templates()} templateContent={templateContent()} editTemplates={editTemplates} editTemplateContent={editTemplateContent} />
+                
+                <TemplateList templates={templates()} templateContent={templateContent()} editTemplates={editTemplates} editTemplateContent={editTemplateContent} />
                 <button onClick={() => { saveTemplate(); dialog.close() }}>Save</button>
                 <button onClick={() => { props.refetch(); dialog.close() }}>Cancel</button>
             </dialog></Suspense>
         <div style={{ 'flex-grow': 1 }} />
     </div>
 }
+
+export function TemplateList(props){
+    function insertRow(idx){
+        props.editTemplates(old=>old.toSpliced(idx,0,Math.random().toString(36).slice(2)))
+    }
+    function deleteRow(idx){
+        props.editTemplates(old=>old.toSpliced(idx,1))
+    }
+
+    return <div class='supply-template-list'>
+
+            <For each={props.templates}>
+                {(x, dayNo) => [
+                    <div style={{'align-content':'center'}}>
+                        <div><strong>Day {dayNo() + 1}</strong></div>
+                        <div><button onClick={() => deleteRow(dayNo())}>❌ Delete</button></div>
+                        <div><button type="button" onClick={()=>insertRow(dayNo())}>➕ Add day</button></div>
+                    </div>,
+                    <div style={{border:'1px solid black'}}>
+                            
+                            <EditElement cell={x} templateContent={props.templateContent} editTemplateContent={f => props.editTemplateContent(old=>({...old,[x]:f(old[x])}))} />
+                        </div>
+                    
+
+                ]}
+            </For>
+            
+                <div class="addrow">
+                    <button type="button" onClick={()=>insertRow(props.templates.length)}>➕ Add row</button>
+                </div>
+            
+        
+    </div>
+}
+
+
 
 export function TemplateGrid(props) {
 

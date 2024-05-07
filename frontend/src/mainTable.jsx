@@ -51,6 +51,17 @@ function MainTable(props) {
   const displayedDates = createMemo(oldDisplayedDates => {
     const newDisplayedDates = []//...oldDisplayedDates]
     if (typeof minDate() == 'undefined') return oldDisplayedDates
+
+    function* isoDateIterator(startdate){
+      let currentDate=typeof startdate=='string'?Date.parse(startdate):startdate.valueOf()
+
+      while (true){
+        yield new Date(currentDate).toISOString().slice(0,10)
+        currentDate+=86400000
+        console.log(currentDate)
+      }
+    }
+
     function addDayToISODate(d) {
       try {
         return (new Date(Date.parse(d) + 86400000)).toISOString().slice(0, 10)
@@ -58,38 +69,27 @@ function MainTable(props) {
         console.error(e, d)
       }
     }
-    let currentDate = minDate()
-    while (currentDate <= maxDataDate() || newDisplayedDates.length < 30) {
+    
+    const dates=isoDateIterator(minDate())
+    let visibility='before'
+    let tail=30
+    for (let currentDate of dates){
+      if (currentDate>maxDataDate() && (visibility=='after' || tail<=0)) break
       newDisplayedDates.push(currentDate)
-      currentDate = addDayToISODate(currentDate)
-    }
-
-    let displayedDate
-    let lastdateisVisible
-    let passedvisiblezone = false
-    const visibleDates = []
-    for (displayedDate of newDisplayedDates) {
-      lastdateisVisible = (dateVisibility[displayedDate] != false)
-      if (lastdateisVisible) {
-        passedvisiblezone = true
-        visibleDates.push(displayedDate)
+      if (typeof dateVisibility[currentDate]=='undefined') {
+        tail--
       }
-      if (displayedDate > maxDataDate()) {
-        if (passedvisiblezone && (lastdateisVisible == false))
-          break
+      
+      
+      if (dateVisibility[currentDate]){
+        visibility='in'
+      }else{
+        if (visibility=='in'){
+          visibility='after'
+        }
       }
     }
-    while ((dateVisibility[displayedDate] == false) && !passedvisiblezone) {
-      //extra dates which are now off the left of the screen
-      displayedDate = addDayToISODate(displayedDate)
-      newDisplayedDates.push(displayedDate)
-    }
-    while (dateVisibility[displayedDate] == true) {
-      displayedDate = addDayToISODate(displayedDate)
-      visibleDates.push(displayedDate)
-      newDisplayedDates.push(displayedDate)
-    }
-    return newDisplayedDates.filter((d) => d <= displayedDate)
+    return newDisplayedDates
   }, [])
 
 
@@ -99,18 +99,18 @@ function MainTable(props) {
       entries => {
         for (let entry of entries) {
           //if (entry.isIntersecting) console.log(entry)
-
           setDateVisibility(entry.target.dataset.celldate, entry.isIntersecting)
         }
       },
       { root: el })
   }
-  function observe(el, data) {
-    const [rowNo, colNo] = data()
+  function observe(el, date) {
+    console.log(el,date)
     intersectionObserver.observe(el)
-    if (typeof focusElements[rowNo] == 'undefined') { focusElements[rowNo] = [] }
-    focusElements[rowNo][colNo] = el
+    //if (typeof focusElements[rowNo] == 'undefined') { focusElements[rowNo] = [] }
+    //focusElements[rowNo][colNo] = el
   }
+
   function doclick(target, duty) {
     const newdata = {
       dutydate: target.dataset.celldate,
@@ -186,7 +186,8 @@ function MainTable(props) {
                 {(cellDate, colNo) =>
                   <td classList={{ pubhol: pubhols()?.indexOf(cellDate) >= 0, wkend: isweekend(cellDate),duty:true }}
                       data-cellDate={cellDate}
-                      data-staffName={staffName}>
+                      data-staffName={staffName}
+                      use:observe={cellDate}>
                     <For each={props.remoteData.latest.data?.[cellDate]?.[staffName] || []}>
                       {(session, sessionNo) => {
                         const dutylabel = () => (dutylabels[session.duty] ?? { classname: 'unallocated', label: session.duty ?? '?' })

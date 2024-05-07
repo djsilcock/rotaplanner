@@ -3,7 +3,7 @@ import "./App.css"
 
 import {RotaView} from './mainTable'
 import TemplateEditor from './templateManagers/demandTemplates'
-import SupplyTemplateEditor from './supplyTemplateEditor'
+import SupplyTemplateEditor from './templateManagers/supplyTemplateEditor'
 
 
 

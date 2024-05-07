@@ -12,6 +12,20 @@
 .template-editor-settings {
 
 }
+
+.supply-template-list {
+  display:grid;
+  font-size: 50%;
+  margin: 0;
+  text-align: left;
+  border-collapse: separate;
+  border-spacing: 0;
+  grid-template-columns: auto 1fr;
+ 
+  & dialog{
+    font-size: 1rem;
+  }
+}
 .main-table {
   white-space: nowrap;
   font-size: 50%;

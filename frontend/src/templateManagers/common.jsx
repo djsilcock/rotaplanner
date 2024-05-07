@@ -1,8 +1,5 @@
-import { For, Switch, Match, createEffect, useContext } from 'solid-js';
-import { getRuleDescription } from './common';
-import { RulesContext } from './common';
-import { RuleDialog } from './common';
-import { ruleClasses, getOrdinalSuffix } from './common';
+import { For, Show,Index,Switch, Match, createEffect, createSignal,children,useContext,createContext } from 'solid-js';
+import { addDays, addWeeks, startOfWeek,setMonth, setYear, startOfMonth,parseISO} from 'date-fns'
 
 export function RuleGroup(props) {
     const { rules, setRules } = useContext(RulesContext);
@@ -100,7 +97,9 @@ export function RuleGroup(props) {
         </ul>
 
     </div>;
-}export function RuleDialog(props) {
+}
+
+export function RuleDialog(props) {
     const [rule, setRule] = createSignal(Object.assign({}, ruleClasses.enwm(), ruleClasses.en()))
     createEffect(() => reset())
     function reset() {
@@ -248,7 +247,7 @@ export function CheckDates(props) {
         </table>
     </details>
 }
-function dateMatches(date, ruleId, rules, valueIfNull) {
+export function dateMatches(date, ruleId, rules, valueIfNull) {
     const rule = rules()[ruleId]
     if (typeof rule == 'undefined') return valueIfNull
     if (typeof date == 'string') return dateMatches(parseISO(date), ruleId, rules)
