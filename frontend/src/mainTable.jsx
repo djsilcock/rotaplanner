@@ -7,11 +7,9 @@ import {
 import { createStore } from 'solid-js/store'
 
 import './maintable.css'
-
+import backend from './backend'
 
 const dutyCSS = 'duty', mainTableCSS = 'main-table', containerCSS = 'container'
-
-
 
 const dutylabels = {
   '-': { classname: 'unallocated', label: '-' },
@@ -40,11 +38,16 @@ function isweekend(isodate) {
   return d.getDay() == 0 || d.getDay() == 6
 }
 
+const [lastUpdated,setLastUpdated]=createSignal(1)
+
+window.api.setLastUpdated=setLastUpdated
+
 function MainTable(props) {
-  const minDate = () => props.remoteData.latest?.minDate
-  const maxDataDate = () => props.remoteData.latest?.maxDate
-  const names = () => props.remoteData.latest?.names
-  const pubhols = () => props.remoteData.latest?.pubhols
+  const [tableConfig]=createResource(lastUpdated,()=>backend.get_table_config(),{initialValue:{}})
+  const minDate = () => tableConfig().minDate
+  const maxDataDate = () => tableConfig().maxDate
+  const names = () => tableConfig().names
+  const pubhols = () => tableConfig().pubhols
   //createEffect(()=>console.log(props.remoteData.latest))
   const [dateVisibility, setDateVisibility] = createStore({})
 
@@ -58,17 +61,9 @@ function MainTable(props) {
       while (true){
         yield new Date(currentDate).toISOString().slice(0,10)
         currentDate+=86400000
-        console.log(currentDate)
       }
     }
 
-    function addDayToISODate(d) {
-      try {
-        return (new Date(Date.parse(d) + 86400000)).toISOString().slice(0, 10)
-      } catch (e) {
-        console.error(e, d)
-      }
-    }
     
     const dates=isoDateIterator(minDate())
     let visibility='before'
@@ -104,8 +99,7 @@ function MainTable(props) {
       },
       { root: el })
   }
-  function observe(el, date) {
-    console.log(el,date)
+  function observe(el) {
     intersectionObserver.observe(el)
     //if (typeof focusElements[rowNo] == 'undefined') { focusElements[rowNo] = [] }
     //focusElements[rowNo][colNo] = el
@@ -115,13 +109,10 @@ function MainTable(props) {
     const newdata = {
       dutydate: target.dataset.celldate,
       name: target.dataset.staffname,
-      sessionStart: props.start()*3600,
-      sessionFinish: props.finish()*3600,
-      duty: duty ?? props.duty
+      activity: duty ?? props.duty
     }
-    console.log(newdata)
-    props.submit(newdata)
-      .then(() => props.refetch())
+    backend.set_activity(newdata)
+      .then(() => setLastUpdated(x=>x+1))
   }
   function handleKeyPress(keyPressed) {
     const currentElement = document.activeElement
@@ -183,12 +174,14 @@ function MainTable(props) {
             <tr>
               <th>{staffName}</th>
               <For each={displayedDates()}>
-                {(cellDate, colNo) =>
-                  <td classList={{ pubhol: pubhols()?.indexOf(cellDate) >= 0, wkend: isweekend(cellDate),duty:true }}
+                {(cellDate, colNo) =>{
+                 
+                  const [data]=createResource(lastUpdated,()=>backend.get_duty_for_staff_and_date(staffName,cellDate))
+                  return <td classList={{ pubhol: pubhols()?.indexOf(cellDate) >= 0, wkend: isweekend(cellDate),duty:true }}
                       data-cellDate={cellDate}
                       data-staffName={staffName}
-                      use:observe={cellDate}>
-                    <For each={props.remoteData.latest.data?.[cellDate]?.[staffName] || []}>
+                      use:observe={cellDate}><Suspense fallback='...'>
+                    <For each={data.latest || []}>
                       {(session, sessionNo) => {
                         const dutylabel = () => (dutylabels[session.duty] ?? { classname: 'unallocated', label: session.duty ?? '?' })
                         const dutyflags = () => (session.flags ?? {})
@@ -211,8 +204,7 @@ function MainTable(props) {
                           {dutyflags().confirmed ? '🔒' : ''}{dutyflags().locum ? '💷' : ''}
                         </div>;
                       }}
-                    </For></td>
-                }
+                    </For></Suspense></td>                }}
               </For>
 
             </tr>}
@@ -225,16 +217,8 @@ function MainTable(props) {
 
 
 
-function RotaView(props) {
+function RotaView() {
   const [duty, setDuty] = createSignal()
-  const [remoteData, { mutate, refetch }] = createResource(
-    (_, { value, refetching }) => console.log('fetching...') || fetch('/api/by_name')
-      .then(r => r.json())
-  )
-
-  function submit(data) {
-    return fetch('/api/update_duty', { method: 'POST', body: JSON.stringify(data) })
-  }
 
   const [start,setStart]=createSignal(8)
   const [finish,setFinish]=createSignal(17)
@@ -263,7 +247,7 @@ function RotaView(props) {
     <Suspense fallback={<span>Loading...</span>}>
       <div class={containerCSS}>
         <div />
-        <MainTable duty={duty()} remoteData={remoteData} mutate={mutate} submit={submit} refetch={refetch} start={start} finish={finish}/>
+        <MainTable duty={duty()} start={start} finish={finish}/>
       </div>
     </Suspense>
   </>

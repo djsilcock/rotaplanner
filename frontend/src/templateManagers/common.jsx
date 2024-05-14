@@ -1,5 +1,5 @@
-import { For, Show,Index,Switch, Match, createEffect, createSignal,children,useContext,createContext } from 'solid-js';
-import { addDays, addWeeks, startOfWeek,setMonth, setYear, startOfMonth,parseISO} from 'date-fns'
+import { For, Show,Index,Switch, Match, createEffect, createSignal,children,useContext,createContext, createResource } from 'solid-js';
+import backend from '../backend'
 
 export function RuleGroup(props) {
     const { rules, setRules } = useContext(RulesContext);
@@ -78,7 +78,7 @@ export function RuleGroup(props) {
                             <li>
                                 <button type='button' onClick={() => deleteRule(ruleId)} style={{ 'font-size': '50%' }}>X</button>
                                 <RuleDialog rule={rule()} onSubmit={editRule}>
-                                    {dialog => <a href="" onClick={(e) => { e.preventDefault(); dialog.showModal(); }}>
+                                    {open => <a href="" onClick={(e) => { e.preventDefault(); open(); }}>
                                         {() => getRuleDescription(rule())}
                                     </a>}
                                 </RuleDialog>
@@ -88,8 +88,8 @@ export function RuleGroup(props) {
                 }}
             </For>
             <li>
-                <RuleDialog rule={{ ruleId: null }}>
-                    {dialog => <button type='button' onClick={() => dialog.showModal()} style={{ 'font-size': '50%' }}>Add rule</button>}
+                <RuleDialog rule={{ ruleId: null }} onSubmit={editRule}>
+                    {open => <button type='button' onClick={() => open()} style={{ 'font-size': '50%' }}>Add rule</button>}
 
                 </RuleDialog>
                 <button type='button' onClick={addGroup} style={{ 'font-size': '50%' }}>Add group</button>
@@ -115,6 +115,10 @@ export function RuleDialog(props) {
     }
     const display = children(() => props.children)
     let dialog
+    const open=()=>{
+        dialog.showModal()
+        reset()
+    }
     return <>
         <dialog ref={dialog}>
             Rule type: <select
@@ -201,97 +205,56 @@ export function RuleDialog(props) {
             <button onClick={() => { reset(); dialog.close() } }>Close</button>
 
         </dialog>
-        {display()(dialog)}
+        {display()(open)}
     </>
 }
 export function CheckDates(props) {
-    const [cal, setCal] = createSignal(new Date())
-
+    const [month, setMonth] = createSignal(1)
+    const [year,setYear]=createSignal(2024)
+    const signal=()=>[month(),year(),props.rules]
+    const [calendar]=createResource(signal,([month,year,rules])=>backend.get_dates_matching_rules(month,year,rules),{initialValue:[]})
     return <details>
         <summary>Check dates...</summary>
 
-        <select valuex={cal().getMonth()} onChange={(e) => setCal(old => setMonth(old, Number(e.target.value)))}>
-            <option value="0">Jan</option>
-            <option value="1">Feb</option>
-            <option value="2">Mar</option>
-            <option value="3">Apr</option>
-            <option value="4">May</option>
-            <option value="5">Jun</option>
-            <option value="6">Jul</option>
-            <option value="7">Aug</option>
-            <option value="8">Sep</option>
-            <option value="9">Oct</option>
-            <option value="10">Nov</option>
-            <option value="11">Dec</option>
+        <select onChange={(e) => setMonth(Number(e.target.value))}>
+            <option value="1">Jan</option>
+            <option value="2">Feb</option>
+            <option value="3">Mar</option>
+            <option value="4">Apr</option>
+            <option value="5">May</option>
+            <option value="6">Jun</option>
+            <option value="7">Jul</option>
+            <option value="8">Aug</option>
+            <option value="9">Sep</option>
+            <option value="10">Oct</option>
+            <option value="11">Nov</option>
+            <option value="12">Dec</option>
         </select>
 
-        <input type='number' value={cal().getFullYear()} onChange={(e) => setCal((old) => setYear(old, e.target.value))} />
+        <input type='number' value={year()} onChange={(e) => setYear(e.target.value)} />
         <table style={{ border: '1px solid black', 'border-collapse': 'collapse', 'text-align': 'center' }}>
             <thead>
                 <tr>
                     <th>Su</th><th>Mo</th><th>Tu</th><th>We</th><th>Th</th><th>Fr</th><th>Sa</th>
                 </tr>
             </thead>
-            <For each={[0, 1, 2, 3, 4, 5].map(i => addWeeks(startOfWeek(startOfMonth(cal())), i))}>
-                {weekStart => <tr>
-                    <For each={[0, 1, 2, 3, 4, 5, 6].map(i => addDays(weekStart, i))}>
+            <For each={calendar()}>
+                {week => <tr>
+                    <For each={week}>
                         {day => <td style={{
                             border: '1px solid black',
                             padding: '2px',
-                            color: dateMatches(day, 'root', props.rules) ? 'black' : 'gray',
-                            'text-decoration': dateMatches(day, 'root', props.rules) ? 'none' : 'line-through'
-                        }}>{day.getDate()}</td>}
+                            color: day.active ? 'black' : 'gray',
+                            'text-decoration': day.active ? 'none' : 'line-through'
+                        }}>{day.date}</td>}
                     </For>
                 </tr>}
             </For>
         </table>
     </details>
 }
-export function dateMatches(date, ruleId, rules, valueIfNull) {
-    const rule = rules()[ruleId]
-    if (typeof rule == 'undefined') return valueIfNull
-    if (typeof date == 'string') return dateMatches(parseISO(date), ruleId, rules)
-    const anchorDate = parseISO(rule.anchorDate ?? '')
-    let result
-    switch (rule.ruleType) {
-        case 'group':
-            switch (rule.groupType) {
-                case 'and':
-                    result = rule.rules.every(item => dateMatches(date, item, rules, true))
-                    break
-                case 'or':
-                    result = rule.rules.some(item => dateMatches(date, item, rules, false))
-                    break
-                case 'not':
-                    result = !rule.rules.some(item => dateMatches(date, item, rules, false))
-                    break
-                default:
-                    console.error(rule.groupType)
-                    throw 'bad rule'
-            }
-            break
-        case 'en':
-            switch (rule.interval) {
-                case 'month':
-                    if (date.getDate() != anchorDate.getDate()) return false
-                    result = (differenceInCalendarMonths(date, anchorDate) % rule.frequency == 0)
-                    break
-                case 'week':
-                    result = (differenceInCalendarDays(date, anchorDate) % (rule.frequency * 7) == 0)
-                    break
-                case 'day':
-                    result(differenceInCalendarDays(date, anchorDate) % rule.frequency) == 0
-                    break
-                default:
-                    throw 'bad rule'
-            }
-            break
-        case 'enwm':
-            if (date.getDay() != anchorDate.getDay()) return false
-            if (Math.floor((date.getDate() - 1) / 7) != Math.floor((anchorDate.getDate() - 1) / 7)) return false
-            result = (differenceInCalendarMonths(date, anchorDate) % rule.frequency == 0)
-    }
-    return result
+export function dateMatches(date, ruleId, rules) {
+    return backend.date_matches(date,ruleId,rules)
 }
 export const RulesContext = createContext()
 export function getRuleDescription(rule) {

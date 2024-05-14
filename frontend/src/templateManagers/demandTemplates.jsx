@@ -5,13 +5,28 @@ import '../maintable.css'
 import { RuleGroup } from './common'
 import { CheckDates } from './common'
 import { RulesContext } from './common'
+import backend from '../backend'
 
 
 function fetchTemplateList([date]) {
     console.log(arguments)
     if (!date) return [[], [], [], [], [], [], []]
-    return fetch('/api/getDemandTemplatesForWeek?date=' + date.toISOString().slice(0, 10)).then(r => r.json())
+    return backend.get_demand_templates_for_week(date.toISOString().slice(0, 10))
 }
+
+function fetchTemplates() {
+    return backend.get_demand_templates()
+}
+
+function updateDemandTemplate(template) {
+    backend.update_demand_template(template)
+        .then(result => {
+            if (result.errors) {
+                alert(result.errors.join(','))
+            }
+        })
+}
+
 export default function TemplateEditor() {
     const [date, setDate] = createSignal()
     const [templateList, { refetch }] = createResource(fetchTemplates)
@@ -20,19 +35,16 @@ export default function TemplateEditor() {
     createEffect(() => setDate(new Date()))
     return <Show when={templateList()} fallback='...'>
         <For each={templateList().templates}>
-            {(template) => <div>
-                <EditTemplateDialog
-                    template={template}
-                    refetch={refetch} />
+            {(template) => <div><a href="" onClick={(e) => { e.preventDefault(); backend.edit_template(template.id).then(() => refetch()) }}>{template.name}</a>
             </div>}
         </For>
-        <EditTemplateDialog template={templateList()?.default} refetch={refetch} />
+        <a href="" onClick={(e) => { e.preventDefault(); backend.new_template().then(() => refetch()).then(() => alert('hello')) }}>(add new...)</a>
         <hr />
-        <table style={{'font-size':'50%','width':'100%'}}>
+        <table style={{ 'font-size': '50%', 'width': '100%' }}>
             <tbody>
                 <tr>
                     <For each={Array.from({ length: 7 }, (_, i) => addDays(new Date(), i))}>
-                        {(day) => console.log(day) || <td style={{border:'1px solid black'}}>{day?.toISOString().slice(0, 10)}</td>}
+                        {(day) => console.log(day) || <td style={{ border: '1px solid black' }}>{day?.toISOString().slice(0, 10)}</td>}
                     </For>
                 </tr>
                 <tr>
@@ -46,26 +58,20 @@ export default function TemplateEditor() {
 }
 
 
-function fetchTemplates() {
-    return fetch('/api/getDemandTemplates').then(r => r.json())
-}
 
-function updateDemandTemplate(template) {
-    return fetch('/api/updateDemandTemplates', { method: 'POST', body: JSON.stringify(template) }).then(r => r.json())
-}
 
 function ActivityTypeMenu(props) {
     return <ul style={{ 'list-style-type': 'none' }}>
         <For each={Object.entries(props.activities)}>
             {([key, value]) => <Switch>
                 <Match when={typeof value == 'string'}>
-                    <li><label><input type='radio' name={`${props.templateId}-activitytype`} value={key} onChange={e => e.target.checked && props.onChange(e.target.value)} checked={props.value == key} /> {value} ({JSON.stringify(props.value == key)})</label></li>
+                    <li><label><input type='radio' name='activitytype' value={key} onChange={e => e.target.checked && props.onChange(e.target.value)} checked={props.value == key} /> {value} ({JSON.stringify(props.value == key)})</label></li>
                 </Match>
                 <Match when={typeof value == 'object'}>
                     <li><details open={findDeep(props.value, value)}>
                         <summary>{key}</summary>
                         <div>
-                            <ActivityTypeMenu activities={value} templateId={props.templateId} value={props.value} onChange={props.onChange} />
+                            <ActivityTypeMenu activities={value} value={props.value} onChange={props.onChange} />
                         </div>
                     </details></li>
                 </Match>
@@ -121,19 +127,10 @@ const activityTypes = {
 
 export function EditTemplateDialog(props) {
     const [rules, setRules] = createSignal({ root: { ruleId: 'root', ruleType: 'group', groupType: 'and', rules: [] } })
-
     const [activityType, setActivityType] = createSignal()
     const [name, setName] = createSignal('Untitled')
     const [start, setStart] = createSignal(8)
     const [finish, setFinish] = createSignal(17)
-
-    createEffect(() => reset())
-
-    function reset() {
-        setRules(props.template.rules)
-        setName(props.template.name)
-        setActivityType(props.template.activityType)
-    }
 
     async function saveTemplate() {
         const payload = {
@@ -150,68 +147,65 @@ export function EditTemplateDialog(props) {
     }
 
     let dialog
+    createEffect(()=>{
+        backend.get_demand_template()
+        .then(result=>{
+            setRules(result.rules)
+            setActivityType(result.activity_type)
+            setName(result.name)
+            setStart(result.start)
+            setFinish(result.finish)
+        })
+    })
 
 
 
-    return <div style={{ display: 'flex', 'width': '100vw' }}>
-        <div style={{ 'flex-grow': '1' }}>&nbsp;</div>
-        <Show when={props.template}>
-            <Switch>
-                <Match when={props.template.id == null}>
-                    <a href="" onClick={(e) => { e.preventDefault(); dialog.showModal() }}>(add new...)</a>
-                </Match>
-                <Match when={props.template.id != null}>
-                    <a href="" onClick={(e) => { e.preventDefault(); dialog.showModal() }}>{name()}</a>
-                </Match>
-            </Switch>
-            <dialog ref={dialog} style={{ 'text-align': 'left', 'margin-left': '1em' }}>
-                <h4>Edit activity</h4>
-                <div class='template-editor-settings'>
-                    <div>Activity name: <input value={name()} onChange={e => setName(e.target.value)} /></div>
-                    Valid when day 1 is between <input type='date' />  and <input type='date' />
-                    <hr />
-                    This activity occurs:
-                    <RulesContext.Provider value={{ rules, setRules }}>
-                        <RuleGroup rule={rules().root} />
-                    </RulesContext.Provider>
-                    <ActivityTypeMenu activities={activityTypes} value={activityType()} templateId={props.template.id} onChange={setActivityType} />
-                    <hr />
-                    <table>
-                        <tbody>
-                            <tr>
-                                <td>Start time</td>
-                                <td>
-                                    <select onChange={e => setStart(e.target.value)} value={start()}>
-                                        <Index each={Array.from({ length: 36 })}>
-                                            {(x, index) => <option value={index} disabled={index > finish()}>
-                                                {index % 24}:00 <Show when={index > 23}>(+1)</Show>
-                                            </option>}
-                                        </Index>
-                                    </select>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Finish time</td>
-                                <td>
-                                    <select onChange={e => setFinish(e.target.value)} value={finish()}>
-                                        <Index each={Array.from({ length: 36 })}>
-                                            {(x, index) => <option value={index} disabled={index < start()}>
-                                                {index % 24}:00 <Show when={index > 23}>(+1)</Show></option>}
-                                        </Index>
-                                    </select>
-                                </td>
-                            </tr>
+    return <div>
+        <h4>Edit activity</h4>
+        <div class='template-editor-settings'>
+            <div>Activity name: <input value={name()} onChange={e => setName(e.target.value)} /></div>
+            Valid when day 1 is between <input type='date' />  and <input type='date' />
+            <hr />
+            This activity occurs:
+            <RulesContext.Provider value={{ rules, setRules }}>
+                <RuleGroup rule={rules().root} />
+            </RulesContext.Provider>
+            <ActivityTypeMenu activities={activityTypes} value={activityType()} templateId={null} onChange={setActivityType} />
+            <hr />
+            <table>
+                <tbody>
+                    <tr>
+                        <td>Start time</td>
+                        <td>
+                            <select onChange={e => setStart(e.target.value)} value={start()}>
+                                <Index each={Array.from({ length: 36 })}>
+                                    {(x, index) => <option value={index} disabled={index > finish()}>
+                                        {index % 24}:00 <Show when={index > 23}>(+1)</Show>
+                                    </option>}
+                                </Index>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Finish time</td>
+                        <td>
+                            <select onChange={e => setFinish(e.target.value)} value={finish()}>
+                                <Index each={Array.from({ length: 36 })}>
+                                    {(x, index) => <option value={index} disabled={index < start()}>
+                                        {index % 24}:00 <Show when={index > 23}>(+1)</Show></option>}
+                                </Index>
+                            </select>
+                        </td>
+                    </tr>
 
 
-                        </tbody>
-                    </table>
-                    <hr />
-                    <CheckDates rules={rules()}/>
-                </div>
-                <button onClick={() => { saveTemplate(); dialog.close() }}>Save</button>
-                <button onClick={() => { props.refetch(); dialog.close() }}>Cancel</button>
-            </dialog>
-        </Show>
+                </tbody>
+            </table>
+            <hr />
+            <CheckDates rules={rules()} />
+        </div>
+        <button onClick={() => { saveTemplate(); dialog.close() }}>Save</button>
+        <button onClick={() => { props.refetch(); dialog.close() }}>Cancel</button>
         <div style={{ 'flex-grow': 1 }} />
     </div>
 }

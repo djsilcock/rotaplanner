@@ -60,44 +60,61 @@ class DemandTemplate:
     finish:int
     def __post_init__(self):
         self.rules={key:rule_or_rulegroup(value) for key,value in self.rules.items()}
+    @classmethod
+    def validate(cls,data):
+        errors=[f"{field} needs to be supplied" for field in ('rules','name','id','activity_type','start','finish') if field not in data]
+        if data['finish'] < data['start']:
+            errors.append('finish must not be before start time')
+        return errors
 
+
+    
 @dataclasses.dataclass
-class SupplyOffer:
-    demand:DemandTemplate
+class SupplyTemplateEntry:
+    dateoffset:int
+    demand_templates:tuple[str,...]
     
 @dataclasses.dataclass
 class SupplyTemplate:
     "template of offers of cover"
     staff:set[str]
+    rules:dict[str,Rule|RuleGroup]
+    entries:tuple[SupplyTemplateEntry,...]
+    def __post_init__(self):
+        self.entries=tuple((SupplyTemplateEntry(**v) if isinstance(v,dict) else v) for v in self.entries )
+        self.rules={key:rule_or_rulegroup(value) for key,value in self.rules.items()}
+
+@dataclasses.dataclass
+class SupplyOffer:
+    supply_template:SupplyTemplate
+    anchor_date:datetime.date
+    staff:str
+    active:cp_model.IntVar
+
+@dataclasses.dataclass
+class ConcreteActivityOffer:
+    demand_template:DemandTemplate
+    anchor_date:datetime.date
+    staff:str
+    active:cp_model.IntervalVar
+    offers:list[SupplyOffer]
 
 
 
-def update_demand_template(data):
-    if data['id'] is None:
-        data['id']=''.join([random.choice(string.ascii_letters) for x in range(7)])
-        demand_templates[data['id']]=DemandTemplate(**data)
-    else:
-        if data.get('delete'):
-            del demand_templates[data['id']]
-        else:
-            demand_templates[data['id']]=DemandTemplate(**data)
 
-@overload
-def get_demand_templates(asdict:Literal[False]) -> Generator[DemandTemplate,None,None]:
-    ...
-@overload
-def get_demand_templates()-> Generator[DemandTemplate,None,None]:
-    ...
-@overload
-def get_demand_templates(asdict:Literal[True]) -> Generator[dict,None,None]:
-    ...
-
-def get_demand_templates(asdict=False):
-    return (dataclasses.asdict(m) if asdict else m for m in demand_templates.values())
+def make_calendar(month,year,rules):
+    rules={k:rule_or_rulegroup(v) for k,v in rules.items()}
+    starting_date=datetime.date(year,month,1)
+    starting_date-=datetime.timedelta(days=starting_date.weekday()) #will be the monday before the start of the month
+    if (starting_date+datetime.timedelta(days=42)).day>7:
+        starting_date-=datetime.timedelta(days=7)   #if more than one week of following month displayed then move back to show a complete week of previous month instead
+    for d in range(42):
+        test_date=starting_date+datetime.timedelta(days=d)
+        yield {'day':test_date.day,'active':rule_matches(test_date,'root',rules)}
 
 def rule_matches(date:datetime.date, rule_id, rules:dict[str,Rule|RuleGroup],default=None):
     "does rule match on this day"
-    rule = rules[rule_id]
+    rule = rule_or_rulegroup(rules[rule_id])
     if rule is None: 
         return default
     if isinstance(date,str):
@@ -127,19 +144,7 @@ def rule_matches(date:datetime.date, rule_id, rules:dict[str,Rule|RuleGroup],def
         return ((date.year*12+date.month)-(rule.anchor_date.year*12+rule.anchor_date.month)%rule.frequency) ==0
     
 
-@overload
-def get_templates_for_day(date:datetime.date,asdict:Literal[False])->Generator[DemandTemplate,None,None]:
-    ...
-@overload
-def get_templates_for_day(date:datetime.date,asdict:Literal[True])->Generator[dict,None,None]:
-    ...
-    
-def get_templates_for_day(date:datetime.date,asdict=False):
-    "return list of demand templates valid on given day"
-    templates=(t for t in get_demand_templates() if rule_matches(date,'root',t.rules))
-    if asdict:
-        return (dataclasses.asdict(t) for t in templates)
-    return templates
+
 
 @dataclasses.dataclass(frozen=True)
 class BoundTemplate:

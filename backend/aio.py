@@ -53,6 +53,7 @@ async def get_data(_):
     "get all data"
     return web.json_response(datastore.as_dict_by_name())
 
+
 @apiroutes.get('/by_location')
 async def get_data_location(_):
     "get data by location"
@@ -61,7 +62,6 @@ async def get_data_location(_):
 @apiroutes.post('/update_duty')
 async def set_data(request:web.Request):
     data=await request.json()
-
     log(data)
     name=data['name']
     dutydate=data['dutydate']

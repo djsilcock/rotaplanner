@@ -49,7 +49,7 @@ async def solve_async(datastore:DataStore, config, result_queue:asyncio.Queue):
     callback:feed results back to main thread
     """
     try:
-        data = datastore.data
+        data = datastore.duty_allocations
         pubhols=datastore.pubhols
         ctx = ConstraintContext(
             {'core':CoreConfig(
