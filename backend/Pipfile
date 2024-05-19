@@ -13,6 +13,7 @@ python-benedict = "*"
 aiohttp-sse = "*"
 pyhumps = "*"
 pywebview = "*"
+pyside6 = "*"
 
 [dev-packages]
 flake8 = "*"
