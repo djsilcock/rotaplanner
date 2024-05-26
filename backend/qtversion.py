@@ -2,13 +2,14 @@
 import sys
 from dataclasses import dataclass,replace
 from enum import IntEnum
+from typing import cast
 
 from PySide6.QtCore import (QAbstractTableModel, QDateTime, QModelIndex, Qt,QAbstractItemModel,
                             QTimeZone, Slot,Signal,QDate)
 from PySide6.QtGui import QAction, QColor, QKeySequence
 from PySide6.QtWidgets import (QApplication, QHBoxLayout, QVBoxLayout,QGridLayout,QHeaderView,QMenu,QTreeWidgetItem,QComboBox,QDateEdit,QDialog,QPushButton,
-                               QLabel,QSpinBox,QStackedLayout,QTabWidget,
-                               QMainWindow, QSizePolicy, QTableView, QWidget,QTextEdit,QTreeView,QTreeWidget)
+                               QLabel,QSpinBox,QStackedLayout,QTabWidget,QFormLayout,QLineEdit,QListWidget,QAbstractItemView,
+                               QMainWindow, QSizePolicy, QTableView, QWidget,QTextEdit,QTreeView,QTreeWidget,QDialogButtonBox)
 
 import datetime
 
@@ -132,21 +133,21 @@ specialties={
 class ActivityTree(QTreeWidget):
     def __init__(self):
         super().__init__()
-        self.setColumnCount(2)
-        self.setHeaderLabels(['Activities','Time'])
+        self.setColumnCount(1)
+        #self.setHeaderLabels(['Activities','Time'])
         self.insertTopLevelItems(0, self.add_branches(specialties))
     def add_branches(self,data):
         items=[]
         for key, values in data.items():
             item = QTreeWidgetItem([key])
-            item.setFirstColumnSpanned(True)
-            item.setCheckState(0,Qt.CheckState.PartiallyChecked)
-            item.setFlags(Qt.ItemFlag.ItemIsAutoTristate|Qt.ItemFlag.ItemIsEnabled|Qt.ItemFlag.ItemIsUserCheckable)
+            #item.setFirstColumnSpanned(True)
+            #item.setCheckState(0,Qt.CheckState.PartiallyChecked)
+            #item.setFlags(Qt.ItemFlag.ItemIsAutoTristate|Qt.ItemFlag.ItemIsEnabled|Qt.ItemFlag.ItemIsUserCheckable)
             if isinstance(values,list):
                 for value in values:
-                    child = QTreeWidgetItem(value)
-                    child.setFlags(Qt.ItemFlag.ItemIsUserCheckable|Qt.ItemFlag.ItemIsEnabled)
-                    child.setCheckState(0,Qt.CheckState.Checked)
+                    child = QTreeWidgetItem([f"{value[0]} ({value[1]})"])
+                    #child.setFlags(Qt.ItemFlag.ItemIsUserCheckable|Qt.ItemFlag.ItemIsEnabled)
+                    #child.setCheckState(0,Qt.CheckState.Checked)
                     item.addChild(child)
             if isinstance(values,dict):
                 for i in self.add_branches(values):
@@ -161,13 +162,10 @@ class MainWindow(QMainWindow):
         #self.setCentralWidget(widget)
         layout=QVBoxLayout()
         layout.addWidget(widget)
-        self.tree=ActivityTree()
         self.rules_window=None
-        
-        layout.addWidget(self.tree)
     
         button=QPushButton()
-        button.setText('Show dialog')
+        button.setText('Add Demand')
         button.clicked.connect(self.show_dialog)
         layout.addWidget(button)
         
@@ -260,20 +258,12 @@ class Widgets:
 
 class RuleTabWidget(QWidget):
     signal=Signal()
-    @property
-    def data(self) ->RulesData:
-        return self._parent.data
-    @property
-    def model(self) ->'RulesModel':
-        return self._parent.model
     def __init__(self,parent):
         super().__init__()
         self.widgets=Widgets()
         self._parent=parent
 
-    def weekday(self,weekday_no=None):
-        if weekday_no is None:
-            weekday_no=self.data.weekday_no
+    def weekday(self,weekday_no):
         return "Monday Tuesday Wednesday Thursday Friday Saturday Sunday".split()[weekday_no]
         
     def get_ordinal(self,number,include_1=False):
@@ -291,12 +281,10 @@ class RuleTabWidget(QWidget):
         widget=QComboBox()
         for i,x in enumerate(values):
             widget.insertItem(i,x)
-        widget.currentIndexChanged.connect(self.handle_changes)
         return widget
     def make_date_widget(self):
         widget=QDateEdit()
         widget.setCalendarPopup(True)
-        widget.dateChanged.connect(self.handle_changes)
         return widget
     def make_label(self,text):
         label=QLabel()
@@ -317,20 +305,13 @@ class DailyRuleWidget(RuleTabWidget):
         super().__init__(data)
         interval_label=self.make_label('Frequency')
         self.widgets.interval=self.make_combobox(f'Every {self.get_ordinal(x+1)}day' for x in range(30))
-        anchor_date_label=self.make_label('Starting date')
-        self.widgets.anchor_date=self.make_date_widget()
         self.make_grid_layout((
             (interval_label,self.widgets.interval),
-            (anchor_date_label,self.widgets.anchor_date)
         ))
-    def handle_changes(self):
-        self.data.anchor_date=self.widgets.anchor_date.date()
-        self.data.interval=self.widgets.interval.currentIndex()+1
-        self.signal.emit()
-    def reload(self):
-        self.widgets.anchor_date.setDate(self.data.anchor_date)
-        self.widgets.interval.setCurrentIndex(self.data.interval-1)
-
+    def populate(self,data):
+        data.interval=self.widgets.interval.currentIndex()+1
+    def set_values(self,data):
+        self.widgets.interval.setCurrentIndex(data.interval-1)
 
 class WeeklyRuleWidget(RuleTabWidget):
     def __init__(self,data):
@@ -339,22 +320,17 @@ class WeeklyRuleWidget(RuleTabWidget):
         self.widgets.weekday=self.make_combobox(self.weekday(v) for v in range(7))
         interval_label=self.make_label('Frequency')
         self.widgets.interval=self.make_combobox(f'Every {self.get_ordinal(x+1)}week' for x in range(26))
-        anchor_date_label=self.make_label('Starting date')
-        self.widgets.anchor_date=self.make_date_widget()
         self.make_grid_layout((
             (weekday_label,self.widgets.weekday),
             (interval_label,self.widgets.interval),
-            (anchor_date_label,self.widgets.anchor_date)
         ))
-    def handle_changes(self):
-        self.data.anchor_date=self.widgets.anchor_date.date()
-        self.data.interval=self.widgets.interval.currentIndex()+1
-        self.data.weekday_no=self.widgets.weekday.currentIndex()
-        self.signal.emit()
-    def reload(self):
-        self.widgets.anchor_date.setDate(self.data.anchor_date)
-        self.widgets.interval.setCurrentIndex(self.data.interval-1)
-        self.widgets.weekday.setCurrentIndex(self.data.weekday_no)
+    def populate(self,data):
+        data.interval=self.widgets.interval.currentIndex()+1
+        data.weekday_no=self.widgets.weekday.currentIndex()
+        
+    def set_values(self,data):
+        self.widgets.interval.setCurrentIndex(data.interval-1)
+        self.widgets.weekday.setCurrentIndex(data.weekday_no)
 
 class MonthlyRuleWidget(RuleTabWidget):
     def __init__(self,data):
@@ -363,23 +339,16 @@ class MonthlyRuleWidget(RuleTabWidget):
         self.widgets.day=self.make_combobox(self.get_ordinal(v+1,include_1=True) for v in range(31))
         interval_label=self.make_label('Frequency')
         self.widgets.interval=self.make_combobox(f'Every {self.get_ordinal(x+1)}month' for x in range(12))
-        anchor_date_label=self.make_label('Starting date')
-        self.widgets.anchor_date=self.make_date_widget()
         self.make_grid_layout((
             (day_label,self.widgets.day),
             (interval_label,self.widgets.interval),
-            (anchor_date_label,self.widgets.anchor_date)
         ))
-    def handle_changes(self):
-        self.data.anchor_date=self.widgets.anchor_date.date()
-        self.data.interval=self.widgets.interval.currentIndex()+1
-        self.data.day=self.widgets.day.currentIndex()+1
-        self.signal.emit()
-    def reload(self):
-        self.widgets.anchor_date.setDate(self.data.anchor_date)
-        self.widgets.interval.setCurrentIndex(self.data.interval-1)
-        self.widgets.day.setCurrentIndex(self.data.day-1)
-
+    def populate(self,data):
+        data.interval=self.widgets.interval.currentIndex()+1
+        data.day=self.widgets.day.currentIndex()+1
+    def set_values(self,data):
+        self.widgets.interval.setCurrentIndex(data.interval-1)
+        self.widgets.day.setCurrentIndex(data.day-1)
 
 class WeekInMonthRuleWidget(RuleTabWidget):
     def __init__(self,data):
@@ -390,99 +359,101 @@ class WeekInMonthRuleWidget(RuleTabWidget):
         self.widgets.week_in_month=self.make_combobox(self.get_ordinal(v+1,include_1=True) for v in range(5))
         interval_label=self.make_label('Frequency')
         self.widgets.interval=self.make_combobox(f'Every {self.get_ordinal(x+1)}month' for x in range(12))
-        anchor_date_label=self.make_label('Starting date')
-        self.widgets.anchor_date=self.make_date_widget()
         self.make_grid_layout((
             (weekday_label,self.widgets.weekday),
             (week_in_month_label,self.widgets.week_in_month),
-            (interval_label,self.widgets.interval),
-            (anchor_date_label,self.widgets.anchor_date)
-        ))
-    def handle_changes(self):
-        self.data.anchor_date=self.widgets.anchor_date.date()
-        self.data.interval=self.widgets.interval.currentIndex()+1
-        self.data.weekday_no=self.widgets.weekday.currentIndex()
-        self.data.week_no=self.widgets.week_in_month.currentIndex()+1
-        self.signal.emit()
-    def reload(self):
-        self.widgets.anchor_date.setDate(self.data.anchor_date)
-        self.widgets.interval.setCurrentIndex(self.data.interval-1)
-        self.widgets.weekday.setCurrentIndex(self.data.weekday_no)
-        self.widgets.week_in_month.setCurrentIndex(self.data.week_no-1)
+            (interval_label,self.widgets.interval)
+            ))
+    def populate(self,data):
+        data.interval=self.widgets.interval.currentIndex()+1
+        data.weekday_no=self.widgets.weekday.currentIndex()
+        data.week_no=self.widgets.week_in_month.currentIndex()+1
+        
+    def set_values(self,data):
+        self.widgets.interval.setCurrentIndex(data.interval-1)
+        self.widgets.weekday.setCurrentIndex(data.weekday_no)
+        self.widgets.week_in_month.setCurrentIndex(data.week_no-1)
 
 class GroupWidget(RuleTabWidget):
     def __init__(self,data):
         super().__init__(data)
         group_label=self.make_label('Group Type')
         self.widgets.group_type=self.make_combobox(('All must apply','Any can apply','None can apply'))
-        self.widgets.add_group=QPushButton()
-        self.widgets.add_group.setText('Add group')
-        self.widgets.add_group.clicked.connect(self.add_group)
-        self.widgets.add_rule=QPushButton()
-        self.widgets.add_rule.setText('Add rule')
-        self.widgets.add_rule.clicked.connect(self.add_rule)
         self.make_grid_layout((
             (group_label,self.widgets.group_type),
-            (None,self.widgets.add_rule),(None,self.widgets.add_group)
         ))
-    @Slot()
-    def add_group(self):
-        self.model.add_rule(self.data,rule_type=RuleType.GROUP)
-    @Slot()
-    def add_rule(self):
-        self.model.add_rule(self.data)
-    def handle_changes(self):
-        self.data.group_type=self.widgets.group_type.currentIndex()
-        self.signal.emit()
-    def reload(self):
-        self.widgets.group_type.setCurrentIndex(self.data.group_type)
+    def populate(self,data):
+        data.group_type=self.widgets.group_type.currentIndex()
+        
+    def set_values(self,data):
+        self.widgets.group_type.setCurrentIndex(data.group_type)
 
-class EditRuleWidget(QWidget):
+class PopulatingWidget(QWidget):
+    tab_widget:QTabWidget
+    def populate(self,data):
+        self.tab_widget.currentWidget().populate(data)
+
+class EditRuleDialog(QDialog):
+    data:RulesData
     signal=Signal()
     reload=Signal()
-    def __init__(self,model:QAbstractItemModel):
+    
+    def __init__(self,data):
         super().__init__()
-        self.data=RulesData(rule_id=-1)
-        self.model=model
-        self.tab_layout=QTabWidget()
-        self.tabs={
-            'Daily':DailyRuleWidget(self),
-            'Weekly':WeeklyRuleWidget(self),
-            'Monthly':MonthlyRuleWidget(self),
-            'Week in Month':WeekInMonthRuleWidget(self),
-        }
-        self.group_widget=GroupWidget(self)
-        self.group_widget.signal.connect(self.model.layoutChanged)
-        for name,widget in self.tabs.items():
-            self.tab_layout.addTab(widget,name)
-            widget.signal.connect(self.signal)
-            widget.signal.connect(self.model.layoutChanged)
-        self.tab_layout.currentChanged.connect(self.handle_tab_change)
-        self.stack=QStackedLayout()
-        self.stack.addWidget(self.tab_layout)
-        self.stack.addWidget(self.group_widget)
-        self.setLayout(self.stack)
-        for v in self.tabs.values():
-            v.reload()
+        self.data=replace(data)
+        layout=QVBoxLayout()
+        if self.data.rule_type==RuleType.GROUP:
+            self.widget=GroupWidget(self)
+        else:
+            self.widget=PopulatingWidget()
+            self.widget.setLayout(QVBoxLayout())
+
+            self.widget.tab_widget=QTabWidget()
+            tabs={
+                'Daily':DailyRuleWidget(self),
+                'Weekly':WeeklyRuleWidget(self),
+                'Monthly':MonthlyRuleWidget(self),
+                'Week in Month':WeekInMonthRuleWidget(self),
+            }
+            for name,widget in tabs.items():
+                self.widget.tab_widget.addTab(widget,name)
+                widget.set_values(data)
+            self.widget.tab_widget.currentChanged.connect(self.handle_tab_change)
+            self.widget.tab_widget.setCurrentIndex(data.rule_type)
+            form=QFormLayout()
+            start_date=QDateEdit()
+            start_date.setCalendarPopup(True)
+            start_date.setDate(self.data.anchor_date)
+            finish_date=QDateEdit()
+            finish_date.setCalendarPopup(True)
+            form.addRow('Starting date',start_date)
+            form.addRow('Finishing date',finish_date)
+            form_widget=QWidget()
+            form_widget.setLayout(form)
+            self.widget.layout().addWidget(form_widget)
+            self.widget.layout().addWidget(self.widget.tab_widget)
+        layout.addWidget(self.widget)
+        actionbuttons=QDialogButtonBox(QDialogButtonBox.StandardButton.Ok|QDialogButtonBox.StandardButton.Cancel)
+        def handle_accept():
+            self.accepted.emit()
+        actionbuttons.accepted.connect(handle_accept)
+        actionbuttons.rejected.connect(self.rejected)
+        actionbuttons.accepted.connect(lambda:self.done(QDialog.DialogCode.Accepted))
+        actionbuttons.rejected.connect(lambda:self.done(QDialog.DialogCode.Rejected))
+        layout.addWidget(actionbuttons)
+        self.setLayout(layout)
+    def populate(self):
+        self.widget.populate(self.data)
+
+        
     @Slot(int)
     def handle_tab_change(self,index):
         self.data.rule_type=index
-        self.model.layoutChanged.emit()
-    def edit_rule(self,index:QModelIndex):
-        rule:RulesData=index.data(Qt.ItemDataRole.UserRole)
-        self.data=rule
-        for v in self.tabs.values():
-            v.reload()
-        if rule.rule_type==RuleType.GROUP:
-            self.stack.setCurrentWidget(self.group_widget)
-        else:
-            self.stack.setCurrentWidget(self.tab_layout)
-            self.tab_layout.setCurrentIndex(rule.rule_type)
         
 
 class RulesModel(QAbstractItemModel):
     counter=0
-    datastore={
+    datastore:dict[int,RulesData]={
         0:RulesData(rule_id=0,rule_type=RuleType.GROUP,group_type=GroupType.AND,children=[1,2,3]),
         1:RulesData(rule_id=1,rule_type=RuleType.GROUP,group_type=GroupType.OR,children=[4,5,6]),
         2:RulesData(rule_id=2,rule_type=RuleType.WEEKLY,weekday_no=0,interval=3,anchor_date=QDate(2024,1,12)),
@@ -491,27 +462,53 @@ class RulesModel(QAbstractItemModel):
         5:RulesData(rule_id=5,rule_type=RuleType.MONTHLY,interval=2,day=30,anchor_date=QDate(2024,1,12)),
         6:RulesData(rule_id=6,rule_type=RuleType.MONTHLY,interval=2,day=30,anchor_date=QDate(2024,1,12))}
     
+    def get_new_index(self):
+        return max(self.datastore.keys())+1
     def index(self,row,col,parent):
         parent_node=self.datastore[parent.internalId()] if parent.isValid() else RulesData(rule_id=-1,children=[0])
         return self.createIndex(row,col,id=parent_node.children[row])
+    def removeRows(self,start_row,count,parent=QModelIndex()):
+        if not parent.isValid(): return False
+        parent_node:RulesData=parent.data(Qt.ItemDataRole.UserRole)
+        child_rules=parent_node.children[start_row:start_row+count]
+        if len(child_rules)==0:
+            return False
+        for rule in child_rules:
+            self.delete_rule(rule)
+        return True
+
     def delete_rule(self,rule_id):
-        for v in self.datastore.values():
+        for key,v in self.datastore.items():
             if rule_id in v.children:
-                v.children.remove(rule_id)
+                self.datastore[key]=replace(v,children=[c for c in v.children if c!=rule_id])
+                break
+        del self.datastore[rule_id]
         self.layoutChanged.emit()
     def update_parents(self):
         new_datastore={}
         for k,v in self.datastore.items():
             for child in v.children:
-                new_datastore[child]=replace(self.datastore[child],parent=k)
+                if new_datastore[child].parent is None:
+                    new_datastore[child]=replace(self.datastore[child],parent=k)
         self.datastore.update(new_datastore)
+    def get_parent_for_node(self,node:RulesData):
+        for v in self.datastore.values():
+            if node.rule_id in v.children:
+                return v
+        return None
 
-    def add_rule(self,parent,**kwargs):
-        new_rule_id=max(self.datastore.keys())+1
+    def add_rule(self,new_rule:RulesData):
+        if new_rule.rule_id is None:
+            new_rule.rule_id=self.get_new_index()
+        parent_node=self.datastore[new_rule.parent]
+        print (new_rule.rule_id)
+        parent=self.datastore[parent_node.rule_id]
         orig_children=parent.children
-        self.datastore[parent.rule_id]=replace(parent,children=[*orig_children,new_rule_id])
-        self.datastore[new_rule_id]=RulesData(**kwargs)
+        if new_rule.rule_id not in orig_children:
+            self.datastore[parent.rule_id]=replace(parent,children=[*orig_children,new_rule.rule_id])
+        self.datastore[new_rule.rule_id]=replace(new_rule,rule_id=new_rule.rule_id)
         self.layoutChanged.emit()
+        return self.createIndex(len(orig_children),0,id=new_rule.rule_id)
 
     def parent(self,index):
         this_id=index.internalId()
@@ -519,23 +516,36 @@ class RulesModel(QAbstractItemModel):
             if this_id in v.children:
                 return self.createIndex(v.children.index(this_id),0,id=k)
         return QModelIndex()
+    
+    def get_index_for_node(self,node:RulesData):
+        parent_node= self.get_parent_for_node(node) 
+        if parent_node is not None:
+            row=parent_node.children.index(node.rule_id)
+        else:
+            row=0
+        return self.createIndex(row,0,id=node.rule_id)
+    
     def rowCount(self,index):
-        if not index.isValid():
+        if not index.isValid():  # this is the root node
             return 1
         else:
             item=self.datastore[index.internalId()]
         return len(item.children)
+    
     def columnCount(self,*args):
         return 1
     def data(self,index,role):
+        
         if role==Qt.ItemDataRole.DisplayRole:
             return self.datastore[index.internalId()].text()
         if role==Qt.ItemDataRole.UserRole:
             return self.datastore[index.internalId()]
-    def setData(self,index,value,role):
+    def setData(self,index,value:RulesData,role):
         if role==Qt.ItemDataRole.UserRole:
+            if value.rule_id is None:
+                self.add_rule(value)
             self.datastore[index.internalId()]=value
-        self.dataChanged.emit()
+        self.layoutChanged.emit()
 
 class RulesView(QTreeView):
     changed=Signal(QModelIndex)
@@ -550,16 +560,83 @@ class RuleWidget(QWidget):
     def __init__(self):
         super().__init__()
         layout=QVBoxLayout()
-        model=RulesModel()
-        self.tree=RulesView(model)
-        self.rule_editor=EditRuleWidget(model)
-        self.tree.activated.connect(self.handle_activated)
-        self.tree.changed.connect(self.rule_editor.edit_rule)
+        self.model=RulesModel()
+        self.tree=RulesView(self.model)
+        self.buttons=QWidget()
+        self.buttons_layout=QHBoxLayout()
+        button_spec=(
+            ('Edit',self.edit_rule),
+            ('Delete',self.delete_rule),
+            ('Add rule',self.add_rule),
+            ('Add group',self.add_group)
+        )
+        buttons={}
+        for button_text,button_handler in button_spec:
+            button=QPushButton()
+            button.setText(button_text)
+            button.clicked.connect(button_handler)
+            self.buttons_layout.addWidget(button)
+            buttons[button_text]=button
+
+        self.buttons.setLayout(self.buttons_layout)
+        self.activity_title_widget=QLineEdit()
+        title_layout=QFormLayout()
+        title_layout.addRow('Activity title',self.activity_title_widget)
+        layout.addLayout(title_layout)
         layout.addWidget(self.tree)
-        layout.addWidget(self.rule_editor)
+        layout.addWidget(self.buttons)
+        actionbuttons=QDialogButtonBox(QDialogButtonBox.StandardButton.Ok|QDialogButtonBox.StandardButton.Cancel)
+        layout.addWidget(actionbuttons)
+        list_widget=QListWidget()
+        #list_widget.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
+        list_widget.addItem('Hello')
+        list_widget.addItem('Hello')
+        for item in range(list_widget.count()):
+            list_widget.item(item).setFlags(list_widget.item(item).flags()|Qt.ItemFlag.ItemIsUserCheckable)
+            list_widget.item(item).setCheckState(Qt.CheckState.Unchecked)
         
+        layout.addWidget(list_widget)
         self.setLayout(layout)
-    def handle_activated(self,*args):
+        
+    def edit_rule(self):
+        rule_to_edit=self.tree.currentIndex()
+        self.tree.setExpanded(rule_to_edit,True)
+        dialog=EditRuleDialog(rule_to_edit.data(Qt.ItemDataRole.UserRole))
+        dialog.setModal(True)
+        def save_rule():
+            print('saving')
+            model=rule_to_edit.model()
+            dialog.populate()
+            model.setData(rule_to_edit,dialog.data,Qt.ItemDataRole.UserRole)
+        dialog.accepted.connect(save_rule)
+        dialog.show()
+
+    def delete_rule(self):
+        rule_to_delete=self.tree.currentIndex()
+        model=rule_to_delete.model()
+        model.removeRow(rule_to_delete.row(),rule_to_delete.parent())
+
+    def add_rule(self,rule_type=0):
+        parent_index=self.tree.currentIndex()
+        if parent_index.data(Qt.ItemDataRole.UserRole).rule_type!=RuleType.GROUP:
+            parent_index=parent_index.parent()
+        parent_node:RulesData=parent_index.data(Qt.ItemDataRole.UserRole)
+        self.tree.setExpanded(parent_index,True)
+        model=cast(RulesModel,parent_index.model())
+        new_rule_id=model.get_new_index()
+        dialog=EditRuleDialog(RulesData(rule_id=None,rule_type=rule_type,parent=parent_node.rule_id))
+        dialog.setModal(True)
+        def add_rule():
+            dialog.populate()
+            model.add_rule(dialog.data)
+        dialog.accepted.connect(add_rule)
+        dialog.show()
+    def add_group(self):
+        return self.add_rule(RuleType.GROUP)
+    
+
+
+    def handle_activate(self,*args):
         print ('activated',args)
     def handle_changed(self,*args):
         print ('changed',args)
