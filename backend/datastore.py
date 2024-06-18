@@ -127,8 +127,8 @@ class DataStore:
     
     def for_staff_and_date_with_detail(self,staff,day) ->Sequence[DutyDetail]:
         return list(sorted(
-            [cast(DutyDetail,{'start':self.demand_templates[demand_id].start,
-              'finish':self.demand_templates[demand_id].finish,
+            [cast(DutyDetail,{'start':self.demand_templates[demand_id].start_time,
+              'finish':self.demand_templates[demand_id].finish_time,
               'duty':self.demand_templates[demand_id].name,
               'flags':flags}) for demand_id,flags in self.for_staff_and_date(staff,day).items()],
             key=lambda x:x['start']))
@@ -144,7 +144,7 @@ class DataStore:
             day=date.fromisoformat(day)
         current_allocations=self.for_staff_and_date_with_detail(name,day)
         proposed_activity=self.demand_templates[activity]
-        return [alloc for alloc in current_allocations if not (alloc['finish']<proposed_activity.start or alloc['start']>proposed_activity.finish)]
+        return [alloc for alloc in current_allocations if not (alloc['finish']<proposed_activity.start_time or alloc['start']>proposed_activity.finish_time)]
     
     def clear_activity(self,name,day,activity):
         if isinstance(day,str):

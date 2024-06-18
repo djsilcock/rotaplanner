@@ -69,7 +69,7 @@ class DemandTemplateDialog():
         if template_id is not None:
             self._template=datastore.get_demand_template(template_id)
         else:
-            self._template=DemandTemplate(rules={},name="Unititled",id=str(uuid4()),start=8,finish=17,activity_type='general')
+            self._template=DemandTemplate(rules={},name="Unititled",id=str(uuid4()),start_time=8,finish_time=17,activity_type='general')
     def create_window(self):
         self._window=webview.create_window('Edit Demand Template','http://localhost:5173',js_api=self)
         self._window.events.closed+=self._event.set
