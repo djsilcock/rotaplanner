@@ -5,16 +5,16 @@ import sys
 
 from typing import cast
 from uuid import uuid4
-from datetime import date, time,timedelta
+from datetime import date, time, timedelta
 
 from dataclasses import is_dataclass, fields, replace
 
-from PySide6.QtCore import ( # pylint: disable=E0611
-                            QDateTime,QTime, Qt, Signal)
+from PySide6.QtCore import (  # pylint: disable=E0611
+    QDateTime, QTime, Qt, Signal)
 from PySide6.QtWidgets import (  # pylint: disable=no-name-in-module
     QApplication, QDialog,
     QDialogButtonBox, QFormLayout, QHBoxLayout, QTimeEdit,
-    QLineEdit, QListWidget, QListWidgetItem,
+    QLineEdit, QListWidget, QListWidgetItem, QLabel,
     QMessageBox, QPushButton,
     QTreeWidget, QTreeWidgetItem,
     QVBoxLayout, QWidget)
@@ -23,7 +23,7 @@ from templating import (DailyRule, GroupType, MonthlyRule, Rule, RuleGroup,  # p
                         DateRangeRule, DateTagsRule, DateType,
                         RuleType, WeekInMonthRule, WeeklyRule, DemandTemplate)
 
-from dialogs.forms import Form, ComboBoxField, DateField, RadioButtonField, HiddenField # pylint: disable=import-error
+from dialogs.forms import Form, ComboBoxField, DateField, RadioButtonField, HiddenField  # pylint: disable=import-error
 
 
 def get_ordinal(number, include_1=False):
@@ -94,16 +94,21 @@ def rule_text(rule):
                 GroupType.NOT: 'None of...'
             }[rule.group_type]
 
-        case DailyRule():
-            return f'every {get_ordinal(rule.day_interval)}day'
-        case WeeklyRule():
-            return f'every {get_ordinal(rule.week_interval)}{weekday(rule.weekday)}'
-        case MonthlyRule():
-            return f'the {get_ordinal(rule.day,include_1=True)} of every {get_ordinal(rule.month_interval)}month'
-        case WeekInMonthRule():
-            return f'the {get_ordinal(rule.week_no,include_1=True)}{weekday(rule.weekday)} of every {get_ordinal(rule.month_interval)}month'
-        case DateRangeRule():
-            return f'is between {rule.start_date.strftime("%d/%m/%Y")} and {rule.finish_date.strftime("%d%m/%Y")}'
+        case DailyRule(day_interval=day_interval) | {'rule_type': RuleType.DAILY, 'day_interval': day_interval}:
+            return f'every {get_ordinal(day_interval)}day'
+        case WeeklyRule(
+                week_interval=week_interval, anchor_date=anchor_date) | {'rule_type': RuleType.WEEKLY, 'week_interval': week_interval, 'anchor_date': anchor_date}:
+            return f'every {get_ordinal(week_interval)}{weekday(anchor_date.weekday())}'
+        case MonthlyRule(
+                month_interval=month_interval, anchor_date=anchor_date) | {'rule_type': RuleType.MONTHLY, 'month_interval': month_interval, 'anchor_date': anchor_date}:
+            return f'the {get_ordinal(anchor_date.day,include_1=True)} of every {get_ordinal(month_interval)}month'
+        case WeekInMonthRule(month_interval=month_interval, anchor_date=anchor_date) | {'rule_type': RuleType.WEEK_IN_MONTH, 'month_interval': month_interval, 'anchor_date': anchor_date}:
+            week_no = anchor_date.day//7+1
+            return f'the {get_ordinal(week_no,include_1=True)}{weekday(anchor_date.weekday())} of every {get_ordinal(month_interval)}month'
+        case DateRangeRule(start_date=start_date, finish_date=finish_date) | {'rule_type': RuleType.DATE_RANGE, 'start_date': start_date, 'finish_date': finish_date}:
+            return f'is between {start_date.strftime("%d/%m/%Y")} and {finish_date.strftime("%d/%m/%Y")}'
+        case _:
+            return ""
 
 
 def weekday(weekday_no: int):
@@ -141,12 +146,6 @@ class RuleForm(Form):
         is_visible=lambda x: x['rule_type'] == RuleType.DAILY,
         default_value=1
     )
-    weekday = ComboBoxField(
-        label='Weekday',
-        values={v: weekday(v) for v in range(7)},
-        is_visible=lambda x: x['rule_type'] in (
-            RuleType.WEEKLY, RuleType.WEEK_IN_MONTH),
-        default_value=0)
     week_interval = ComboBoxField(
         label='Frequency',
         values={x: f'Every {get_ordinal(x)}week' for x in range(1, 27)},
@@ -155,15 +154,9 @@ class RuleForm(Form):
     anchor_date = DateField(
         label='Including date',
         is_visible=lambda x: x['rule_type'] in (
-            RuleType.WEEKLY, RuleType.DAILY,RuleType.MONTHLY,RuleType.WEEK_IN_MONTH),
+            RuleType.WEEKLY, RuleType.DAILY, RuleType.MONTHLY, RuleType.WEEK_IN_MONTH),
         default_value=date.today())
 
-    day = ComboBoxField(label='Day', values={v: get_ordinal(v+1, include_1=True) for v in range(1, 32)},
-                        is_visible=lambda x: x['rule_type'] == RuleType.MONTHLY,
-                        default_value=1)
-    week_no = ComboBoxField(label='Week of month', values={v: get_ordinal(v, include_1=True) for v in range(1, 6)},
-                            is_visible=lambda x: x['rule_type'] == RuleType.WEEK_IN_MONTH,
-                            default_value=1)
     month_interval = ComboBoxField(label='Frequency', values={x: f'Every {get_ordinal(x)}month' for x in range(1, 13)},
                                    is_visible=lambda x: x['rule_type'] in (
                                        RuleType.MONTHLY, RuleType.WEEK_IN_MONTH),
@@ -171,11 +164,11 @@ class RuleForm(Form):
     start_date = DateField(label='Starting Date',
                            is_visible=lambda x: x['rule_type'] == RuleType.DATE_RANGE,
                            default_value=date.today(),
-                           maximum=lambda v:v['finish_date'])
+                           maximum=lambda v: v['finish_date'])
     finish_date = DateField(label='Finishing Date',
                             is_visible=lambda x: x['rule_type'] == RuleType.DATE_RANGE,
                             default_value=date.today(),
-                            minimum=lambda v:v['start_date'])
+                            minimum=lambda v: v['start_date'])
     range_type = RadioButtonField(
         label='Date range type',
         values={DateType.INCLUSIVE: 'Include these dates',
@@ -183,25 +176,31 @@ class RuleForm(Form):
         is_visible=lambda x: x['rule_type'] == RuleType.DATE_RANGE,
         default_value=DateType.INCLUSIVE)
 
+
 class ValidationError(ValueError):
     pass
+
 
 class EditRuleDialog(QDialog):
     signal = Signal()
     reload = Signal()
     on_save = Signal(Rule)
     group_widget = None
+
     def __init__(self, data: Rule):
         super().__init__()
-        self.original_rule=data
+        self.original_rule = data
         layout = QVBoxLayout()
+        self.explanation = QLabel()
         if data.rule_type == RuleType.GROUP:
             self.form = GroupForm()
         else:
             self.form = RuleForm()
-            self.form.values.subscribe(self.validate_entries)
+            self.form.values.subscribe(self.generate_explanation)
         self.form.populate(data)
         layout.addWidget(self.form.form())
+        layout.addWidget(self.explanation)
+        self.explanation.setText('This is the explanation')
         actionbuttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         actionbuttons.accepted.connect(self.handle_save)
@@ -209,69 +208,43 @@ class EditRuleDialog(QDialog):
         layout.addWidget(actionbuttons)
         self.setLayout(layout)
 
-    def validate_entries(self,key,value):
-        with self.form.values.batch() as values:
-            match key:
-                case 'anchor_date':
-                    if value is None:
-                        return
-                    assert isinstance(value,date)
-                    match values['rule_type']:
-                        case RuleType.WEEKLY:
-                            values['weekday']=value.weekday()
-                        case RuleType.WEEK_IN_MONTH:
-                            values['weekday']=value.weekday()
-                            values['week_no']=value.day//7+1
-                case 'weekday'|'week_no':
-                    match values['rule_type']:
-                        case RuleType.WEEKLY:
-                            values['anchor_date']+=timedelta(days=value-values['anchor_date'].weekday())
-                        case RuleType.WEEK_IN_MONTH:
-                            year,month,_=values['anchor_date'].timetuple()[0:3]
-                            starting_weekday=date(year,month,1).weekday()
-                            first_week=date(year,month,1)+timedelta(days=(7+values['weekday']-starting_weekday)%7)
-                            target_week=first_week+timedelta(days=values['week_no']*7-7)
-                            if target_week.month!=month:
-                                target_week=first_week+timedelta(days=21)
-                                values['week_no']=4
-                            values['anchor_date']=target_week
-                case 'day':
-                    year,month,_=values['anchor_date'].timetuple()[0:3]
-                    values['anchor_date']=date(year,month,value)
-                
-
+    def generate_explanation(self, key, value):
+        self.explanation.setText(rule_text(self.form.values))
 
     def handle_save(self):
         print('save handler')
-        rule=None
+        rule = None
+
         def check_not_incomplete(*field_names):
             for f in field_names:
                 if self.form.values[f] is None:
                     raise ValidationError('please complete all the fields')
         match dict(self.form.values):
-            case {'rule_type':RuleType.DAILY,'day_interval':day_interval}:
+            case {'rule_type': RuleType.DAILY, 'day_interval': day_interval}:
                 check_not_incomplete('day_interval')
-                rule=DailyRule(day_interval=day_interval)
-            case {'rule_type':RuleType.WEEKLY,'week_interval':week_interval,'weekday':weekday}:
-                check_not_incomplete('week_interval','weekday')
-                rule=WeeklyRule(week_interval=week_interval,weekday=weekday)
-            case {'rule_type':RuleType.WEEK_IN_MONTH,'month_interval':month_interval,'weekday':weekday,'week_no':week_no}:
-                check_not_incomplete('month_interval','weekday','week_no')
-                rule=WeekInMonthRule(month_interval=month_interval,weekday=weekday,week_no=week_no)
-            case {'rule_type':RuleType.MONTHLY,'month_interval':month_interval,'day':day}:
-                check_not_incomplete('month_interval','day')
-                rule=MonthlyRule(month_interval=month_interval,day=day)
-            case {'rule_type':RuleType.DATE_RANGE,'start_date':start_date,'finish_date':finish_date,'range_type':range_type}:
-                check_not_incomplete('start_date','finish_date','range_type')
-                rule=DateRangeRule(start_date=start_date,finish_date=finish_date,range_type=range_type)
-            case {'rule_type':RuleType.DATE_TAGS,'label':label,'date_type':date_type}:
-                check_not_incomplete('date_type','label')
-                rule=DateTagsRule(label=label,date_type=date_type)
-            case {'rule_type':RuleType.GROUP,'group_type':group_type}:
+                rule = DailyRule(day_interval=day_interval)
+            case {'rule_type': RuleType.WEEKLY, 'week_interval': week_interval, 'weekday': weekday}:
+                check_not_incomplete('week_interval', 'weekday')
+                rule = WeeklyRule(week_interval=week_interval, weekday=weekday)
+            case {'rule_type': RuleType.WEEK_IN_MONTH, 'month_interval': month_interval, 'weekday': weekday, 'week_no': week_no}:
+                check_not_incomplete('month_interval', 'weekday', 'week_no')
+                rule = WeekInMonthRule(
+                    month_interval=month_interval, weekday=weekday, week_no=week_no)
+            case {'rule_type': RuleType.MONTHLY, 'month_interval': month_interval, 'day': day}:
+                check_not_incomplete('month_interval', 'day')
+                rule = MonthlyRule(month_interval=month_interval, day=day)
+            case {'rule_type': RuleType.DATE_RANGE, 'start_date': start_date, 'finish_date': finish_date, 'range_type': range_type}:
+                check_not_incomplete('start_date', 'finish_date', 'range_type')
+                rule = DateRangeRule(
+                    start_date=start_date, finish_date=finish_date, range_type=range_type)
+            case {'rule_type': RuleType.DATE_TAGS, 'label': label, 'date_type': date_type}:
+                check_not_incomplete('date_type', 'label')
+                rule = DateTagsRule(label=label, date_type=date_type)
+            case {'rule_type': RuleType.GROUP, 'group_type': group_type}:
                 check_not_incomplete('group_type')
                 assert is_dataclass(self.original_rule)
-                assert not isinstance(self.original_rule,type)
-                rule=replace(self.original_rule,group_type=group_type)
+                assert not isinstance(self.original_rule, type)
+                rule = replace(self.original_rule, group_type=group_type)
         self.done(QDialog.DialogCode.Accepted)
         self.on_save.emit(rule)
 

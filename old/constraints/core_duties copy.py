@@ -6,7 +6,7 @@ from calendar import SATURDAY, SUNDAY
 from typing import NamedTuple,Callable
 
 from signals import signal
-from constraint_ctx import BaseConstraintConfig, DutyStore
+from old.constraint_ctx import BaseConstraintConfig, DutyStore
 
 
 clinical_duty_types = ('THEATRE', 'ICU')

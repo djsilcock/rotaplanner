@@ -7,7 +7,7 @@ import contextlib
 import pytest
 import pytest_asyncio
 from backend.solver import async_solver_ctx
-from constraint_ctx import Signal,ConstraintContext
+from old.constraint_ctx import Signal,ConstraintContext
 import asyncio
 
 def test_sync_signal():

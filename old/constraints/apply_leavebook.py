@@ -2,7 +2,7 @@
 
 
 from enum import Flag, StrEnum
-from constraint_ctx import BaseConstraintConfig
+from old.constraint_ctx import BaseConstraintConfig
 from constraints.core_duties import leave, icu
 from constraints.some_shifts_are_locum import quota_icu, locum_icu
 from solver import GenericConfig

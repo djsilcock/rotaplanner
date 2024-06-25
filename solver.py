@@ -10,7 +10,7 @@ import asyncio
 
 
 from ortools.sat.python import cp_model
-from constraint_ctx import ConstraintContext
+from old.constraint_ctx import ConstraintContext
 from datatypes import SessionDuty
 
 from datastore import DataStore

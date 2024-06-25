@@ -1,18 +1,20 @@
 "Data storage class"
 
+from collections import ChainMap
 from dataclasses import dataclass, field, fields, replace,asdict
-from datetime import date, timedelta
+from datetime import date, datetime,timedelta
 from itertools import pairwise
 from typing import Iterable,TypedDict,Sequence,cast,overload,Literal,Generator,TYPE_CHECKING
 from warnings import warn
 from enum import IntFlag,auto
 import random
 import string
+import pickle
 
 import storage.filesystem
 from datatypes import SessionDuty
 from templating import DemandTemplate,SupplyTemplate,rule_matches
-from logger import log
+
 
 storages = {'filesystem': storage.filesystem}
 
@@ -34,16 +36,63 @@ class DutyDetail(TypedDict):
     flags:int|Flags
 
 
-class DataStore:
+class Singleton(type):
+    _instances={}
+    def __call__(cls,*args,**kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super().__call__(*args, **kwargs)
+        return cls._instances[cls]
+    
+class DataStore(metaclass=Singleton):
     "datastore class"
-
     def __init__(self, storage_type='filesystem'):
-        self.duty_allocations: dict[tuple[str, date], dict[str,Flags]] = {}
-        self.demand_templates:dict[str,DemandTemplate]={}
-        self.supply_templates:list[SupplyTemplate]=[]
+        self.duty_allocations: ChainMap[tuple[str, date], dict[str,Flags]] = ChainMap()
+        self.demand_templates:ChainMap[str,DemandTemplate]=ChainMap()
+        self.supply_templates:ChainMap[str,SupplyTemplate]=ChainMap()
         self.storage = storages[storage_type]
         self.config = Config(names=['Fred', 'Barney'])
         self._subscribers = set()
+
+    def incremental_save(self,file):
+        self.duty_allocations['_timestamp']=datetime.today()
+        self.demand_templates['_timestamp']=datetime.today()
+        self.supply_templates['_timestamp']=datetime.today()
+
+        save_info={
+            'duty_allocations':self.duty_allocations.maps[0],
+            'demand_templates':self.demand_templates.maps[0],
+            'supply_templates':self.supply_templates.maps[0],
+            'timestamp':datetime.today()
+        }
+        pickle.dump(save_info,file)
+        self.duty_allocations.new_child()
+        self.demand_templates.new_child()
+        self.supply_templates.new_child()
+
+    def save_all(self,file):
+        save_points={}
+        for chainmap in ('duty_allocations','demand_templates','supply_templates'):
+            for map in getattr(self,chainmap).maps:
+                save_points.setdefault(map['_timestamp'],{'timestamp':map['_timestamp']})[chainmap]=map
+        for v in save_points.values():
+            pickle.dump(v)
+
+    def rollback(self,save_point):
+        chainmaps=(self.duty_allocations,self.demand_templates,self.supply_templates)
+        if not all(any(map['_timestamp']==save_point for map in chainmap.maps) for chainmap in chainmaps):
+            raise ValueError
+        for chainmap in chainmaps:
+            chainmap.maps=[m for m in chainmap.maps if m['_timestamp']<save_point]
+
+    def load(self,file):
+        try:
+            while (newdict:=pickle.load(file)):
+                self.duty_allocations.new_child(newdict['duty_allocations'])
+                self.demand_templates.new_child(newdict['demand_templates'])
+                self.supply_templates.new_child(newdict['supply_templates'])
+        except (EOFError,pickle.PickleError):
+            pass
+        self.notify()
 
     def subscribe(self, callback):
         "add callback to notify changes"
@@ -186,10 +235,10 @@ class DataStore:
             data['id']=''.join([random.choice(string.ascii_letters) for x in range(7)])
             self.demand_templates[data['id']]=DemandTemplate(**data)
         else:
-            if data.get('delete'):
-                del self.demand_templates[data['id']]
-            else:
-                self.demand_templates[data['id']]=DemandTemplate(**data)
+            self.demand_templates[data['id']]=DemandTemplate(**data)
+
+    def delete_demand_template(self,template_id):
+        del self.demand_templates[template_id]
 
     @overload
     def get_demand_templates(self,as_dict:Literal[False]) -> Generator[DemandTemplate,None,None]:
@@ -214,7 +263,7 @@ class DataStore:
         ...
     def get_templates_for_day(self,day:date,as_dict=False):
         "return list of demand templates valid on given day"
-        templates=(t for t in self.get_demand_templates() if rule_matches(day,'root',t.rules))
+        templates=(t for t in self.get_demand_templates() if rule_matches(day,t.rules))
         if as_dict:
             return (asdict(t) for t in templates)
         return templates
@@ -276,3 +325,4 @@ class DataStore:
     def import_clw_csv(self, csvfile: Iterable[str]):
         "import from csv file"
         self.update_data(self.storage.import_clw_csv(csvfile))
+

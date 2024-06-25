@@ -33,34 +33,53 @@ class Rule:
             assert is_dataclass(other) and not isinstance(other,type)
             return cast(Rule,replace(other,**{f:getattr(other,f) for f in my_fields if hasattr(other,f)}))
         return
+    def matches(self,match_date:datetime.date):
+        raise NotImplementedError
             
 @dataclass
 class DailyRule(Rule):
     "every nth day"
     day_interval:int=1
+    anchor_date:datetime.date=datetime.date.today()
     rule_type:RuleType=RuleType.DAILY
+
+    def matches(self,match_date:datetime.date):
+        return (match_date-self.anchor_date).days%self.day_interval==0
 
 @dataclass
 class WeeklyRule(Rule):
     "every nth week"
     week_interval:int=1
-    weekday:int=0
+    anchor_date:datetime.date=datetime.date.today()
     rule_type:RuleType=RuleType.WEEKLY
+    
+    def matches(self,match_date:datetime.date):
+        return (match_date-self.anchor_date).days%(7*self.week_interval)==0
 
 @dataclass
 class MonthlyRule(Rule):
     "every nth month"
     month_interval:int=1
-    day:int=1
+    anchor_date:datetime.date=datetime.date.today()
     rule_type:RuleType=RuleType.MONTHLY
-
+    def matches(self,match_date:datetime.date):
+        if self.anchor_date.day!=match_date.day:
+            return False
+        return ((self.anchor_date.year*12+self.anchor_date.month)-(match_date.year*12+match_date.month))%self.month_interval==0
+    
 @dataclass
 class WeekInMonthRule(Rule):
     "the nth week of every mth month"
     month_interval:int=1
-    weekday:int=0
-    week_no:int=1
+    anchor_date:datetime.date=datetime.date.today()
     rule_type:RuleType=RuleType.WEEK_IN_MONTH
+    def matches(self,match_date:datetime.date):
+        if match_date.weekday()!=self.anchor_date.weekday():
+            return False
+        if match_date.day//7!=self.anchor_date.day//7:
+            return False
+        return ((self.anchor_date.year*12+self.anchor_date.month)-(match_date.year*12+match_date.month))%self.month_interval==0
+
 
 class DateType(IntEnum):
     INCLUSIVE=auto()
@@ -72,6 +91,10 @@ class DateRangeRule(Rule):
     finish_date:datetime.date=datetime.date(2199,12,31)
     range_type:DateType=DateType.INCLUSIVE
     rule_type:RuleType=RuleType.DATE_RANGE
+    def matches(self,match_date:datetime.date):
+        if self.range_type==DateType.INCLUSIVE:
+            return self.start_date<=match_date<=self.finish_date
+        return not (self.start_date<=match_date<=self.finish_date)
 
 @dataclass
 class DateTagsRule(Rule):
@@ -85,6 +108,14 @@ class RuleGroup(Rule):
     group_type:GroupType=GroupType.AND
     children:list[Rule]=field(default_factory=list)
     rule_type:RuleType=RuleType.GROUP
+    def matches(self,match_date):
+        match self.group_type:
+            case GroupType.AND:
+                return all(rule.matches(match_date) for rule in self.children)
+            case GroupType.OR:
+                return any(rule.matches(match_date) for rule in self.children)
+            case GroupType.NOT:
+                return not any(rule.matches(match_date)for rule in self.children)
 
 
 rule_types={
@@ -146,30 +177,7 @@ def make_calendar(month,year,rules):
 
 def rule_matches(date:datetime.date, rule:Rule):
     "does rule match on this day"
-
-    if isinstance(rule,RuleGroup):
-        match rule.group_type:
-            case GroupType.AND:
-                return all(rule_matches(date,r) for r in rule.children)
-            case GroupType.OR:
-                return any(rule_matches(date,r) for r in rule.children)
-            case GroupType.NOT:
-                return not any(rule_matches(date,r) for r in rule.children)
-    match rule:
-        case MonthlyRule():
-            if date.day != rule.day:
-                return False
-            return ((date.year*12+date.month)-(rule.anchor_date.year*12+rule.anchor_date.month)%rule.month_interval) ==0
-        case WeeklyRule():
-            return (rule.start_date-date).days % (rule.week_interval*7) == 0
-        case DailyRule():
-            return (rule.start_date-date).days % (rule.day_interval*7) == 0
-        case WeekInMonthRule():
-            if date.weekday()!=rule.weekday:
-                return False
-            if (date.day - 1) // 7 != (rule.week_no - 1):
-                return False
-            return ((date.year*12+date.month)-(rule.start_date.year*12+rule.start_date.month)%rule.month_interval) ==0
+    return rule.matches(date)
     
 def get_all_templates():
     return demand_templates.values()
@@ -180,15 +188,16 @@ class BoundTemplate:
     start_time:datetime.datetime
     finish_time:datetime.datetime
 
-def at_midnight(d:datetime.date):
-    return datetime.datetime.combine(d,datetime.time(0,0))
-
 def get_templates_for_date_range(fromdate:datetime.date,todate:datetime.date):
     for day in (fromdate+datetime.timedelta(days=d) for d in range((todate-fromdate).days)):
         for templ in get_all_templates():
             if rule_matches(day,templ.rules):
+                start_time=datetime.datetime.combine(day,templ.start_time)
+                finish_time=datetime.datetime.combine(day,templ.finish_time)
+                if finish_time<=start_time:
+                    finish_time+=datetime.timedelta(days=1)
                 yield BoundTemplate(
                     template=templ,
-                    start_time=at_midnight(day)+templ.start_time,
-                    finish_time=at_midnight(day)+templ.finish_time
+                    start_time=start_time,
+                    finish_time=finish_time
                 )

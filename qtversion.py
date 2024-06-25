@@ -3,10 +3,12 @@ import sys
 
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Slot,Qt
 from PySide6.QtGui import QAction, QColor, QKeySequence
-from PySide6.QtWidgets import (QApplication, QHBoxLayout, QVBoxLayout,QHeaderView,QMenu,QPushButton,
+from PySide6.QtWidgets import (QApplication, QHBoxLayout, QVBoxLayout,QHeaderView,QMenu,QPushButton,QMessageBox,
                                QMainWindow, QSizePolicy, QTableView, QWidget)
 
 import datetime
+import random
+import string
 
 from dialogs.edit_activity import EditActivityDialog
 from dialogs.demand_activities import DemandActivityDialog
@@ -26,13 +28,7 @@ class CustomTableModel(QAbstractTableModel):
         QAbstractTableModel.__init__(self)
         self.column_count=365
         self.row_count=5
-
-    def load_data(self, data):
-        self.input_dates = [1,2,3,4,5]
-        self.input_magnitudes = [1,2,3,4,5]
-
-        self.column_count = 2
-        self.row_count = len(self.input_magnitudes)
+        self.datastore={}
 
     def rowCount(self, parent=QModelIndex()):
         return self.row_count
@@ -52,26 +48,49 @@ class CustomTableModel(QAbstractTableModel):
         column = index.column()
         row = index.row()
 
-        if role == Qt.DisplayRole:
-            return "yes"
+        if role == Qt.ItemDataRole.ToolTipRole:
+            if (row,column) in self.datastore:
+                return '\n'.join(self.datastore[(row,column)])
         elif role == Qt.BackgroundRole:
             return QColor(Qt.white)
         elif role == Qt.TextAlignmentRole:
             return Qt.AlignRight
+        elif role == Qt.ItemDataRole.DisplayRole:
+            item=self.datastore.get((row,column),set())
+            if len(item)==0:
+                return '-'
+            if len(item)>1:
+                return f'{sorted(item)[0]} (+{len(item)-1})'
+            return sorted(item)[0]
+        elif role == Qt.ItemDataRole.UserRole:
+            return self.datastore.get((row,column),set())
 
         return None
+    
+    def setData(self,index,data,role):
+        if role==Qt.ItemDataRole.UserRole:
+            self.datastore.setdefault((index.row(),index.column()),set()).symmetric_difference_update({data})
+            self.layoutChanged.emit()
+
+
+fake_activities=[''.join(random.choices(string.ascii_lowercase,k=6)) for i in range(10)]
 
 class CustomTableView(QTableView):
-    @Slot()
-    def selectionChanged(self,old,new):
-        super().selectionChanged(old,new)
-        print([(index.row(),index.column()) for index in old.indexes()],new)
-
+        
     def contextMenuEvent(self, event):
         # Show the context menu
         context_menu=QMenu(self)
-        for index in self.selectedIndexes():
-            context_menu.addAction(f'{index.row()},{index.column()}')
+        items=fake_activities
+        def handle_menuclick(action):
+            for index in self.selectedIndexes():
+                self.model().setData(index,action.data(),Qt.ItemDataRole.UserRole)
+            self.resizeRowsToContents()
+
+        for i in items:
+            menutext=i
+            item=context_menu.addAction(menutext)
+            item.setData(menutext)
+        context_menu.triggered.connect(handle_menuclick)
         context_menu.exec(event.globalPos())
  
     def action1_triggered(self):
@@ -123,16 +142,12 @@ class Widget(QWidget):
 class MainWindow(QMainWindow):
     def __init__(self, widget):
         QMainWindow.__init__(self)
-        self.setWindowTitle("Earthquakes information")
+        self.setWindowTitle("Rota solver")
         #self.setCentralWidget(widget)
         layout=QVBoxLayout()
         layout.addWidget(widget)
         self.rules_window=None
     
-        button=QPushButton()
-        button.setText('Add Demand')
-        button.clicked.connect(self.show_dialog)
-        layout.addWidget(button)
         
         main_widget=QWidget()
         main_widget.setLayout(layout)
@@ -140,7 +155,21 @@ class MainWindow(QMainWindow):
         # Menu
         self.menu = self.menuBar()
         self.file_menu = self.menu.addMenu("File")
+        self.template_menu=self.menu.addMenu('Templating')
+        edit_demand=QAction('Demand templates...',self)
+        edit_demand.triggered.connect(self.show_dialog)
+        self.template_menu.addAction(edit_demand)
+        
+        edit_supply=QAction('Supply templates...',self)
+        edit_supply.triggered.connect(self.not_implemented)
+        self.template_menu.addAction(edit_supply)
 
+        manage_expectations=QAction('Expectations...',self)
+        manage_expectations.triggered.connect(self.not_implemented)
+        self.template_menu.addAction(manage_expectations)
+        
+
+        
         ## Exit QAction
         exit_action = QAction("Exit", self)
         exit_action.setShortcut(QKeySequence.Quit)
@@ -161,6 +190,8 @@ class MainWindow(QMainWindow):
         self.rules_window=DemandActivityDialog()
         self.rules_window.show()
 
+    def not_implemented(self):
+        return QMessageBox.warning(self,'Under construction',"This bit isn't built yet")
 
 if __name__ == "__main__":
     # Qt Application

@@ -8,7 +8,7 @@ from typing import Any, Literal, TypedDict, cast,TypeVar,Callable,Sequence,overl
 import attrs
 from ortools.sat.python.cp_model import IntVar,IntervalVar
 
-from constraint_ctx import BaseConstraintConfig, DutyStore
+from old.constraint_ctx import BaseConstraintConfig, DutyStore
 from constraints.core_duties import CoreDuties
 from constraints.date_utils import convert_isodate, is_cycle, is_nth_of_month
 from constraints.utils import groupby
