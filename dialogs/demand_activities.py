@@ -27,7 +27,7 @@ class DemandActivityDialog(QWidget):
             buttons[button_text] = button
 
         self.template_list_widget = QListWidget()
-        for tag_id, template in datastore.demand_templates.items():
+        for tag_id, template in datastore.datastore.demand_templates.items():
             item = QListWidgetItem(template.name, self.template_list_widget)
             item.setData(Qt.ItemDataRole.UserRole, tag_id)
             
@@ -44,7 +44,7 @@ class DemandActivityDialog(QWidget):
 
     def edit_template(self):
         rule_to_edit = self.template_list_widget.currentItem()
-        self.edit_activity_dialog = EditActivityDialog(datastore.demand_templates[rule_to_edit.data(Qt.ItemDataRole.UserRole)])
+        self.edit_activity_dialog = EditActivityDialog(datastore.datastore.demand_templates[rule_to_edit.data(Qt.ItemDataRole.UserRole)])
         self.edit_activity_dialog.setModal(True)
         def save_rule(new_template):
             print('saving')
