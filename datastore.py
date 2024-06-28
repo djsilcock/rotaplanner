@@ -17,22 +17,10 @@ from templating import DemandTemplate,SupplyTemplate,rule_matches
 storages = {'filesystem': storage.filesystem}
 
 class Flags(IntFlag):
+    "flags for duties"
     NONE=0
     LOCUM=1
     LOCKED=2
-
-@dataclass
-class Config:
-    "config class"
-    names: list[str] = field(default_factory=list)
-    pubhols: set[date] = field(default_factory=set)
-
-class DutyDetail(TypedDict):
-    start:int
-    finish:int
-    name:str
-    flags:int|Flags
-
 
 class Singleton(type):
     _instances={}
@@ -47,6 +35,7 @@ class DataStoreEntry:
     demand_templates:dict[str,DemandTemplate]=field(default_factory=dict)
     supply_templates:dict[str,SupplyTemplate]=field(default_factory=dict)
     flagged_dates:dict[tuple[date,str],bool]=field(default_factory=dict)
+    staff:dict=field(default_factory=dict)
     timestamp:datetime=field(default_factory=datetime.today)
 
 class DataStoreChainMap:
@@ -56,7 +45,7 @@ class DataStoreChainMap:
         self.maps=list(maps)
     def reset(self):
         self._cache.clear()
-    def __getattr__(self, name: str) -> random.Any:
+    def __getattr__(self, name: str):
         if name not in self._cache:
             self._cache[name]=ChainMap(*[getattr(m,name) for m in self.maps])
         return self._cache[name]
@@ -85,7 +74,6 @@ class DataStore(metaclass=Singleton):
     def __init__(self, storage_type='filesystem'):
         self.datastore=DataStoreChainMap()
         self.storage = storages[storage_type]
-        self.config = Config(names=['Fred', 'Barney'])
         self._subscribers = set()
 
 
@@ -169,14 +157,7 @@ class DataStore(metaclass=Singleton):
     def for_staff_and_date(self,staff,day):
         return self.datastore.duty_allocations.get((staff,day),{})
     
-    def for_staff_and_date_with_detail(self,staff,day) ->Sequence[DutyDetail]:
-        return list(sorted(
-            [cast(DutyDetail,{'start':self.datastore.demand_templates[demand_id].start_time,
-              'finish':self.datastore.demand_templates[demand_id].finish_time,
-              'duty':self.datastore.demand_templates[demand_id].name,
-              'flags':flags}) for demand_id,flags in self.for_staff_and_date(staff,day).items()],
-            key=lambda x:x['start']))
-
+    
     
     def set_activity(self,name,day,activity):
         self.datastore.duty_allocations.setdefault((name,day),{}).setdefault(activity,Flags.NONE)
