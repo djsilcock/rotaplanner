@@ -1,26 +1,30 @@
 import csv
-from datetime import date
-import pickle
+import contextlib
 
-from datatypes import SessionDuty 
 
 
 def import_clw_csv(csvfile):
+    raise NotImplementedError
     data: dict[tuple, SessionDuty] = {}
     reader = csv.DictReader(csvfile)
     for r in reader:
-        key = (r['Person'], date.fromisoformat(r['Date']),r['Session'])
-        data[key]=SessionDuty(r['Location'])
+        #todo
+        pass
     return data
 
-
-def save_data(data):
+@contextlib.contextmanager
+def full_save():
     "Save data to disc"
     with open('datafile', 'wb') as f:
-        pickle.dump(data, f)
+        yield f
 
+@contextlib.contextmanager        
+def incremental_save():
+    with open('datafile','ab') as f:
+        yield f
 
-def load_data():
-    "load from file"
-    with open('datafile', 'rb') as f:
-        return pickle.load(f)
+@contextlib.contextmanager
+def load():
+    with open('datafile','rb') as f:
+        yield f
+

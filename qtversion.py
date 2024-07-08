@@ -11,7 +11,7 @@ import random
 import string
 
 from dialogs.edit_activity import EditActivityDialog
-from dialogs.demand_activities import DemandActivityDialog
+from dialogs.demand_activities import DemandActivityDialog,SupplyActivityDialog
 
 def get_ordinal(number,include_1=False):
         if number<2 and not include_1:
@@ -52,7 +52,7 @@ class CustomTableModel(QAbstractTableModel):
             if (row,column) in self.datastore:
                 return '\n'.join(self.datastore[(row,column)])
         elif role == Qt.BackgroundRole:
-            return QColor(Qt.white)
+            return QColor(Qt.GlobalColor.white)
         elif role == Qt.TextAlignmentRole:
             return Qt.AlignRight
         elif role == Qt.ItemDataRole.DisplayRole:
@@ -157,11 +157,11 @@ class MainWindow(QMainWindow):
         self.file_menu = self.menu.addMenu("File")
         self.template_menu=self.menu.addMenu('Templating')
         edit_demand=QAction('Demand templates...',self)
-        edit_demand.triggered.connect(self.show_dialog)
+        edit_demand.triggered.connect(self.show_demand_dialog)
         self.template_menu.addAction(edit_demand)
         
         edit_supply=QAction('Supply templates...',self)
-        edit_supply.triggered.connect(self.not_implemented)
+        edit_supply.triggered.connect(self.show_supply_dialog)
         self.template_menu.addAction(edit_supply)
 
         manage_expectations=QAction('Expectations...',self)
@@ -186,8 +186,13 @@ class MainWindow(QMainWindow):
         self.setFixedSize(geometry.width() * 0.8, geometry.height() * 0.7)
     
     @Slot()
-    def show_dialog(self):
+    def show_demand_dialog(self):
         self.rules_window=DemandActivityDialog()
+        self.rules_window.setModal(True)
+        self.rules_window.show()
+    def show_supply_dialog(self):
+        self.rules_window=SupplyActivityDialog()
+        self.rules_window.setModal(True)
         self.rules_window.show()
 
     def not_implemented(self):

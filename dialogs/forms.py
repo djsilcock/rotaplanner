@@ -222,7 +222,6 @@ class ComboBoxField(SingleSelectField):
         value = self._values[value]
         return super().update_value(value)
 
-
 class RadioButtonField(SingleSelectField):
     "Displays options as a radiobutton set"
     _widgets: dict[str, QRadioButton] | None = None
@@ -260,7 +259,6 @@ class RadioButtonField(SingleSelectField):
         except KeyError as e:
             raise ValueError(
                 f'{value} is not a valid value for this radiobutton set') from e
-
 
 class DateField(Field):
     "Displays datetime.date value field as a Date selector"
