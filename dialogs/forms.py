@@ -4,7 +4,7 @@ from typing import Any, Callable
 from contextlib import contextmanager
 from collections import ChainMap
 
-from PySide6.QtWidgets import QWidget, QComboBox, QDateEdit, QRadioButton, QVBoxLayout, QFormLayout  # pylint: disable=E0611
+from PySide6.QtWidgets import QWidget, QComboBox, QDateEdit, QRadioButton, QButtonGroup,QVBoxLayout, QFormLayout  # pylint: disable=E0611
 from PySide6.QtCore import QDate  # pylint: disable=E0611
 
 
@@ -225,26 +225,30 @@ class ComboBoxField(SingleSelectField):
 class RadioButtonField(SingleSelectField):
     "Displays options as a radiobutton set"
     _widgets: dict[str, QRadioButton] | None = None
-
+    button_group=None
+    enumerated_values=None
     def widget(self):
         if self._widget is None:
             self._widget = QWidget()
             layout = QVBoxLayout()
             self._widget.setLayout(layout)
             self._widgets = {}
-            for key, value in self._labels.items():
-                new_widget = QRadioButton(value)
-                self._widgets[key] = new_widget
+            self.button_group=QButtonGroup()
+            self.enumerated_values=dict(enumerate(self._labels.keys()))
+            for button_id, value in self.enumerated_values.items():
+                new_widget = QRadioButton(self._labels[value])
+                self.button_group.addButton(new_widget)
+                self.button_group.setId(new_widget,button_id)
+                self._widgets[button_id] = new_widget
                 layout.addWidget(new_widget)
                 new_widget.clicked.connect(self._on_click)
-
+            self.enumerated_values[-1]=None
+            
         return self._widget
 
     def _on_click(self):
-        assert self._widgets is not None
-        for k, v in self._widgets.items():
-            if v.isChecked():
-                self.update_value(k)
+        assert self.button_group is not None
+        self.update_value(self.enumerated_values[self.button_group.checkedId()])
 
     def set_display_value(self, value):
         if self._widgets is None:

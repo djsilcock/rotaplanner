@@ -142,13 +142,12 @@ class DemandTemplate:
 @dataclass
 class SupplyTemplateEntry:
     dateoffset:int
-    demand_templates:tuple[str,...]
+    demand_offer:DemandTemplate
     
 @dataclass
 class SupplyTemplate:
     "template of offers of cover"
     staff:set[str]
-    rules:dict[str,Rule|RuleGroup]
     entries:tuple[SupplyTemplateEntry,...]
     
 @dataclass

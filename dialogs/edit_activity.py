@@ -7,6 +7,7 @@ from typing import cast
 from uuid import uuid4
 from datetime import time
 import functools
+from contextlib import contextmanager
 
 from dataclasses import is_dataclass, fields, replace
 
@@ -16,12 +17,12 @@ from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (  # pylint: disable=no-name-in-module
     QApplication, QDialog,
     QDialogButtonBox, QFormLayout, QHBoxLayout, QTimeEdit,
-    QLineEdit, QListWidget, QListWidgetItem, QLabel,
-    QMessageBox, QPushButton,
-    QTreeWidget, QTreeWidgetItem,QTableWidget,QTableWidgetItem,
+    QLineEdit, QListWidget, QListWidgetItem, QLabel,QSpinBox,
+    QMessageBox, QPushButton,QRadioButton,QButtonGroup,
+    QTreeWidget, QTreeWidgetItem,QTableWidget,QTableWidgetItem,QGroupBox,
     QVBoxLayout, QWidget,QGridLayout)
 
-from templating import (GroupType,RuleGroup,DemandTemplate)
+from templating import (GroupType,RuleGroup,DemandTemplate,SupplyTemplate,SupplyTemplateEntry)
 from dialogs.date_rules import DateRuleWidget
 
 
@@ -128,8 +129,8 @@ class TransferListWidget(QWidget):
 
 class EditActivityDialog(QDialog):
     save_activity = Signal(DemandTemplate)
-
-    def __init__(self, demand_template: DemandTemplate | None = None):
+    date_rule_widget=None
+    def __init__(self, demand_template: DemandTemplate | None = None,with_date_rules=True):
         super().__init__()
         self.rules_dialog = None
         layout = QVBoxLayout()
@@ -156,8 +157,9 @@ class EditActivityDialog(QDialog):
         title_layout.addRow('Start time', self.activity_start_widget)
         title_layout.addRow('Finish time', self.activity_finish_widget)
         layout.addLayout(title_layout)
-        self.date_rule_widget=DateRuleWidget(demand_template.rules)
-        title_layout.addRow('Date Rules',self.date_rule_widget)
+        if with_date_rules:
+            self.date_rule_widget=DateRuleWidget(demand_template.rules)
+            title_layout.addRow('Date Rules',self.date_rule_widget)
         self.transfer_list=TransferListWidget(get_activity_tags(),selected=demand_template.activity_tags)
         title_layout.addRow('Tags',self.transfer_list)
         actionbuttons = QDialogButtonBox(
@@ -167,6 +169,77 @@ class EditActivityDialog(QDialog):
         actionbuttons.rejected.connect(self.close)
         self.setLayout(layout)
 
+    def do_accept(self):
+        if len(self.activity_title_widget.text()) == 0:
+            QMessageBox.warning(self, 'Incomplete',
+                                'Please enter a title for this activity')
+            return
+        if self.date_rule_widget and len(self.date_rule_widget.getRules().children)==0:
+            QMessageBox.warning(self, 'Incomplete',
+                                'No scheduling rules have been added')
+            return
+        activity_tags = self.transfer_list.currentSelection()[1]
+        if len(activity_tags) == 0:
+            if QMessageBox.question(self, 'Really', 'Continue with no tags selected?') == QMessageBox.StandardButton.No:
+                return
+        self.save_activity.emit(DemandTemplate(
+            rules=self.date_rule_widget.tree.get_tree() if self.date_rule_widget else None,
+            id=self.demand_template_id,
+            name=self.activity_title_widget.text(),
+            activity_tags=activity_tags,
+            start_time=cast(
+                time, self.activity_start_widget.time().toPython()),
+            finish_time=cast(time, self.activity_finish_widget.time().toPython())))
+        self.done(QDialog.DialogCode.Accepted)
+
+
+@contextmanager
+def ctx(v):
+    yield v
+
+class EditActivityOfferEntryDialog(QDialog):
+    save_activity = Signal(SupplyTemplate)
+    def __init__(self, demand_template: DemandTemplate | None = None):
+        super().__init__()
+        self.rules_dialog = None
+        layout = QVBoxLayout()
+        if demand_template is None:
+            demand_template = DemandTemplate(
+                rules=RuleGroup(group_type=GroupType.AND),
+                name='',
+                id=str(uuid4()),
+                start_time=time(8, 0),
+                finish_time=time(17, 0),
+                activity_tags=set()
+            )
+        self.demand_template_id = demand_template.id
+        self.setWindowTitle('Add activity')
+
+        self.template_day = QSpinBox()
+        self.template_day.setMinimum(1)
+        title_layout = QFormLayout()
+        title_layout.addRow('Template day', self.template_day)
+        
+        layout.addLayout(title_layout)
+
+        self.date_rule_widget=DateRuleWidget(demand_template.rules)
+        title_layout.addRow('Date Rules',self.date_rule_widget)
+        self.transfer_list=TransferListWidget(get_activity_tags(),selected=demand_template.activity_tags)
+        activities_layout=QVBoxLayout()
+        activities_layout.addWidget(self.transfer_list)
+        activities_layout.addWidget(add_wildcard:=QPushButton('Add wildcard...'))
+        add_wildcard.clicked.connect(self.add_wildcard)
+        title_layout.addRow('Available activities',activities_layout)
+        actionbuttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        layout.addWidget(actionbuttons)
+        actionbuttons.accepted.connect(self.do_accept)
+        actionbuttons.rejected.connect(self.close)
+        self.setLayout(layout)
+    def add_wildcard(self):
+        self.rules_dialog=EditActivityDialog(with_date_rules=False)
+        self.rules_dialog.setModal(True)
+        self.rules_dialog.open()
     def do_accept(self):
         if len(self.activity_title_widget.text()) == 0:
             QMessageBox.warning(self, 'Incomplete',
@@ -191,30 +264,78 @@ class EditActivityDialog(QDialog):
         self.done(QDialog.DialogCode.Accepted)
 
 class EditActivityOfferDialog(QDialog):
-    save_activity=Signal()
-    def __init__(self):
+    save_activity = Signal(SupplyTemplate)
+    def __init__(self, demand_template: DemandTemplate | None = None):
         super().__init__()
-        layout=QFormLayout()
-        self.setLayout(layout)
-        tree_container=QVBoxLayout()
-        tree_widget=QTableWidget(1,7)
-        for week in (0,1):
-          for day in (0,1,2,3,4,5,6):
-            item=QTableWidgetItem()
-            item.setText(str(day))
-            item.setData(Qt.ItemDataRole.DisplayRole,"🔒This\nis\na\ntool\ntip")
-            item.setBackground(QColor(Qt.GlobalColor.blue))
-            tree_widget.setItem(week,day,item)
-        tree_container.addWidget(tree_widget)
-        button_bar=QHBoxLayout()
-        button_bar.addWidget(add_day:=QPushButton('Add day'))
-        button_bar.addWidget(del_day:=QPushButton('Delete day'))
-        button_bar.addWidget(edit_day:=QPushButton('Edit day'))
-            
-        tree_container.addLayout(button_bar)
+        self.rules_dialog = None
+        layout = QVBoxLayout()
+        if demand_template is None:
+            demand_template = DemandTemplate(
+                rules=RuleGroup(group_type=GroupType.AND),
+                name='',
+                id=str(uuid4()),
+                start_time=time(8, 0),
+                finish_time=time(17, 0),
+                activity_tags=set()
+            )
+        self.demand_template_id = demand_template.id
+        self.setWindowTitle('Add activity')
+
+        self.staff_member = QSpinBox()
+        self.staff_member.setMinimum(1)
+        title_layout = QFormLayout()
+        title_layout.addRow('Staff member', self.staff_member)
         
-        rules_widget=DateRuleWidget(RuleGroup())
-        layout.addRow('days',tree_container)
+        layout.addLayout(title_layout)
+
+        self.date_rule_widget=DateRuleWidget(demand_template.rules)
+        title_layout.addRow('Date Rules',self.date_rule_widget)
+        self.transfer_list=QTreeWidget()
+        self.transfer_list.setColumnCount(2)
+        self.transfer_list.setHeaderLabels(('Day','Activity'))
+        activities_layout=QVBoxLayout()
+        activities_layout.addWidget(self.transfer_list)
+        button_layout=QHBoxLayout()
+        button_layout.addWidget(add_activity:=QPushButton('Add activity...'))
+        button_layout.addWidget(add_rest:=QPushButton('Add rest...'))
+        button_layout.addWidget(del_activity:=QPushButton('Remove activity'))
+        add_activity.clicked.connect(self.add_activity)
+        activities_layout.addLayout(button_layout)
+        title_layout.addRow('Activities',activities_layout)
+        
+        actionbuttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        layout.addWidget(actionbuttons)
+        actionbuttons.accepted.connect(self.do_accept)
+        actionbuttons.rejected.connect(self.close)
+        self.setLayout(layout)
+    def add_activity(self):
+        self.rules_dialog=EditActivityOfferEntryDialog()
+        self.rules_dialog.setModal(True)
+        self.rules_dialog.show()
+    def do_accept(self):
+        if len(self.activity_title_widget.text()) == 0:
+            QMessageBox.warning(self, 'Incomplete',
+                                'Please enter a title for this activity')
+            return
+        if len(self.date_rule_widget.getRules().children)==0:
+            QMessageBox.warning(self, 'Incomplete',
+                                'No scheduling rules have been added')
+            return
+        activity_tags = self.transfer_list.currentSelection()[1]
+        if len(activity_tags) == 0:
+            if QMessageBox.question(self, 'Really', 'Continue with no tags selected?') == QMessageBox.StandardButton.No:
+                return
+        self.save_activity.emit(DemandTemplate(
+            rules=self.tree.get_tree(),
+            id=self.demand_template_id,
+            name=self.activity_title_widget.text(),
+            activity_tags=activity_tags,
+            start_time=cast(
+                time, self.activity_start_widget.time().toPython()),
+            finish_time=cast(time, self.activity_finish_widget.time().toPython())))
+        self.done(QDialog.DialogCode.Accepted)
+
 
 def transform_date(utc, timezone=None):
     utc_fmt = "yyyy-MM-ddTHH:mm:ss.zzzZ"
