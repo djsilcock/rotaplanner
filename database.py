@@ -22,9 +22,17 @@ class RuleBase(Base):
         "polymorphic_identity": "rule",
         "polymorphic_on":"type"
     }
+    @classmethod
+    def from_json(cls,data):
+        ruleclass=rule_types[data['type']]
+        return ruleclass.from_json(data)
 
 class Rule(RuleBase):
     anchor_date:Mapped[datetime.datetime|None]
+    @classmethod
+    def from_json(cls,data):
+        data['anchor_date']=datetime.datetime.fromisoformat(data['anchor_date'])
+        return cls(**data)
 
 class GroupType(StrEnum):
     AND='and'
@@ -57,6 +65,9 @@ class RuleGroup(RuleBase):
                 return any(rule.matches(match_date) for rule in self.members)
             case GroupType.NOT:
                 return not any(rule.matches(match_date)for rule in self.members)
+    @classmethod
+    def from_json(cls,data):
+        data['members']=[Rule.from_json(d) for d in data['members']]
 
 
 class DailyRule(Rule):
@@ -173,6 +184,12 @@ class DemandTemplate(Template):
     }
     def matches(self,date):
         return self.rules.matches(date)
+    @classmethod
+    def from_json(cls,data):
+        data['start_time']=datetime.datetime.fromisoformat(data['start_time'])
+        data['finish_time']=datetime.datetime.fromisoformat(data['finish_time'])
+        data['rules']=Rule.from_json(data['rules'])
+        return cls(**data)
     
 
 class SupplyTemplateEntry:
