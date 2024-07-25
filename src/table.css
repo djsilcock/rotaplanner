@@ -1,0 +1,40 @@
+.menu{ 
+    z-index:300;
+    position:absolute;
+    background-color:white;
+    padding:5px;
+    border-radius:4px;
+    border:1px solid black;
+    & .menuitem:hover {
+        background-color: gainsboro;
+    }
+}
+.table-container {
+    position: absolute;
+    z-index:200;
+    background-color:white;
+    top:0;
+    left: 0;
+    user-select:none;
+    height: 3rem;
+    width: 90px;
+}
+.table {
+    height: 400px;
+    position:relative;
+    overflow: auto;
+  }
+.tablecell {  
+    position: absolute;
+    top:0;
+    left: 0;
+    user-select:none;
+    height: 3rem;
+    background-color:white;
+    border:1px solid gainsboro;
+    vertical-align: middle;
+    font-size: 0.5em;
+    &.selected {
+        background-color:lightcyan
+    }
+}
