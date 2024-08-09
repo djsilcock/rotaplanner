@@ -26,4 +26,4 @@ api_blueprint=Blueprint('api',__name__)
 api_blueprint.register_blueprint(sched_blueprint,url_prefix='/scheduling')
 app.register_blueprint(api_blueprint,url_prefix='/api')
 if __name__=='__main__':    
-    app.run()
+    app.run(debug=True)

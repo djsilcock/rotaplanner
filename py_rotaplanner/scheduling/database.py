@@ -26,23 +26,30 @@ class StaffActivities(db.Model):
     activity_id:Mapped[str]=mapped_column(ForeignKey('activities.id') ,primary_key=True)
     activity:Mapped[Activity]=relationship(back_populates='staff')
 
-
 def get_assigned_activities(start_date,end_date):
     activities={}
     result=db.session.execute(
-        select(Activity.id,Activity.name,Activity.activity_start,StaffActivities.staff_id)
+        #select(Activity.id,Activity.name,Activity.activity_start,StaffActivities.staff_id)
+        select(Activity,StaffActivities.staff_id)
         .select_from(Activity)
         .join(StaffActivities,full=True)
         .where(Activity.activity_start>=start_date)
         .where(Activity.activity_start<=end_date))
-    for activity_id,name,day,staff in result:
-        activities.setdefault((day.date(),staff),set()).add(name)
-    print(activities)
+    #for activity_id,name,day,staff in result:
+    for activity,staff in result:
+        activities.setdefault((activity.activity_start.date(),staff),set()).add(activity)
+        activities.setdefault((activity.activity_start.date(),None),set()).add(activity)
     return activities
+
+def get_activities_for_date(date):
+    start_date=date
+    finish_date=date+datetime.timedelta(days=1)
+    return db.session.execute(select(Activity).where((Activity.activity_start>=start_date) & (Activity.activity_start<=finish_date))).scalars()
 
 def assign_activity(staff,activity_id):
     db.session.merge(StaffActivities(staff_id=staff,activity_id=activity_id))
     db.session.commit()
+
 
 def unassign_activity(staff,activity_id):
     db.session.execute(delete(StaffActivities).where((StaffActivities.activity_id==activity_id)&(StaffActivities.staff_id==staff)))
