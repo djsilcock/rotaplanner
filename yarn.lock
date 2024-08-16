@@ -866,6 +866,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@solidjs/router@npm:^0.14.1":
+  version: 0.14.1
+  resolution: "@solidjs/router@npm:0.14.1"
+  peerDependencies:
+    solid-js: ^1.8.6
+  checksum: 10c0/e9944a54fa7405d54f457711281c4894e2cf8f1e20f84201b54ef30de8b899e2881dff73307cf3d8dd12b63cbef7229b65ad64ffb3924da0164bfbf9fd3b9440
+  languageName: node
+  linkType: hard
+
 "@suid/base@npm:0.9.0":
   version: 0.9.0
   resolution: "@suid/base@npm:0.9.0"
@@ -2364,6 +2373,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "vite-template-solid@workspace:."
   dependencies:
+    "@solidjs/router": "npm:^0.14.1"
     "@suid/icons-material": "npm:^0.7.0"
     "@suid/material": "npm:^0.16.0"
     "@suid/vite-plugin": "npm:^0.2.0"

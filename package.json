@@ -17,6 +17,7 @@
     "vite-plugin-solid": "^2.10.2"
   },
   "dependencies": {
+    "@solidjs/router": "^0.14.1",
     "@suid/icons-material": "^0.7.0",
     "@suid/material": "^0.16.0",
     "@tanstack/solid-query": "^5.51.9",

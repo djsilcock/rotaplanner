@@ -27,6 +27,7 @@ const RAW_RUNTIME_STATE =
       [null, {\
         "packageLocation": "./",\
         "packageDependencies": [\
+          ["@solidjs/router", "virtual:e89a60c7c352dd76fb01ae57e884900eea222b691259f2ab7c26f672c7da9c9f0f96d0e37eb17a9a95cd0e05fb026d04c1efae09031c0b70564ac5dea54942f5#npm:0.14.1"],\
           ["@suid/icons-material", "virtual:e89a60c7c352dd76fb01ae57e884900eea222b691259f2ab7c26f672c7da9c9f0f96d0e37eb17a9a95cd0e05fb026d04c1efae09031c0b70564ac5dea54942f5#npm:0.7.0"],\
           ["@suid/material", "virtual:e89a60c7c352dd76fb01ae57e884900eea222b691259f2ab7c26f672c7da9c9f0f96d0e37eb17a9a95cd0e05fb026d04c1efae09031c0b70564ac5dea54942f5#npm:0.16.0"],\
           ["@suid/vite-plugin", "virtual:e89a60c7c352dd76fb01ae57e884900eea222b691259f2ab7c26f672c7da9c9f0f96d0e37eb17a9a95cd0e05fb026d04c1efae09031c0b70564ac5dea54942f5#npm:0.2.0"],\
@@ -1263,6 +1264,28 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./.yarn/__virtual__/@solid-primitives-utils-virtual-2bec7d639a/5/AppData/Local/Yarn/Berry/cache/@solid-primitives-utils-npm-6.2.3-adef7ae041-10c0.zip/node_modules/@solid-primitives/utils/",\
         "packageDependencies": [\
           ["@solid-primitives/utils", "virtual:153d120cbf73c1eec55058b8601cf6023cc42aa14a8acd7e736345a724dea6e77a99b02d7de08e73c39c965968cda3d8825f391bfa26086c673825eb9a4dd35e#npm:6.2.3"],\
+          ["@types/solid-js", null],\
+          ["solid-js", "npm:1.8.18"]\
+        ],\
+        "packagePeers": [\
+          "@types/solid-js",\
+          "solid-js"\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["@solidjs/router", [\
+      ["npm:0.14.1", {\
+        "packageLocation": "../../../../AppData/Local/Yarn/Berry/cache/@solidjs-router-npm-0.14.1-a5c974e651-10c0.zip/node_modules/@solidjs/router/",\
+        "packageDependencies": [\
+          ["@solidjs/router", "npm:0.14.1"]\
+        ],\
+        "linkType": "SOFT"\
+      }],\
+      ["virtual:e89a60c7c352dd76fb01ae57e884900eea222b691259f2ab7c26f672c7da9c9f0f96d0e37eb17a9a95cd0e05fb026d04c1efae09031c0b70564ac5dea54942f5#npm:0.14.1", {\
+        "packageLocation": "./.yarn/__virtual__/@solidjs-router-virtual-89412c9a47/5/AppData/Local/Yarn/Berry/cache/@solidjs-router-npm-0.14.1-a5c974e651-10c0.zip/node_modules/@solidjs/router/",\
+        "packageDependencies": [\
+          ["@solidjs/router", "virtual:e89a60c7c352dd76fb01ae57e884900eea222b691259f2ab7c26f672c7da9c9f0f96d0e37eb17a9a95cd0e05fb026d04c1efae09031c0b70564ac5dea54942f5#npm:0.14.1"],\
           ["@types/solid-js", null],\
           ["solid-js", "npm:1.8.18"]\
         ],\
@@ -3070,6 +3093,7 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./",\
         "packageDependencies": [\
           ["vite-template-solid", "workspace:."],\
+          ["@solidjs/router", "virtual:e89a60c7c352dd76fb01ae57e884900eea222b691259f2ab7c26f672c7da9c9f0f96d0e37eb17a9a95cd0e05fb026d04c1efae09031c0b70564ac5dea54942f5#npm:0.14.1"],\
           ["@suid/icons-material", "virtual:e89a60c7c352dd76fb01ae57e884900eea222b691259f2ab7c26f672c7da9c9f0f96d0e37eb17a9a95cd0e05fb026d04c1efae09031c0b70564ac5dea54942f5#npm:0.7.0"],\
           ["@suid/material", "virtual:e89a60c7c352dd76fb01ae57e884900eea222b691259f2ab7c26f672c7da9c9f0f96d0e37eb17a9a95cd0e05fb026d04c1efae09031c0b70564ac5dea54942f5#npm:0.16.0"],\
           ["@suid/vite-plugin", "virtual:e89a60c7c352dd76fb01ae57e884900eea222b691259f2ab7c26f672c7da9c9f0f96d0e37eb17a9a95cd0e05fb026d04c1efae09031c0b70564ac5dea54942f5#npm:0.2.0"],\
