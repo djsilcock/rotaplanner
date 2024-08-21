@@ -48,7 +48,6 @@ def remove_activity():
         unassign_activity(n,a.id)
   return {}
 
-
 @blueprint.get('/assigned_activities')
 def assigned_activities():
   page=request.args['page']

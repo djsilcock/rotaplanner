@@ -33,6 +33,7 @@ const RAW_RUNTIME_STATE =
           ["@suid/vite-plugin", "virtual:e89a60c7c352dd76fb01ae57e884900eea222b691259f2ab7c26f672c7da9c9f0f96d0e37eb17a9a95cd0e05fb026d04c1efae09031c0b70564ac5dea54942f5#npm:0.2.0"],\
           ["@tanstack/solid-query", "virtual:e89a60c7c352dd76fb01ae57e884900eea222b691259f2ab7c26f672c7da9c9f0f96d0e37eb17a9a95cd0e05fb026d04c1efae09031c0b70564ac5dea54942f5#npm:5.51.9"],\
           ["@tanstack/solid-virtual", "virtual:e89a60c7c352dd76fb01ae57e884900eea222b691259f2ab7c26f672c7da9c9f0f96d0e37eb17a9a95cd0e05fb026d04c1efae09031c0b70564ac5dea54942f5#npm:3.8.3"],\
+          ["json2ts", "npm:0.0.7"],\
           ["solid-devtools", "virtual:e89a60c7c352dd76fb01ae57e884900eea222b691259f2ab7c26f672c7da9c9f0f96d0e37eb17a9a95cd0e05fb026d04c1efae09031c0b70564ac5dea54942f5#npm:0.29.3"],\
           ["solid-js", "npm:1.8.18"],\
           ["typescript", "patch:typescript@npm%3A5.5.4#optional!builtin<compat/typescript>::version=5.5.4&hash=379a07"],\
@@ -2307,6 +2308,16 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["json2ts", [\
+      ["npm:0.0.7", {\
+        "packageLocation": "../../../../AppData/Local/Yarn/Berry/cache/json2ts-npm-0.0.7-13b2595ce7-10c0.zip/node_modules/json2ts/",\
+        "packageDependencies": [\
+          ["json2ts", "npm:0.0.7"],\
+          ["underscore", "npm:1.13.7"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["json5", [\
       ["npm:2.2.3", {\
         "packageLocation": "../../../../AppData/Local/Yarn/Berry/cache/json5-npm-2.2.3-9962c55073-10c0.zip/node_modules/json5/",\
@@ -2951,6 +2962,15 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["underscore", [\
+      ["npm:1.13.7", {\
+        "packageLocation": "../../../../AppData/Local/Yarn/Berry/cache/underscore-npm-1.13.7-f57feeae48-10c0.zip/node_modules/underscore/",\
+        "packageDependencies": [\
+          ["underscore", "npm:1.13.7"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["unique-filename", [\
       ["npm:3.0.0", {\
         "packageLocation": "../../../../AppData/Local/Yarn/Berry/cache/unique-filename-npm-3.0.0-77d68e0a45-10c0.zip/node_modules/unique-filename/",\
@@ -3099,6 +3119,7 @@ const RAW_RUNTIME_STATE =
           ["@suid/vite-plugin", "virtual:e89a60c7c352dd76fb01ae57e884900eea222b691259f2ab7c26f672c7da9c9f0f96d0e37eb17a9a95cd0e05fb026d04c1efae09031c0b70564ac5dea54942f5#npm:0.2.0"],\
           ["@tanstack/solid-query", "virtual:e89a60c7c352dd76fb01ae57e884900eea222b691259f2ab7c26f672c7da9c9f0f96d0e37eb17a9a95cd0e05fb026d04c1efae09031c0b70564ac5dea54942f5#npm:5.51.9"],\
           ["@tanstack/solid-virtual", "virtual:e89a60c7c352dd76fb01ae57e884900eea222b691259f2ab7c26f672c7da9c9f0f96d0e37eb17a9a95cd0e05fb026d04c1efae09031c0b70564ac5dea54942f5#npm:3.8.3"],\
+          ["json2ts", "npm:0.0.7"],\
           ["solid-devtools", "virtual:e89a60c7c352dd76fb01ae57e884900eea222b691259f2ab7c26f672c7da9c9f0f96d0e37eb17a9a95cd0e05fb026d04c1efae09031c0b70564ac5dea54942f5#npm:0.29.3"],\
           ["solid-js", "npm:1.8.18"],\
           ["typescript", "patch:typescript@npm%3A5.5.4#optional!builtin<compat/typescript>::version=5.5.4&hash=379a07"],\

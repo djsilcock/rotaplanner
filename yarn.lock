@@ -1703,6 +1703,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"json2ts@npm:^0.0.7":
+  version: 0.0.7
+  resolution: "json2ts@npm:0.0.7"
+  dependencies:
+    underscore: "npm:^1.8.3"
+  checksum: 10c0/b79a4b134ec5dee28435189549b8fecb67396ae88b4392878599cb9f6c0006c610b599bcf110f609247a0ae81110e65bed8f87fc63c7da06b14ae777e431725c
+  languageName: node
+  linkType: hard
+
 "json5@npm:^2.2.3":
   version: 2.2.3
   resolution: "json5@npm:2.2.3"
@@ -2309,6 +2318,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"underscore@npm:^1.8.3":
+  version: 1.13.7
+  resolution: "underscore@npm:1.13.7"
+  checksum: 10c0/fad2b4aac48847674aaf3c30558f383399d4fdafad6dd02dd60e4e1b8103b52c5a9e5937e0cc05dacfd26d6a0132ed0410ab4258241240757e4a4424507471cd
+  languageName: node
+  linkType: hard
+
 "unique-filename@npm:^3.0.0":
   version: 3.0.0
   resolution: "unique-filename@npm:3.0.0"
@@ -2379,6 +2395,7 @@ __metadata:
     "@suid/vite-plugin": "npm:^0.2.0"
     "@tanstack/solid-query": "npm:^5.51.9"
     "@tanstack/solid-virtual": "npm:^3.8.3"
+    json2ts: "npm:^0.0.7"
     solid-devtools: "npm:^0.29.2"
     solid-js: "npm:^1.8.11"
     typescript: "npm:^5.5.4"
