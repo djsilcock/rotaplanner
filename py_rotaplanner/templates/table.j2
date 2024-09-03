@@ -1,0 +1,60 @@
+{% macro activity(activity_def) -%}
+<div class=activity id="{{activity_def.activity_id|string}}" draggable=true>
+ <div class=activity-name>
+    {{activity_def.name}}
+ </div>
+ {% for assignment in activity_def.staff_assignments %}
+    <div class='assignment'>
+    {{assignment.staff.name}}
+    {% if (assignment.start_time != activity_def.activity_start) or (assignment.finish_time != activity_def.activity.finish) %}
+        ({{assignment.start_time.strftime('%H')}}-{{assignment.finish_time.strftime('%H')}})
+    {%endif%} 
+    </div>
+ {% endfor %} 
+ </div>
+{% endmacro %}
+<!DOCTYPE html>
+<html>
+<head>
+<link rel=stylesheet href="/static/table.css"/>
+<script src="/static/table.js" ></script>
+</head>
+<body>
+
+<table id="rota-table">
+<thead>
+<tr>
+<th></th>
+{% for date in dates %}
+<th class="column-header">{{date.strftime('%d %b')}}</th>
+{% endfor %}
+</tr>
+</thead>
+<tbody>
+{% for name in names %}
+<tr>
+    <td class=rowheader>{{name}}</td>
+    {% for date in dates %}
+    <td class=activitycell id="{{name}}-{{date.isoformat()}}">
+        {% for act in activities[date] if act.includes_staff(name) %}
+        {{activity(act)}}
+        {% endfor %}
+    </td>
+{% endfor %}
+</tr>
+{% endfor%}
+<tr>
+<td></td>
+{% for date in dates %}
+    <td title="{{activities.__repr__()}}">
+    {% for act in activities[date] %}
+        {{activity(act)}}
+    {% endfor %}
+    </td>
+{% endfor %}
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>

@@ -1,0 +1,50 @@
+.activity-name {
+    font-size: small;
+    font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+.rota-table{
+    position:relative;
+}
+.activity {
+    background-color: antiquewhite;
+    padding:2px;
+    border: 1px solid burlywood;
+    border-radius: 2px;
+    cursor: pointer;
+    &:hover {
+        background-color: burlywood;
+    }
+}
+.activitycell {
+    border: 1px solid gray;
+    min-width: 5em;
+    &:hover,&.dragover {
+        border: 1px solid lawngreen;
+        background-color: azure;
+    }
+}
+.assignment {}
+.rowheader {
+    position:sticky;
+    left:0;
+    background-color: white;
+    z-index:10
+}
+.rowheader,.column-header {
+    font-size: small;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    font-weight: normal;}
+
+.spinner {
+        border-top: 2px solid blue;
+        
+        border-radius: 50%;
+        width:1rem;
+        height:1rem;
+        margin: auto;
+        animation: spin 2s linear 0s infinite forwards;
+    }
+@keyframes spin {
+        0% {transform:rotate(0deg)}
+        100% {transform:rotate(360deg)}
+    }

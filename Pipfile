@@ -13,6 +13,7 @@ flask = "*"
 sqlmodel = "*"
 pydantic = "*"
 flask-pydantic = "*"
+flask-sqlalchemy = "*"
 
 [dev-packages]
 flake8 = "*"

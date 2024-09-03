@@ -45,7 +45,7 @@ function Layout(props) {
   const [open, setOpen] = createSignal(false)
   const navigator=useNavigate()
   const match=useLocation()
-  const title=createMemo(()=>pages?.find(page=>page.path==match.pathname).title??"")
+  const title=createMemo(()=>pages?.find(page=>page.path==match.pathname)?.title??"")
   return (
     <div>
       <Drawer

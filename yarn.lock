@@ -654,7 +654,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@solid-devtools/debugger@npm:^0.23.3":
+"@solid-devtools/debugger@npm:^0.23.4":
   version: 0.23.4
   resolution: "@solid-devtools/debugger@npm:0.23.4"
   dependencies:
@@ -676,7 +676,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@solid-devtools/shared@npm:^0.13.1, @solid-devtools/shared@npm:^0.13.2":
+"@solid-devtools/shared@npm:^0.13.2":
   version: 0.13.2
   resolution: "@solid-devtools/shared@npm:0.13.2"
   dependencies:
@@ -1070,6 +1070,22 @@ __metadata:
   version: 1.0.5
   resolution: "@types/estree@npm:1.0.5"
   checksum: 10c0/b3b0e334288ddb407c7b3357ca67dbee75ee22db242ca7c56fe27db4e1a31989cb8af48a84dd401deb787fe10cc6b2ab1ee82dc4783be87ededbe3d53c79c70d
+  languageName: node
+  linkType: hard
+
+"@yornaath/batshit-devtools@npm:^1.7.1":
+  version: 1.7.1
+  resolution: "@yornaath/batshit-devtools@npm:1.7.1"
+  checksum: 10c0/99702781cf1af69e52234578336e619215dcba1d9f2e716469f25a5554a21a3ebc6148c597e576de4dfa0e849f80d7e28b86c2699cdd3613392c6e2e51505a2a
+  languageName: node
+  linkType: hard
+
+"@yornaath/batshit@npm:^0.10.1":
+  version: 0.10.1
+  resolution: "@yornaath/batshit@npm:0.10.1"
+  dependencies:
+    "@yornaath/batshit-devtools": "npm:^1.7.1"
+  checksum: 10c0/4b74c08f464b8a2dce5b0f9183de2893f8ff31c8786eecfb7862db2c20a1197b52727c4b7452d715685be59b4cba85be13cee7e81316e52878c0c51e6a722fdf
   languageName: node
   linkType: hard
 
@@ -1703,15 +1719,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"json2ts@npm:^0.0.7":
-  version: 0.0.7
-  resolution: "json2ts@npm:0.0.7"
-  dependencies:
-    underscore: "npm:^1.8.3"
-  checksum: 10c0/b79a4b134ec5dee28435189549b8fecb67396ae88b4392878599cb9f6c0006c610b599bcf110f609247a0ae81110e65bed8f87fc63c7da06b14ae777e431725c
-  languageName: node
-  linkType: hard
-
 "json5@npm:^2.2.3":
   version: 2.2.3
   resolution: "json5@npm:2.2.3"
@@ -2159,15 +2166,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"solid-devtools@npm:^0.29.2":
-  version: 0.29.3
-  resolution: "solid-devtools@npm:0.29.3"
+"solid-devtools@npm:^0.30.1":
+  version: 0.30.1
+  resolution: "solid-devtools@npm:0.30.1"
   dependencies:
     "@babel/core": "npm:^7.23.3"
     "@babel/plugin-syntax-typescript": "npm:^7.23.3"
     "@babel/types": "npm:^7.23.3"
-    "@solid-devtools/debugger": "npm:^0.23.3"
-    "@solid-devtools/shared": "npm:^0.13.1"
+    "@solid-devtools/debugger": "npm:^0.23.4"
+    "@solid-devtools/shared": "npm:^0.13.2"
   peerDependencies:
     solid-js: ^1.8.0
     solid-start: ^0.3.0
@@ -2177,7 +2184,7 @@ __metadata:
       optional: true
     vite:
       optional: true
-  checksum: 10c0/746ae55931245cb98232d9630ee57b07ef6746b179f16749da26c6c957cb0747a53be842cfc3ac7937734432bf7f3d6f1e30de55bf6a7c7194ad79e528c66beb
+  checksum: 10c0/b8d6545fdb841b16b5d70e6248c7c1eb0980bf12f8fccb46254b74b26a1507404bac98f40b26f48a2e88d35f7b6ce09e61732a857c0dcd835de951891c5d9176
   languageName: node
   linkType: hard
 
@@ -2318,13 +2325,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"underscore@npm:^1.8.3":
-  version: 1.13.7
-  resolution: "underscore@npm:1.13.7"
-  checksum: 10c0/fad2b4aac48847674aaf3c30558f383399d4fdafad6dd02dd60e4e1b8103b52c5a9e5937e0cc05dacfd26d6a0132ed0410ab4258241240757e4a4424507471cd
-  languageName: node
-  linkType: hard
-
 "unique-filename@npm:^3.0.0":
   version: 3.0.0
   resolution: "unique-filename@npm:3.0.0"
@@ -2395,8 +2395,8 @@ __metadata:
     "@suid/vite-plugin": "npm:^0.2.0"
     "@tanstack/solid-query": "npm:^5.51.9"
     "@tanstack/solid-virtual": "npm:^3.8.3"
-    json2ts: "npm:^0.0.7"
-    solid-devtools: "npm:^0.29.2"
+    "@yornaath/batshit": "npm:^0.10.1"
+    solid-devtools: "npm:^0.30.1"
     solid-js: "npm:^1.8.11"
     typescript: "npm:^5.5.4"
     vite: "npm:^5.3.4"

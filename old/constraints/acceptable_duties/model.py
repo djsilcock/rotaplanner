@@ -1,6 +1,6 @@
 from ast import For
 from constraints.enforce_acceptable_deviation import AcceptableDeviationEntry
-from database import Base, Location, Shift
+from database0 import Base, Location, Shift
 from sqlalchemy import Column, Table
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer

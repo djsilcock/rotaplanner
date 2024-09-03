@@ -1,8 +1,7 @@
 from py_rotaplanner.app import app,db
-import py_rotaplanner.templating.database
-import py_rotaplanner.scheduling.database
-from flask import Blueprint
-from py_rotaplanner.scheduling.endpoints import blueprint as sched_blueprint
+import py_rotaplanner.activities.models
+from flask import Blueprint,render_template
+from py_rotaplanner.activities.endpoints import blueprint as sched_blueprint
 import datetime
 
 @app.cli.command('initdb')
@@ -11,8 +10,7 @@ def create_db():
 
 @app.cli.command('testdata')
 def create_test_data():
-    Activity=py_rotaplanner.scheduling.database.Activity
-
+    Activity=py_rotaplanner.activities.models.Activity
     for day in range(365):
       for a in ('A','B','C'):
         db.session.add(Activity(
@@ -23,7 +21,11 @@ def create_test_data():
 
 api_blueprint=Blueprint('api',__name__)
 
-api_blueprint.register_blueprint(sched_blueprint,url_prefix='/scheduling')
+api_blueprint.register_blueprint(sched_blueprint,url_prefix='/activities')
 app.register_blueprint(api_blueprint,url_prefix='/api')
+
+@app.get('/')
+def home():
+   return render_template('hello.html',name='world')
 if __name__=='__main__':    
     app.run(debug=True)
