@@ -2,8 +2,10 @@
     font-size: small;
     font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
 }
-.rota-table{
+#rota-table{
     position:relative;
+    width:80vw;
+    overflow:auto;
 }
 .activity {
     background-color: antiquewhite;

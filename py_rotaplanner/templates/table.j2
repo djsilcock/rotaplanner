@@ -1,5 +1,5 @@
 {% macro activity(activity_def) -%}
-<div class=activity id="{{activity_def.activity_id|string}}" draggable=true>
+<div class=activity data-activityid="{{activity_def.activity_id}}" data-activitydate={{activity_def.activity_start.date().isoformat()}} draggable=true>
  <div class=activity-name>
     {{activity_def.name}}
  </div>
@@ -21,7 +21,8 @@
 </head>
 <body>
 
-<table id="rota-table">
+<div id="rota-table">
+<table>
 <thead>
 <tr>
 <th></th>
@@ -35,7 +36,7 @@
 <tr>
     <td class=rowheader>{{name}}</td>
     {% for date in dates %}
-    <td class=activitycell id="{{name}}-{{date.isoformat()}}">
+    <td class=activitycell data-date={{date.isoformat()}} id="{{name}}-{{date.isoformat()}}">
         {% for act in activities[date] if act.includes_staff(name) %}
         {{activity(act)}}
         {% endfor %}
@@ -46,7 +47,7 @@
 <tr>
 <td></td>
 {% for date in dates %}
-    <td title="{{activities.__repr__()}}">
+    <td>
     {% for act in activities[date] %}
         {{activity(act)}}
     {% endfor %}
@@ -55,6 +56,7 @@
 </tr>
 </tbody>
 </table>
+</div>
 
 </body>
 </html>
