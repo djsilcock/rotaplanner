@@ -3,6 +3,7 @@ import py_rotaplanner.activities.models
 from flask import Blueprint,render_template
 from py_rotaplanner.activities.endpoints import blueprint as sched_blueprint
 import datetime
+import sys
 
 @app.cli.command('initdb')
 def create_db():
@@ -23,6 +24,10 @@ api_blueprint=Blueprint('api',__name__)
 
 api_blueprint.register_blueprint(sched_blueprint,url_prefix='/activities')
 app.register_blueprint(api_blueprint,url_prefix='/api')
+
+@app.get('/shutdown')
+def quit():
+   raise KeyboardInterrupt
 
 @app.get('/')
 def home():

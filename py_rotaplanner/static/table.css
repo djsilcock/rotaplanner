@@ -14,15 +14,24 @@
     border-radius: 2px;
     cursor: pointer;
     &:hover {
+        box-shadow: 1px 1px;
+    }
+    &.selected{
         background-color: burlywood;
     }
 }
 .activitycell {
     border: 1px solid gray;
     min-width: 5em;
-    &:hover,&.dragover {
+    &:hover {
         border: 1px solid lawngreen;
         background-color: azure;
+    }
+    &.dragover-valid {
+        background-color:green
+    }
+    &.dragover-invalid {
+        background-color:red
     }
 }
 .assignment {}
