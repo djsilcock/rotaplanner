@@ -1,6 +1,6 @@
 from py_rotaplanner.app import app,db
 import py_rotaplanner.activities.models
-from flask import Blueprint,render_template
+from flask import Blueprint,render_template,current_app
 from py_rotaplanner.activities.endpoints import blueprint as sched_blueprint
 import datetime
 import sys
@@ -8,6 +8,10 @@ import sys
 @app.cli.command('initdb')
 def create_db():
     db.create_all()
+
+@app.cli.command('templates')
+def templates():
+   app.jinja_env.compile_templates('compiled',zip=None)
 
 @app.cli.command('testdata')
 def create_test_data():
@@ -20,17 +24,15 @@ def create_test_data():
             activity_finish=datetime.datetime(2024,1,1,17,0)+datetime.timedelta(days=day)))
     db.session.commit()
 
-api_blueprint=Blueprint('api',__name__)
 
-api_blueprint.register_blueprint(sched_blueprint,url_prefix='/activities')
-app.register_blueprint(api_blueprint,url_prefix='/api')
+app.register_blueprint(sched_blueprint,url_prefix='/activities',)
 
 @app.get('/shutdown')
 def quit():
    raise KeyboardInterrupt
 
-@app.get('/')
+@app.get('/sidebar.html')
 def home():
-   return render_template('hello.html',name='world')
+   return render_template('sidebar.html',name='world')
 if __name__=='__main__':    
     app.run(debug=True)

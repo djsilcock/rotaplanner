@@ -7,8 +7,8 @@ import enum
 
 from .models import Activity, Requirement, Staff, StaffAssignment
 from pydantic import BaseModel, Field, RootModel,TypeAdapter
-from sqlmodel import select,delete
-from sqlalchemy import func
+from sqlmodel import select,delete,Session
+from sqlalchemy import func,or_
 from typing import Literal,Annotated,Union
 
 
@@ -61,7 +61,7 @@ def get_staff(sess):
 
 
 class ReallocateStaffDragDropEntry(BaseModel):
-    activity:uuid.UUID
+    activityid:uuid.UUID
     initialstaff:uuid.UUID|None=None
     newstaff:uuid.UUID|None=None
     newdate:datetime.date|None=None
@@ -87,24 +87,33 @@ class RemoveStaffRequest(BaseModel):
 
 #StaffChangeRequest=TypeAdapter(Annotated[Union[RestaffRequest,ReallocateStaffRequest,AllocateStaffRequest,SwapStaffRequest,RemoveStaffRequest],Field(discriminator='alloctype')])
 
-def reallocate_staff(sess,reallocations:DragDropHandlerRequest):
+def reallocate_staff(sess:Session,reallocations:DragDropHandlerRequest):
     print(reallocations)
-    return []
-    for entry in reallocations.entries:
-        if entry.initialstaff:
-            sess.exec(delete(StaffAssignment).where(StaffAssignment.activity_id.in_(entry.activities)).where(StaffAssignment.staff_id==entry.initialstaff))
-        if entry.newstaff:
-            for act in entry.activities:
-                sess.add(StaffAssignment(activity_id=act,staff_id=entry.newstaff))
-        for act in entry.activities:
-            if entry.initialstaff:
-                sess.exec(delete(StaffAssignment).where(StaffAssignment.activity_id.in_(entry.activities)).where(StaffAssignment.staff_id==entry.initialstaff))
-            if entry.newstaff:
-                for act in entry.activities:
-                    sess.add(StaffAssignment(activity_id=act,staff_id=entry.newstaff))
     dates=set()
-    for activity_id in entry.activities:
-        print([activity_id],list(act.activity_start.date() for act in sess.exec(select(Activity).where(Activity.activity_id == activity_id))))
-    dates.update(act.activity_start.date() for act in sess.exec(select(Activity).where(Activity.activity_id.in_(entry.activities))))
-    print ('dates',dates)     
-    return [activity.activity_start.date() for activity in sess.exec(select(Activity).where(Activity.activity_id.in_(entry.activities)))]
+    errors=[]
+    for entry in reallocations.entries:
+        activity=sess.get(Activity,entry.activityid)
+        initialstaff=sess.get(Staff,entry.initialstaff)
+        newstaff=sess.get(Staff,entry.newstaff)
+        if entry.newdate!=activity.activity_start.date():
+            #is there a matching activity on that date?
+            result=sess.exec(select(Activity)
+                      .where(func.date(Activity.activity_start)==entry.newdate)
+                      .where(or_(Activity.template_id==activity.template_id,Activity.name==activity.name))).first()
+            if result is None:
+                errors.append(f'Cannot find an activity matching {activity.name} on {entry.newdate.strftime("%d/%m/%Y")}')
+                continue
+            activity=result
+        result=sess.exec(
+            select(StaffAssignment).where(StaffAssignment.activity_id==activity.activity_id).where(StaffAssignment.staff_id==entry.newstaff)).first()
+        if result is not None:
+            errors.append(f'{newstaff.name} is already assigned to {activity.name} on {entry.newdate.strftime("%d/%m/%Y")}')
+            continue
+        print(activity)
+        if entry.initialstaff:
+            sess.exec(delete(StaffAssignment).where(StaffAssignment.activity_id==entry.activityid).where(StaffAssignment.staff_id==entry.initialstaff))
+        if entry.newstaff:
+                sess.add(StaffAssignment(activity_id=entry.activityid,staff_id=entry.newstaff))
+        dates.update(act.activity_start.date() for act in sess.exec(select(Activity).where(Activity.activity_id==entry.activityid)))  
+    return dates,errors
+

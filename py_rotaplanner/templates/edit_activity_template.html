@@ -1,0 +1,107 @@
+<!--
+{%macro ordinal(index)%}
+{%if (index%100>3) and (index%100<21)%} {{index}}th
+{%elif index%10 == 1 %} {{index}}st
+{%elif index%10 == 2 %} {{index}}nd 
+{%elif index%10 == 3 %} {{index}}rd
+{%else%}{{index}}th
+{%endif%}
+{%endmacro%}
+-->
+
+{%macro ordinal_options(first,last,name,value)%} {%for index in range(first,last+1)%}
+<option value="{{index}}" {%if index==value %}selected{%endif%}>
+    {%if index==1 %} Every {{name}} {%else%} Every {{ordinal(index)}} {{name}} {%endif%}
+</option>
+{%endfor%} {%endmacro%} {%macro render_rule(rule,key)%}
+<li>
+    <details up-form-group>
+        <summary>{{rule.description}}</summary>
+        <input type="hidden" name="ruleset" value="{{key}}" />
+        {%if rule.rule_type=='group'%}
+        <input name="{{key}}.rule_type" value="group" type="hidden" />
+        <select name="{{key}}.group_type" up-validate>
+            <option value="and" {%if rule.group_type=="and" %} selected {%endif%}>All must match</option>
+            <option value="or" {%if rule.group_type=="and" %} selected {%endif%}>At least one must match</option>
+            <option value="not" {%if rule.group_type=="and" %} selected {%endif%}>None must match</option>
+        </select>
+        {%else%}
+        <select name="{{key}}.rule_type" value="{{rule.rule_type}}" up-validate>
+            <option value="daily" {%if rule.rule_type=="daily" %} selected {%endif%}>Daily</option>
+            <option value="weekly" {%if rule.rule_type=="weekly" %} selected {%endif%}>Weekly</option>
+            <option value="day-in-month" {%if rule.rule_type=="day-in-month" %} selected {%endif%}>Day of month</option>
+            <option value="week-in-month" {%if rule.rule_type=="week-in-month" %} selected {%endif%}>Week of month
+            </option>
+            <option value="date-range" {%if rule.rule_type=="date-range" %} selected {%endif%}>Date range</option>
+            <option value="date-tag" {%if rule.rule_type=="date-tag" %} selected {%endif%}>Tagged dates</option>
+        </select>
+        {%endif%} {%if rule.rule_type == "weekly"%}
+        <select name="{{key}}.week_interval" value="{{rule.week_interval}}" up-validate>
+            {{ordinal_options(1,12,"week",rule.week_interval)}}
+        </select>
+        {%elif rule.rule_type in ['day-in-month','week-in-month']%}
+        <select name="{{key}}.month_interval" value="{{rule.month_interval}}" up-validate>
+            {{ordinal_options(1,12,"month",rule.month_interval)}}
+        </select>
+        {%endif%}
+        beginning
+        <input type="date" name="{{key}}.anchor_date" value="{{rule.anchor_date}}" up-validate />
+    </details>
+    {%if rule.children%}
+    <ul>
+        {%for rule2 in rule.children%}
+        {{render_rule(rule2,"{}.{}".format(key,loop.index0))}} {%endfor%}
+        <li><button>➕Add rule</button> <button>➕Add rule group</button></li>
+    </ul>
+    {%endif%}
+</li>
+{%endmacro%}
+
+<main>
+    <form method="post">
+        <h4>Edit activity</h4>
+        <div class="template-editor-settings">
+            <div>Activity name: <input name="name" value="{{name}}" /></div>
+            Valid when day 1 is between <input name="start-date" type="date" /> and
+            <input name="finish-date" type="date" />
+            <hr />
+            This activity occurs:
+            <div id="ruleset-container">
+                <input name="encoded-ruleset" type="hidden" value="{{form.encoded_ruleset}}" />
+                <ul>
+                    {{render_rule(ruleset,'ruleset')}}
+                </ul>
+            </div>
+            <hr />
+            <table>
+                <tbody>
+                    <tr>
+                        <td>Start time</td>
+                        <td>
+                            <select name="start-time" value="{{start}}">
+                                {%for h in range(24)%}
+                                <option value="{{h}}">{{h}}:00</option>
+                                {%endfor%} {%for h in range(12)%}
+                                <option value="{{h+24}}">{{h}}:00 (+1)</option>
+                                {%endfor%}
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Finish time</td>
+                        <td>
+                            <select name="start-time" value="{{start}}">
+                                {%for h in range(24)%}
+                                <option value="{{h}}">{{h}}:00</option>
+                                {%endfor%} {%for h in range(12)%}
+                                <option value="{{h+24}}">{{h}}:00 (+1)</option>
+                                {%endfor%}
+                            </select>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <hr />
+        </div>
+    </form>
+</main>
