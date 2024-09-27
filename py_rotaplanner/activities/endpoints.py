@@ -4,10 +4,31 @@ from .queries import GetActivitiesRequest,GetActivitiesResponse,get_activities,r
 from py_rotaplanner.database import db
 from sqlmodel import Session
 import datetime
+import json
+import string
 
 blueprint=Blueprint('activities',__name__)
 
-   
+def unflatten(d:dict):
+    root_value={}
+    for key,value in request.form.items():
+        path=key.split('.')
+        final_key=path.pop()
+        target=root_value
+        for this_key in path:
+            target=target.setdefault(this_key,{})
+        target[final_key]=value
+    def list_or_dict(obj):
+        if isinstance(obj,(tuple,list)):
+            return [list_or_dict(i) for i in obj]
+        if not isinstance(obj,dict):
+            return obj
+        if not all(i.isdigit() for i in obj.keys()):
+            return {k:list_or_dict(v) for k,v in obj.items()}
+        return [obj.get(str(a)) for a in range(max(int(k) for k in obj.keys())+1)]
+    return list_or_dict(root_value)
+    
+
 @blueprint.get('/table')
 @validate()
 def table(query:GetActivitiesRequest):
@@ -42,3 +63,8 @@ def activity_templates():
 @blueprint.get('/edit_activity_template')
 def edit_activity_template():
     return render_template('edit_activity_template.html',form={},ruleset={'id':'A','rule_type':'group','description':'All of','children':[{'id':'B','description':'every Monday','rule_type':'weekly','anchor_date':'1998-02-29'}]})
+
+@blueprint.post('/edit_activity_template')
+def edit_activity_template_post():
+    print(json.dumps(unflatten(request.form),indent=2))
+    return ""

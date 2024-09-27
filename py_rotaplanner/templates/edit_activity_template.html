@@ -17,7 +17,6 @@
 <li>
     <details up-form-group>
         <summary>{{rule.description}}</summary>
-        <input type="hidden" name="ruleset" value="{{key}}" />
         {%if rule.rule_type=='group'%}
         <input name="{{key}}.rule_type" value="group" type="hidden" />
         <select name="{{key}}.group_type" up-validate>
@@ -50,7 +49,7 @@
     {%if rule.children%}
     <ul>
         {%for rule2 in rule.children%}
-        {{render_rule(rule2,"{}.{}".format(key,loop.index0))}} {%endfor%}
+        {{render_rule(rule2,"{}.children.{}".format(key,loop.index0))}} {%endfor%}
         <li><button>➕Add rule</button> <button>➕Add rule group</button></li>
     </ul>
     {%endif%}

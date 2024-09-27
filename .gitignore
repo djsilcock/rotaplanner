@@ -13,6 +13,7 @@ dist
 
 # dependencies
 /node_modules
+*/__pycache__
 
 # IDEs and editors
 /.idea
@@ -20,6 +21,7 @@ dist
 .classpath
 *.launch
 .settings/
+*.pyc
 
 # Temp
 gitignore
