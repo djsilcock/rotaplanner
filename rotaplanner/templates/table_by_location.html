@@ -1,0 +1,77 @@
+{%extends "layout.html" %}
+{%block title%}View by location{%endblock%}
+{% macro activity(activity_def,staff_id=none,show_location=true,show_name=true) -%}
+<div class=activity id="activity-{{activity_def.id}}" {%if staff_id%}data-staff="{{staff_id}}" {%endif%}
+    data-activityid="{{activity_def.id}}" data-activitydate={{activity_def.activity_start.date().isoformat()}}
+    draggable=true up-hungry>
+    <div class=activity-name>
+        {{activity_def.name}}
+    </div>
+    {%if show_location%}
+    <div class=activity-location>
+        {{activity_def.location}}
+    </div>
+    {%endif%}
+    {% for assignment in activity_def.staff_assignments%}
+    <div class='assignment' draggable=true data-staff="{{assignment.staff.id}}">
+        {{assignment.staff.name}}
+        {% if (assignment.start_time is not none) and (assignment.finish_time is not none) %}
+        ({{assignment.start_time.strftime('%H')}}-{{assignment.finish_time.strftime('%H')}})
+        {%endif%}
+    </div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{%block assets%}
+<link rel=stylesheet href="/static/table.css" />
+<script src="/static/table.js"></script>
+{%endblock%}
+
+{%block main%}
+<main>
+    <div id="rota-table" up-main data-csrf="{{csrf_token()}}">
+        <table>
+            <thead>
+                <tr>
+                    <th></th>
+                    {% for date in dates %}
+                    <th class="column-header">{{date.strftime('%d %b')}}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody id="rota-table-content">
+                {% for location in locations %}
+                <tr>
+                    <td class=rowheader>{{location.name}}</td>
+                    {% for date in dates %}
+                    <td class=activitycell data-date={{date.isoformat()}} data-location="{{location.id}}"
+                        id="td-{{date.isoformat()}}-{{location.id}}" up-hungry>
+
+                        {% for act in activities[date] if act.location==location%}
+
+
+                        {{activity(act,show_location=false)}}
+
+                        {% endfor %}
+                    </td>
+
+                    {% endfor %}
+                </tr>
+                {% endfor%}
+                <tr>
+                    <td><span id=empty></span></td>
+                    {% for date in dates %}
+                    <td data-date={{date.isoformat()}} class="unallocated-activities"
+                        id="td-{{date.isoformat()}}-unalloc" up-hungry>
+                        {% for act in activities[date] if act.location==none%}
+                        {{activity(act,show_name=false)}}
+                        {% endfor %}
+                    </td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+{%endblock%}

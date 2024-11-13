@@ -1,0 +1,18 @@
+input:invalid {
+  border: 2px solid red;
+}
+.rule-box {
+  border: 1px solid blue;
+  border-radius: 2px;
+  padding: 5px;
+  margin: 5px;
+}
+
+.linklike {
+  color: blue;
+  cursor: pointer;
+  text-decoration-line: underline;
+  input {
+    display: none;
+  }
+}

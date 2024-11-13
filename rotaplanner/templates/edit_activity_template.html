@@ -1,0 +1,134 @@
+{%extends "activity_templates.html"%}
+{%macro ordinal_options(first,last,name,value)%} {%for index in range(first,last+1)%}
+<option value="{{index}}" {%if index==value %}selected{%endif%}>
+    {%if index==1 %} Every {{name}} {%else%} Every {{ordinal(index)}} {{name}} {%endif%}
+</option>
+{%endfor%} {%endmacro%}
+
+{%macro form_line(field)%}
+<tr id="{{field.id}}-group" up-form-group {%if field.flags.usf%} up-show-for="{{field.flags.usf}}" {%endif%}>
+    <td>{{field.label}}</td>
+    <td>{%if field.errors%}
+        <div class="ui negative message">
+            {%for err in field.errors%}
+            <div>{{err}}</div>
+            {%endfor%}
+        </div>
+        {%endif%}
+        {{field(**{"up-validate":true})}}
+    </td>
+</tr>
+{%endmacro%}
+
+
+{%macro render_group(group,rule_types,is_root=false)%}
+<li>
+    <div id="{{group._prefix}}-container" class="rule-box">
+        {{group.group_type}} <label class="linklike">{{group.should_add_rule}}Add rule</label> <label
+            class="linklike">{{group.should_add_group}}Add rule
+            group</label>
+        {%if not is_root%}<label class="linklike">{{group.is_deleted}}Delete group</label>{%endif%}
+        <ul id="{{group._prefix}}-ul" up-form-group>
+
+            {%for subgroup in group.groups%}
+            {{render_group(subgroup,rule_types)}}
+            {%endfor%}
+            {%for rule in group.rules%}
+            {{render_rule(rule,rule_types)}}
+            {%endfor%}
+            {%if group.groups|length == 0 and group.rules|length==0 %}
+            ⚠️This group has no members
+            {%endif%}
+
+        </ul>
+    </div>
+</li>
+{%endmacro%}
+
+
+
+
+
+{%macro render_rule(rule,rule_types)%}
+<li>
+    <details class="rule-definition" {%if rule.is_open.data%}open{%endif%} name="rule-definition-box">
+        <summary class="description">(rule description)</summary>
+        <div style="display:none">{{rule.is_open}}</div>
+        <table class="rule-box">
+            <tbody>
+                {{form_line(rule.rule_type)}}
+                {{form_line(rule.day_interval)}}
+                {{form_line(rule.week_interval)}}
+                {{form_line(rule.month_interval)}}
+                {{form_line(rule.start_date)}}
+                {{form_line(rule.finish_date)}}
+                {{form_line(rule.date_type)}}
+                <tr>
+                    <td></td>
+                    <td><label class="linklike">
+                            {{rule.is_deleted}}Delete rule
+                        </label></td>
+                </tr>
+            </tbody>
+        </table>
+
+    </details>
+
+</li>
+{%endmacro%}
+
+{%block main%}
+<main>
+    <form method="post" id="edit-activity-form" up-submit>
+        <span up-hungry id="edit-activity-form-csrf">{{form.csrf_token}}</span>
+        {{form.id}}
+        <h4>Edit activity</h4>
+        <div id="template-editor-settings">
+            <div>{{form.activity_name.label}} {{form.activity_name}}</div>
+            This activity occurs:
+            <div id="ruleset-container" up-form-group>
+                <ul>
+                    {{render_group(form.ruleset,rule_types,true)}}
+                </ul>
+            </div>
+            <hr />
+            <table>
+                <tbody>
+                    {{form_line(form.start_time)}}
+                    {{form_line(form.finish_time)}}
+                    {{form_line(form.activity_tags)}}
+                </tbody>
+            </table>
+            <hr />
+            <div id="requirements-container" up-form-group>
+                Requirements:
+                {%for req in form.requirements%}
+                <details {%if req.is_open.data%}open{%endif%}>
+                    <summary>Requirement</summary>
+                    <table class="requirement">
+                        <div style="display:none">{{req.is_open}}</div>
+                        {{form_line(req.skills)}}
+                        {{form_line(req.requirement)}}
+                        {{form_line(req.optional)}}
+                        {{form_line(req.attendance)}}
+                        {{form_line(req.geofence)}}
+                        <tr>
+                            <td></td>
+                            <td><label class="linklike">
+                                    {{req.is_deleted}}Delete rule
+                                </label></td>
+                        </tr>
+
+                    </table>
+                </details>
+                {%else%}
+                <div>⚠️No requirements have been set</div>
+                {%endfor%}
+
+                <label class="linklike">{{form.should_add_requirement}}Add requirement</label>
+            </div>
+        </div>
+        <input type="submit">
+    </form>
+</main>
+{%endblock%}
