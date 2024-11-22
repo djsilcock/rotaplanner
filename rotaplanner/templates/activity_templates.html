@@ -15,11 +15,13 @@
                 <div>To</div>
             </div>
             {%for template in templates%}
-            <a href="{{url_for('activities.edit_activity_template',template_id=template)}}" up-layer="new modal"
-                up-size="grow" class="template-entry">
-                <div>{{template}}</div>
-                <div>from</div>
-                <div>to</div>
+            {%set date_range = template.date_range()%}
+            <a href="{{url_for('activities.edit_activity_template',template_id=template.id)}}" up-layer="new modal"
+                up-size="grow" class="template-entry" up-accept-location="{{url_for('activities.activity_templates')}}"
+                up-on-dismissed="up.reload()" up-on-accepted="up.reload()">
+                <div>{{template.name}}</div>
+                <div>{{date_range[0]}}</div>
+                <div>{{date_range[1]}}</div>
             </a>
             {%else%}
             No activity templates are currently defined
@@ -27,5 +29,10 @@
         </div>
 
     </div>
+    <a href="{{url_for('activities.edit_activity_template',template_id=new_template_id)}}" up-layer="new modal"
+        up-size="grow" up-on-accepted="up.reload()" up-on-dismissed="up.reload()"
+        up-accept-location="{{url_for('activities.activity_templates')}}">New
+        template</a>
+
 </main>
 {%endblock%}

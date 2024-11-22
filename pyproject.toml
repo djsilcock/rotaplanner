@@ -36,7 +36,8 @@ dependencies = [
 "flask-pydantic",
 "flask-sqlalchemy",
 "unpoly",
-"flask-wtf"]
+"flask-wtf",
+"WTForms-SQLAlchemy"]
 
 [project.urls]
 Documentation = "https://github.com/Daniel Silcock/rotaplanner#readme"

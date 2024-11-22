@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, redirect, url_for
 from flask_pydantic import validate
 from .queries import (
     GetActivitiesRequest,
@@ -10,6 +10,7 @@ from .queries import (
     get_staff,
     get_locations,
 )
+from ..utils import get_instance_fields
 from rotaplanner.database import db
 from flask_unpoly import unpoly
 import datetime
@@ -29,6 +30,9 @@ from wtforms import (
     IntegerRangeField,
     Field,
 )
+
+from wtforms_sqlalchemy.fields import QuerySelectField, QuerySelectMultipleField
+
 from wtforms.validators import (
     NumberRange,
     StopValidation,
@@ -37,12 +41,19 @@ from wtforms.validators import (
     Optional,
     UUID as ValidateUUID,
 )
-from rotaplanner.date_rules import Rule, GroupType, RuleType, RuleGroup, DateType
-from .models import ActivityTemplate
+from rotaplanner.date_rules import (
+    Rule,
+    GroupType,
+    RuleType,
+    RuleGroup,
+    DateType,
+    DateTag,
+)
+from .models import ActivityTemplate, Location, Requirement, ActivityTag, Skill
 import uuid
 from typing import Any, Self, Sequence
 from rotaplanner.utils import discard_extra_kwargs
-from sqlalchemy import inspect
+from sqlalchemy import inspect, select
 
 
 blueprint = Blueprint("activities", __name__)
@@ -212,10 +223,16 @@ def reallocate_staff():
     ), (200 if len(errors) == 0 else 422)
 
 
+def get_activity_templates():
+    return db.session.scalars(select(ActivityTemplate))
+
+
 @blueprint.get("/activity_templates")
 def activity_templates():
     return render_template(
-        "activity_templates.html", templates=[uuid.uuid4() for r in range(100)]
+        "activity_templates.html",
+        templates=get_activity_templates(),
+        new_template_id=uuid.uuid4(),
     )
 
 
@@ -249,7 +266,12 @@ class SwitchingSelectField(SelectField):
         return super().__call__(**kwargs)
 
 
+def get_date_tags():
+    return db.session.scalars(select(DateTag))
+
+
 class RuleForm(FlaskForm):
+    rule_id = HiddenField(name="id", default=uuid.uuid4)
     rule_type = SwitchingSelectField(
         label="Rule Type",
         choices=[
@@ -286,10 +308,11 @@ class RuleForm(FlaskForm):
         validators=[OnlyForRuleType(RuleType.MONTHLY, RuleType.WEEK_IN_MONTH)],
         render_kw={"class": "month-interval"},
     )
-    tag = SelectMultipleField(
+    tag = QuerySelectField(
         label="Tags",
-        choices=[],
         validators=[OnlyForRuleType(RuleType.DATE_TAGS)],
+        query_factory=get_date_tags,
+        get_label="name",
     )
     date_type = SelectField(
         "Type",
@@ -306,11 +329,12 @@ class RuleForm(FlaskForm):
     finish_date = DateField(
         "Finish date", default=datetime.date(2099, 12, 31), validators=[Optional()]
     )
-    is_deleted = BooleanField(render_kw={"up-validate": True})
+    is_deleted = BooleanField("Delete rule", render_kw={"up-validate": True})
     is_open = BooleanField(render_kw={"class": "is-open"})
 
 
 class RuleGroupForm(FlaskForm):
+    id = HiddenField(default=uuid.uuid4)
     group_type = SelectField(
         label="Group Type",
         choices=(
@@ -322,8 +346,8 @@ class RuleGroupForm(FlaskForm):
         default=GroupType.AND,
     )
     rules = FieldList(FormField(RuleForm, default=Rule), "Rules")
-    should_add_group = BooleanField(render_kw={"up-validate": True})
-    is_deleted = BooleanField(render_kw={"up-validate": True})
+    should_add_group = BooleanField("Add group", render_kw={"up-validate": True})
+    is_deleted = BooleanField("Delete group", render_kw={"up-validate": True})
 
     def validate_should_add_group(self, field: BooleanField):
         if field.data:
@@ -347,8 +371,15 @@ class RuleGroupForm(FlaskForm):
 RuleGroupForm.groups = FieldList(FormField(RuleGroupForm, default=RuleGroup), "Groups")
 
 
+def get_skills():
+    return db.session.scalars(select(Skill))
+
+
 class RequirementForm(FlaskForm):
-    skills = SelectMultipleField("Skills", choices=("SDM", "IAC", "Paeds"))
+    req_id = HiddenField(name="id", default=uuid.uuid4)
+    skills = QuerySelectMultipleField(
+        "Skills", query_factory=get_skills, get_label="name"
+    )
     requirement = IntegerField(
         "Required people", default=1, validators=[NumberRange(min=0)]
     )
@@ -357,15 +388,23 @@ class RequirementForm(FlaskForm):
     )
     attendance = IntegerField(
         "Attendance",
+        default=100,
         validators=[NumberRange(0, 100)],
         description="Will usually be 100%",
     )
     geofence = SelectField(
         "Geofence (if attendance not 100%)",
-        choices=["Main theatre", "Day surgery", "Whole hospital", "Remote"],
+        default="_immediate",
+        choices=[
+            ("_immediate", "Local location"),
+            ("main", "Main theatre"),
+            ("dsu", "Day surgery"),
+            ("hosp", "Whole hospital"),
+            ("remote", "Remote"),
+        ],
     )
 
-    is_deleted = BooleanField()
+    is_deleted = BooleanField("Delete requirement")
     is_open = BooleanField(render_kw={"class": "is-open"})
 
 
@@ -381,17 +420,26 @@ def ensure_uuid(val):
     return val
 
 
-class EditActivityForm(FlaskForm):
+def get_locations():
+    return db.session.scalars(select(Location))
+
+
+def get_tags():
+    return db.session.scalars(select(ActivityTag))
+
+
+class EditActivityTemplateForm(RuleGroupForm):
     id = HiddenField(filters=[ensure_uuid])
-    ruleset = FormField(RuleGroupForm, default=RuleGroup)
-    activity_name = StringField("Activity Name")
-    activity_tags = SelectMultipleField("Tags", choices=[(1, "One"), (2, "Two")])
+    name = StringField("Activity Name")
+    activity_tags = QuerySelectMultipleField(
+        "Tags", query_factory=get_tags, get_label="name"
+    )
     start_time = TimeField("Start time")
     finish_time = TimeField("Finish Time")
     duration = TimeField("Duration")
-    location = StringField("Location")
-    # requirements = FieldList(FormField(RequirementForm, default=Requirement))
-    should_add_requirement = BooleanField()
+    location = QuerySelectField(query_factory=get_locations, get_label="name")
+    requirements = FieldList(FormField(RequirementForm, default=Requirement))
+    should_add_requirement = BooleanField("Add requirement")
 
     def validate_should_add_requirement(self, field: BooleanField):
         print(self, field.data)
@@ -406,36 +454,25 @@ class EditActivityForm(FlaskForm):
 @blueprint.route("/edit_activity_template/<uuid:template_id>", methods=["GET", "POST"])
 def edit_activity_template(template_id):
     def_activity = db.session.get(ActivityTemplate, template_id) or ActivityTemplate(
-        id=uuid.uuid4(),
+        id=template_id,
         name="New activity",
-        # activity_tags=set(),
-        ruleset=RuleGroup(
-            group_type="and",
-            rules=[
-                Rule(
-                    rule_type=RuleType.DAILY,
-                    day_interval=1,
-                    start_date=datetime.date.today(),
-                )
-            ],
-        ),
+        activity_tags=[],
+        group_type="and",
         start_time=datetime.time(9),
-        duration=datetime.timedelta(hours=8),
-        # location="Theatre 1",
+        finish_time=datetime.time(17),
     )
-    form: EditActivityForm = EditActivityForm(obj=def_activity)
+    form: EditActivityTemplateForm = EditActivityTemplateForm(obj=def_activity)
     print("validate on submit:", form.validate_on_submit(), form.errors)
     print("unpoly", unpoly().validate)
 
     if form.validate_on_submit() and not unpoly().validate:
         form.populate_obj(def_activity)
-        def_activity.activity_tags = " ".join(def_activity.activity_tags)
-        for i in inspect(def_activity).attrs:
-            print(i)
+        print(get_instance_fields(def_activity))
         print(def_activity)
         print(form.data)
         db.session.merge(def_activity)
         db.session.commit()
+        return redirect(url_for("activities.activity_templates"))
     return render_template(
         "edit_activity_template.html",
         form=form,

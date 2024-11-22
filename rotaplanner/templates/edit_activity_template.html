@@ -5,6 +5,12 @@
 </option>
 {%endfor%} {%endmacro%}
 
+{%macro render_linklike(field)%}
+<label class="linklike">
+    {{field(**{'up-validate':true})}}{{field.label.text}}
+</label>
+{%endmacro%}
+
 {%macro form_line(field)%}
 <tr id="{{field.id}}-group" up-form-group {%if field.flags.usf%} up-show-for="{{field.flags.usf}}" {%endif%}>
     <td>{{field.label}}</td>
@@ -15,7 +21,7 @@
             {%endfor%}
         </div>
         {%endif%}
-        {{field(**{"up-validate":true})}}
+        {{field(**{"up-validate":true,"up-watch-event":"blur"})}}
     </td>
 </tr>
 {%endmacro%}
@@ -54,6 +60,7 @@
     <details class="rule-definition" {%if rule.is_open.data%}open{%endif%} name="rule-definition-box">
         <summary class="description">(rule description)</summary>
         <div style="display:none">{{rule.is_open}}</div>
+        {{rule.rule_id}}
         <table class="rule-box">
             <tbody>
                 {{form_line(rule.rule_type)}}
@@ -62,12 +69,11 @@
                 {{form_line(rule.month_interval)}}
                 {{form_line(rule.start_date)}}
                 {{form_line(rule.finish_date)}}
+                {{form_line(rule.tag)}}
                 {{form_line(rule.date_type)}}
                 <tr>
                     <td></td>
-                    <td><label class="linklike">
-                            {{rule.is_deleted}}Delete rule
-                        </label></td>
+                    <td>{{render_linklike(rule.is_deleted)}}
                 </tr>
             </tbody>
         </table>
@@ -84,11 +90,11 @@
         {{form.id}}
         <h4>Edit activity</h4>
         <div id="template-editor-settings">
-            <div>{{form.activity_name.label}} {{form.activity_name}}</div>
+            <div>{{form.name.label}} {{form.name}}</div>
             This activity occurs:
             <div id="ruleset-container" up-form-group>
                 <ul>
-                    {{render_group(form.ruleset,rule_types,true)}}
+                    {{render_group(form,rule_types,true)}}
                 </ul>
             </div>
             <hr />
@@ -97,6 +103,7 @@
                     {{form_line(form.start_time)}}
                     {{form_line(form.finish_time)}}
                     {{form_line(form.activity_tags)}}
+                    {{form_line(form.location)}}
                 </tbody>
             </table>
             <hr />
@@ -105,8 +112,10 @@
                 {%for req in form.requirements%}
                 <details {%if req.is_open.data%}open{%endif%}>
                     <summary>Requirement</summary>
+                    {{req.req_id}}
                     <table class="requirement">
                         <div style="display:none">{{req.is_open}}</div>
+
                         {{form_line(req.skills)}}
                         {{form_line(req.requirement)}}
                         {{form_line(req.optional)}}
@@ -125,10 +134,11 @@
                 <div>⚠️No requirements have been set</div>
                 {%endfor%}
 
-                <label class="linklike">{{form.should_add_requirement}}Add requirement</label>
+                {{render_linklike(form.should_add_requirement)}}
             </div>
         </div>
-        <input type="submit">
+        <button type="submit">Save template</button>
+        <a href="{{url_for('activities.activity_templates')}}">Cancel</a>
     </form>
 </main>
 {%endblock%}

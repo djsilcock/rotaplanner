@@ -5,12 +5,18 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from ortools.sat.python import cp_model
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, ForeignKeyConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from rotaplanner.database import db
 
-from rotaplanner.date_rules import RuleGroup
+from rotaplanner.date_rules import RuleGroup, RuleRoot, GroupType
+
+from functools import reduce
+
+
+MIN_DATE = datetime.date(1900, 1, 1)
+MAX_DATE = datetime.date(2100, 12, 31)
 
 
 class RequirementType(Enum):
@@ -18,10 +24,24 @@ class RequirementType(Enum):
     OR = "OR"
 
 
+class Skill(db.Model):
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    name: Mapped[str]
+
+
+class StaffSkill(db.Model):
+    skill_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("skill.id"), primary_key=True
+    )
+    staff_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("staff.id"), primary_key=True
+    )
+
+
 class Staff(db.Model):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
     name: Mapped[str]
-    skills: Mapped[str] = ""
+    skills: Mapped[list[Skill]] = relationship(secondary=StaffSkill.__table__)
     assignments: Mapped[list["StaffAssignment"]] = relationship(back_populates="staff")
 
 
@@ -30,56 +50,116 @@ class Location(db.Model):
     name: Mapped[str]
 
 
+class SkillRequirement(db.Model):
+    skill_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("skill.id"), primary_key=True
+    )
+    requirement_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("requirement.id"), primary_key=True
+    )
+
+
 class Requirement(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
     activity_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("activity_base.id"))
-    mandatory: Mapped[int] = 1  # required number of people
-    optional: Mapped[int] = 1  # optional extra people
-    attendance: Mapped[int] = (
-        100  # required attendance for this role (eg remote supervisor=50%)
-    )
-    geofence: Mapped[str] = (
-        "_immediate"  # must not clash with duty outside this zone (eg main theatre)
-    )
-    skills: Mapped[str] = ""  # must have these skills
+    mandatory: Mapped[int] = mapped_column(default=1)  # required number of people
+    optional: Mapped[int] = mapped_column(default=1)  # optional extra people
+    attendance: Mapped[int] = mapped_column(
+        default=100
+    )  # required attendance for this role (eg remote supervisor=50%)
+    geofence: Mapped[str] = mapped_column(
+        default="_immediate"
+    )  # must not clash with duty outside this zone (eg main theatre)
+    skills: Mapped[list[Skill]] = relationship(
+        secondary=SkillRequirement.__table__
+    )  # must have these skills
+
+    def clone(self):
+        return Requirement(
+            id=uuid.uuid4(),
+            mandatory=self.mandatory,
+            optional=self.optional,
+            attendance=self.attendance,
+            geofence=self.geofence,
+            skills=[s for s in self.skills],
+        )
 
 
 class ActivityTag(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
     name: Mapped[str]
 
 
 class ActivityTagAssoc(db.Model):
-    tag_id: Mapped[int] = mapped_column(ForeignKey("activity_tag.id"), primary_key=True)
+    tag_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("activity_tag.id"), primary_key=True
+    )
     activity_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("activity_base.id"), primary_key=True
     )
 
 
-class ActivityBase(db.Model):
+class AssignmentTag(db.Model):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
-    type: Mapped[str]
     name: Mapped[str]
-    activity_tags: Mapped[list[ActivityTag]] = relationship(secondary=ActivityTagAssoc)
+
+
+class AssignmentTagAssoc(db.Model):
+    tag_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("assignment_tag.id"), primary_key=True
+    )
+    activity_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    staff_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ("activity_id", "staff_id"),
+            ("staff_assignment.activity_id", "staff_assignment.staff_id"),
+        ),
+    )
+
+
+class ActivityBase(RuleRoot):
+    id: Mapped[uuid.UUID] = mapped_column(ForeignKey("rule_root.id"), primary_key=True)
+    name: Mapped[str]
+    activity_tags: Mapped[list[ActivityTag]] = relationship(
+        secondary=ActivityTagAssoc.__table__
+    )
     location: Mapped[Location] = relationship()
     location_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("location.id"))
     requirements: Mapped[list[Requirement]] = relationship(cascade="all,delete")
-    ruleset_id: Mapped[int] = mapped_column(ForeignKey("rule_group.id"))
-    ruleset: Mapped[RuleGroup] = relationship(cascade="all,delete")
-    __mapper_args__ = {"polymorphic_identity": "base", "polymorphic_on": "type"}
+    __mapper_args__ = {"polymorphic_identity": "base"}
 
 
 class ActivityTemplate(ActivityBase):
     __mapper_args__ = {"polymorphic_identity": "template"}
     id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("activity_base.id"), primary_key=True
+        ForeignKey("activity_base.id"), primary_key=True, default=uuid.uuid4
     )
     start_time: Mapped[datetime.time]
-    duration: Mapped[datetime.timedelta]
+    finish_time: Mapped[datetime.time]
+    group_type: Mapped[GroupType]
 
-    def matches(self, date) -> bool:
-        "returns true if activity planned to take place on given date"
-        return self.ruleset.matches(date)
+    def date_range(self):
+        def maxmin(a, b):
+            if a == (None, None):
+                return (b, b)
+            return min(a[0], b), max(a[1], b)
+
+        result = reduce(
+            maxmin,
+            filter(
+                lambda d: self.matches(d),
+                (
+                    MIN_DATE + datetime.timedelta(days=i)
+                    for i in range((MAX_DATE - MIN_DATE).days + 1)
+                ),
+            ),
+            (None, None),
+        )
+        return (
+            None if result[0] == MIN_DATE else result[0],
+            None if result[1] == MAX_DATE else result[1],
+        )
 
     def materialise(self, date, force=False):
         "returns concrete activity for date. If force is false or not given then only returns if planned for that day"
@@ -90,8 +170,13 @@ class ActivityTemplate(ActivityBase):
                 name=self.name,
                 location=self.location,
                 activity_start=datetime.datetime.combine(date, self.start_time),
-                activity_finish=datetime.datetime.combine(date, self.start_time)
-                + self.duration,
+                activity_finish=datetime.datetime.combine(date, self.finish_time)
+                + datetime.timedelta(
+                    days=(0 if self.finish_time > self.start_time else 1)
+                ),
+                activity_tags=[tag for tag in self.activity_tags],
+                requirements=[req.clone() for req in self.requirements],
+                location_id=self.location_id,
             )
 
 
@@ -121,7 +206,9 @@ class StaffAssignment(db.Model):
     staff: Mapped[Staff] = relationship(back_populates="assignments")
     attendance: Mapped[int] = 100
     staff: Mapped[Staff] = relationship()
-    tags: Mapped[str] = ""
+    tags: Mapped[list[AssignmentTag]] = relationship(
+        secondary=AssignmentTagAssoc.__table__
+    )
     start_time: Mapped[datetime.datetime | None]
     finish_time: Mapped[datetime.datetime | None]
 

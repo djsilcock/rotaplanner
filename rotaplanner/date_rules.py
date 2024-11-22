@@ -3,9 +3,41 @@ from enum import StrEnum
 from rotaplanner.database import db
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 from sqlalchemy import ForeignKey
+import uuid
+
+from .utils import get_instance_fields
 
 
-from typing import Union
+from typing import Union, TYPE_CHECKING, ClassVar
+from functools import reduce
+
+
+class GroupType(StrEnum):
+    "group types"
+    AND = "and"
+    OR = "or"
+    NOT = "not"
+
+
+class RuleRoot(db.Model):
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    type: Mapped[str]
+    rules: Mapped[list["Rule"]] = relationship(cascade="all,delete")
+    groups: Mapped[list["RuleGroup"]] = relationship(
+        foreign_keys="RuleGroup.parent_group_id"
+    )
+
+    __mapper_args__ = {"polymorphic_identity": "rule_root", "polymorphic_on": "type"}
+
+    def matches(self, match_date: datetime.date) -> bool:
+        members = [*self.rules, *self.groups]
+        match self.group_type:
+            case GroupType.AND:
+                return all(rule.matches(match_date) for rule in members)
+            case GroupType.OR:
+                return any(rule.matches(match_date) for rule in members)
+            case GroupType.NOT:
+                return not any(rule.matches(match_date) for rule in members)
 
 
 class RuleType(StrEnum):
@@ -19,31 +51,34 @@ class RuleType(StrEnum):
     GROUP = "group"
 
 
-class GroupType(StrEnum):
-    "group types"
-    AND = "and"
-    OR = "or"
-    NOT = "not"
-
-
 class DateType(StrEnum):
     INCLUSIVE = "incl"
     EXCLUSIVE = "excl"
 
 
+class DateTag(db.Model):
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
+    name: Mapped[str]
+
+
 class Rule(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    group_id: Mapped[int] = mapped_column(ForeignKey("rule_group.id"))
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    group_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("rule_root.id"))
     rule_type: Mapped[RuleType]
     day_interval: Mapped[int | None]
     week_interval: Mapped[int | None]
     month_interval: Mapped[int | None]
     start_date: Mapped[datetime.date | None]
     finish_date: Mapped[datetime.date | None]
-    tag: Mapped[str | None]
+    date_tag_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("date_tag.id"))
+    tag: Mapped[DateTag | None] = relationship(DateTag)
     date_type: Mapped[DateType | None]
 
     def matches(self, match_date: datetime.date):
+        if self.start_date is not None and self.start_date > match_date:
+            return False
+        if self.finish_date is not None and self.finish_date < match_date:
+            return False
         match (self.rule_type):
             case RuleType.DAILY:
                 return (match_date - self.start_date).days % self.day_interval == 0
@@ -74,22 +109,39 @@ class Rule(db.Model):
             case RuleType.DATE_TAGS:
                 pass
 
+    def clone(self):
+        fields = get_instance_fields(self)
+        fields["id"] = uuid.uuid4()
+        del fields["group_id"]
+        return Rule(**fields)
 
-class RuleGroup(db.Model):
-    "group of rules"
-    id: Mapped[int] = mapped_column(primary_key=True)
+
+class RuleGroup(RuleRoot):
+
+    id: Mapped[uuid.UUID] = mapped_column(ForeignKey("rule_root.id"), primary_key=True)
     group_type: Mapped[GroupType]
-    rules: Mapped[list[Rule]] = relationship(cascade="all,delete")
-    parent_group_id: Mapped[int | None] = mapped_column(ForeignKey("rule_group.id"))
-    parent_group: Mapped["RuleGroup | None"] = relationship(remote_side=[id])
-    groups: Mapped[list["RuleGroup"]] = relationship(cascade="all,delete")
+    parent_group_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("rule_root.id"))
+    parent_group: Mapped[RuleRoot] = relationship(
+        back_populates="groups", foreign_keys=[parent_group_id]
+    )
 
-    def matches(self, match_date: datetime.date) -> bool:
-        members = [*self.rules, *self.groups]
-        match self.group_type:
-            case GroupType.AND:
-                return all(rule.matches(match_date) for rule in members)
-            case GroupType.OR:
-                return any(rule.matches(match_date) for rule in members)
-            case GroupType.NOT:
-                return not any(rule.matches(match_date) for rule in members)
+    "group of rules"
+    __mapper_args__ = {
+        "polymorphic_identity": "rule_group",
+        "inherit_condition": id == RuleRoot.id,
+    }
+
+    def finish_date(self):
+        finish_dates = list(filter(None, (r.finish_date for r in self.rules)))
+        finish_dates.extend(filter(None, (g.finish_date() for g in self.groups)))
+        if len(finish_dates) == 0:
+            return None
+        return max(finish_dates)
+
+    def clone(self):
+        fields = get_instance_fields(self)
+        fields["id"] = uuid.uuid4()
+        del fields["parent_group_id"]
+        fields["groups"] = [group.clone() for group in self.groups]
+        fields["rules"] = [rule.clone() for rule in self.rules]
+        return RuleGroup(**fields)
