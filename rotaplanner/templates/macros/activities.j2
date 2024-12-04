@@ -1,0 +1,46 @@
+{%macro activity_cell(staff_or_location,date,activities)%}
+  <div
+    class="activitycell"
+    data-date="{{date.isoformat()}}"
+    data-yaxis="{{staff_or_location.id}}"
+    id="td-{{date.isoformat()}}-{{staff_or_location.id}}"
+    up-hungry
+  >
+    {% for act in activities[date] %}
+      {%if act.location==staff_or_location%}
+        {{activity(act,staff_or_location,show_location=false,show_staff=true)}}
+      {%else%}
+
+        {% for assignment in act.staff_assignments if assignment.staff_id == staff_or_location.id%}
+          {{activity(act,staff_or_location)}} 
+        {% endfor %} 
+      {%endif%}
+    {%endfor %}
+  </div>
+{%endmacro%}
+
+{% macro
+activity(activity_def,staff_or_location=none,show_location=true,show_staff=true) -%}
+<div
+  class="activity"
+  {%if staff_id%}
+    data-yaxis="{{staff_or_location}}"
+  {%endif%}
+  data-activityid="{{activity_def.id}}"
+  data-activitydate="{{activity_def.activity_start.date().isoformat()}}"
+  draggable="true"
+>
+  <div class="activity-name">{{activity_def.name}}</div>
+  {%if staff_or_location != activity_def.location.id%} <div class="activity-location">{{activity_def.location.name}}</div> {%endif%}
+  {%if show_staff%}
+  {% for assignment in activity_def.staff_assignments if assignment.staff != staff_or_location %}
+    <div class="assignment">
+      {{assignment.staff.name}} 
+      {% if (assignment.start_time is not none) and (assignment.finish_time is not none) %}
+        ({{assignment.start_time.strftime('%H')}}-{{assignment.finish_time.strftime('%H')}})
+      {%endif%}
+    </div>
+  {% endfor %}
+  {%endif%}
+</div>
+{% endmacro %} 

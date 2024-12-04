@@ -1,10 +1,33 @@
 .activity-name {
   font-size: small;
 }
+#rota-names {
+  display: grid;
+  grid-template-rows: subgrid;
+}
 #rota-table {
   position: relative;
+  display: grid;
   width: 80vw;
+}
+#rota-scrollable {
+  display: grid;
+  position: relative;
+  scroll-snap-type: x mandatory;
+  grid-template-rows: subgrid;
+  grid-auto-flow: column;
   overflow: auto;
+}
+#rota-grid {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-auto-columns: auto;
+  grid-auto-flow: column;
+}
+.rota-segment {
+  display: grid;
+  grid-auto-columns: auto;
+  grid-template-rows: subgrid;
 }
 .activity {
   background-color: antiquewhite;
@@ -23,6 +46,7 @@
   }
 }
 .activitycell {
+  scroll-snap-align: start;
   border: 1px solid gray;
   min-width: 5em;
   &:hover {

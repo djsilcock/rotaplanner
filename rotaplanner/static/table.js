@@ -1,3 +1,17 @@
+up.on("up:deferred:load", "#entryzone", (ev, el) => {
+  console.log(ev);
+  const firstpos = document.querySelector(".column-header");
+  ev.renderOptions.onRendered = (ev) => {
+    console.log(firstpos, firstpos.offsetLeft);
+    console.log(document.querySelector("#rota-scrollable").scrollLeft);
+    document.querySelector("#rota-scrollable").scrollLeft = firstpos.offsetLeft;
+    //      ev.fragments
+    //        .filter((e) => e.matches(".column-header"))
+    //        .reduce((tot, cur) => tot + cur.scrollWidth, 0),
+    //      0
+    //    );
+  };
+});
 up.compiler("#rota-table", (table) => {
   let draglimit = "";
   let dragmode = "";
@@ -9,29 +23,40 @@ up.compiler("#rota-table", (table) => {
     element,
     { row: zeroRow = 0, column: zeroColumn = 0 } = {}
   ) {
-    const containingRow = element.closest("tr");
-    const containingCell = element.closest("td");
-    const rowCells = Array.from(
-      containingRow.querySelectorAll(
-        "td.activitycell,td.unallocated-activities"
-      )
+    const columns = Array.from(
+      document.querySelectorAll(".column-header"),
+      (e) => e.dataset.date
     );
-    const columnIndex = rowCells.indexOf(containingCell);
-    const rowIndex = Array.from(
-      containingRow.closest("tbody").querySelectorAll("tr")
-    ).indexOf(containingRow);
+    const rows = Array.from(
+      document.querySelectorAll(".row-header"),
+      (e) => e.dataset.yaxis
+    );
+    const containingCell = element.closest(
+      ".activitycell,.unallocated-activities"
+    );
+    console.log({ rows, columns, containingCell });
+    const columnIndex = columns.indexOf(containingCell.dataset.date);
+    const rowIndex = rows.indexOf(containingCell.dataset.yaxis);
     console.log({ element, rowIndex, zeroRow, columnIndex, zeroColumn });
     return { row: rowIndex - zeroRow, column: columnIndex - zeroColumn };
   }
   function getCells(entries) {
     const result = [];
-    const table = document.getElementById("rota-table-content");
-    const rows = Array.from(table.querySelectorAll("tr"));
+    const columns = Array.from(
+      document.querySelectorAll(".column-header"),
+      (e) => e.dataset.date
+    );
+    const rows = Array.from(
+      document.querySelectorAll(".row-header"),
+      (e) => e.dataset.yaxis
+    );
+    console.log(rows);
     for (let entry of entries) {
-      const targetRow = rows[entry.row];
-      targetCell = Array.from(
-        targetRow.querySelectorAll("td.activitycell,td.unallocated-activities")
-      )[entry.column];
+      targetCell = document.querySelector(
+        `[data-date="${columns[entry.column]}"]:is([data-yaxis="${
+          rows[entry.row]
+        }"])`
+      );
       result.push({ ...entry, cell: targetCell });
     }
     return result;
@@ -62,7 +87,7 @@ up.compiler("#rota-table", (table) => {
         initialactivity: e.target.closest(".activity").dataset.activityid,
       });
       e.dataTransfer.setData("text/plain", payload);
-      e.dataTransfer.setDragImage(document.getElementById("empty"), 0, 0);
+      //e.dataTransfer.setDragImage(document.getElementById("empty"), 0, 0);
     } else if (e.target.matches(".activity")) {
       console.log("dragging activity");
       dragmode = "activity";
@@ -78,18 +103,18 @@ up.compiler("#rota-table", (table) => {
         draggedElements.push({
           activityid: el.dataset.activityid,
           initialdate: el.dataset.activitydate,
-          initialstaff: el.dataset.staff,
+          initialposition: el.dataset.yaxis,
           ...getRowAndColumn(el, getRowAndColumn(e.target)),
         });
       }
-      draglimit = "td.activitycell,td.unallocated-activities";
+      draglimit = ".activitycell,.unallocated-activities";
 
       payload = JSON.stringify({
-        initialstaff: e.target.dataset.staff,
+        initialposition: e.target.dataset.yaxis,
         activities: Array.from(selectedElements, (el) => el.dataset.activityid),
       });
       e.dataTransfer.setData("text/plain", payload);
-      e.dataTransfer.setDragImage(document.getElementById("empty"), 0, 0);
+      //e.dataTransfer.setDragImage(document.getElementById("empty"), 0, 0);
     }
   });
   table.addEventListener("dragend", (e) => {
@@ -124,12 +149,12 @@ up.compiler("#rota-table", (table) => {
     }
 
     if (dragmode == "activity") {
-      const target = e.target.closest("td");
+      const target = e.target.closest(".activitycell");
       if (!target) return;
       console.log("dragover", getRowAndColumn(target));
       const { row, column } = getRowAndColumn(target);
       document
-        .querySelectorAll("td.activitycell")
+        .querySelectorAll(".activitycell")
         .forEach((el) =>
           el.classList.remove("dragover-valid", "dragover-invalid")
         );
@@ -147,7 +172,7 @@ up.compiler("#rota-table", (table) => {
         console.warn(e);
         dragIsValid = false;
         document
-          .querySelectorAll("td.activitycell")
+          .querySelectorAll(".activitycell")
           .forEach((el) =>
             el.classList.remove("dragover-valid", "dragover-invalid")
           );
@@ -161,7 +186,9 @@ up.compiler("#rota-table", (table) => {
   table.addEventListener("drop", (e) => {
     console.log("drop", e.target);
     if (dragmode == "activity") {
-      const droptarget = e.target.closest("td");
+      const droptarget = e.target.closest(
+        ".activitycell,.unallocated-activities"
+      );
       if (!droptarget) return;
       console.log("drop", getRowAndColumn(droptarget));
       const { row, column } = getRowAndColumn(droptarget);
@@ -179,15 +206,17 @@ up.compiler("#rota-table", (table) => {
         dragIsValid = false;
       }
       for (let entry of dropEntries) {
-        entry.newstaff = entry.cell.dataset.staff;
+        entry.newposition = entry.cell.dataset.yaxis;
         entry.newdate = entry.cell.dataset.date;
         console.log(entry);
       }
       const formdata = new FormData();
       dropEntries.forEach((entry, i) => {
-        ["activityid", "initialstaff", "newstaff", "newdate"].forEach((v) => {
-          if (entry[v]) formdata.append(`entries-${i}-${v}`, entry[v]);
-        });
+        ["activityid", "initialposition", "newposition", "newdate"].forEach(
+          (v) => {
+            if (entry[v]) formdata.append(`entries-${i}-${v}`, entry[v]);
+          }
+        );
       });
 
       up.render(`#${droptarget.id}:maybe`, {

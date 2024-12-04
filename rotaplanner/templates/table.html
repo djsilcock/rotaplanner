@@ -1,78 +1,71 @@
-{%extends "layout.html" %}
-{%block title%}View by name{%endblock%}
-{% macro activity(activity_def,staff_id=none,show_location=true,show_name=true) -%}
-<div class=activity {%if staff_id%}data-staff="{{staff_id}}" {%endif%} data-activityid="{{activity_def.id}}"
-    data-activitydate={{activity_def.activity_start.date().isoformat()}} draggable=true>
-    <div class=activity-name>
-        {{activity_def.name}}
-    </div>
-    {%if show_location%}
-    <div class=activity-location>
-        {{activity_def.location.name}}
-    </div>
-    {%endif%}
-    {% for assignment in activity_def.staff_assignments if assignment.staff.id != staff_id and show_name%}
-    <div class='assignment'>
-        {{assignment.staff.name}}
-        {% if (assignment.start_time is not none) and (assignment.finish_time is not none) %}
-        ({{assignment.start_time.strftime('%H')}}-{{assignment.finish_time.strftime('%H')}})
-        {%endif%}
-    </div>
-    {% endfor %}
-</div>
-{% endmacro %}
+{%extends "layout.html" %} {%block title%}View by name{%endblock%} 
+{% from "macros/activities.j2" import activity_cell,activity %}
+
 
 {%block assets%}
-<link rel=stylesheet href="/static/table.css" />
+<link rel="stylesheet" href="/static/table.css" />
 <script src="/static/table.js"></script>
-{%endblock%}
 
-{%block main%}
+<style up-asset id="gridspan">
+  /*prettier-ignore */
+  .spans-all-rows {
+      grid-row: 1/ {{y_axis|length +3}};
+  }
+
+</style>
+{%endblock%} {%block main%}
 <main>
-    <div id="rota-table" up-main data-csrf="{{csrf_token()}}">
-        <table>
-            <thead>
-                <tr>
-                    <th></th>
-                    {% for date in dates %}
-                    <th class="column-header">{{date.strftime('%d %b')}}</th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody id="rota-table-content">
-                {% for staffmember in staff %}
-                <tr>
-                    <td class=rowheader>{{staffmember.name}}</td>
-                    {% for date in dates %}
-                    <td class=activitycell data-date={{date.isoformat()}} data-staff="{{staffmember.id}}"
-                        id="td-{{date.isoformat()}}-{{staffmember.id}}" up-hungry>
-
-                        {% for act in activities[date] %}
-
-                        {% for assignment in act.staff_assignments if assignment.staff_id == staffmember.id%}
-                        {{activity(act,staff_id=staffmember.id)}}
-                        {% endfor %}
-                        {%else%}
-
-                        {% endfor %}
-                    </td>
-
-                    {% endfor %}
-                </tr>
-                {% endfor%}
-                <tr>
-                    <td><span id=empty></span></td>
-                    {% for date in dates %}
-                    <td data-date={{date.isoformat()}} class="unallocated-activities"
-                        id="td-{{date.isoformat()}}-unalloc" up-hungry>
-                        {% for act in activities[date] %}
-                        {{activity(act,show_name=false)}}
-                        {% endfor %}
-                    </td>
-                    {% endfor %}
-                </tr>
-            </tbody>
-        </table>
+  <div id="rota-table" up-main data-csrf="{{csrf_token()}}" style="grid-template-rows: repeat({{y_axis|length +3}},auto);">
+    <div id="rota-names" class="spans-all-rows">
+      <div></div>
+      {%for staff_or_location in y_axis%}
+      <div class="row-header" data-yaxis="{{staff_or_location.id}}">{{staff_or_location.name}}</div>
+      {%endfor%}
     </div>
+    <div class="row-header" data-staff="none"></div>
+    <div id="rota-scrollable" class="spans-all-rows">
+      {%if prev_page%}
+      <div
+        id="entryzone"
+        class="spans-all-rows"
+        up-defer="reveal"
+        up-target="#rota-grid:before,#entryzone"
+        up-href="/activities/table?start_date={{prev_page[0].isoformat()}}&finish_date={{prev_page[1].isoformat()}}"
+      >
+        <span class="spinner">.</span>
+      </div>
+      {%endif%}
+      <div id="rota-grid" class="spans-all-rows">
+          {% for date in dates %}
+          <div class="column-header" data-date="{{date.isoformat()}}">{{date.strftime('%d %b %y')}}</div>
+          {% for staff_or_location in y_axis%}
+          {{activity_cell(staff_or_location,date,activities)}}
+          {%endfor%}
+          <div
+            data-date="{{date.isoformat()}}"
+            data-staff="none"
+            class="unallocated-activities"
+            id="td-{{date.isoformat()}}-unalloc"
+            up-hungry
+          >
+            {% for act in activities[date] %} {{activity(act,show_staff=false)}}
+            {% endfor %}
+          </div>
+          {% endfor %}
+        </div>
+      {%if next_page%}
+      <div
+        id="endzone"
+        class="spans-all-rows"
+        up-defer="reveal"
+        up-target="#rota-grid:after,#endzone"
+        up-href="/activities/table?start_date={{next_page[0].isoformat()}}&finish_date={{next_page[1].isoformat()}}"
+      >
+        <span class="spinner">ENDZONE</span>
+      </div>
+      {%endif%}
+      </div>
+    </div>
+  </div>
 </main>
 {%endblock%}

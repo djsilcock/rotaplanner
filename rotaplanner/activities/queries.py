@@ -12,6 +12,8 @@ from sqlalchemy import func, or_, select, delete
 from typing import Literal, Annotated, Union, Self
 
 from sqlalchemy.orm import Session
+from rotaplanner.database import db
+from rotaplanner.constants import UNALLOCATED_STAFF
 
 
 class StaffApi(BaseModel):
@@ -48,15 +50,22 @@ class ActivityWithAssignmentsApi(BaseModel):
 @dataclass
 class GetActivitiesRequest:
     "request"
-    start_date: datetime.date = datetime.date(1970, 1, 1)
-    finish_date: datetime.date = datetime.date(2099, 1, 1)
+    start_date: datetime.date = datetime.date.today()
+    finish_date: datetime.date = datetime.date.today() + datetime.timedelta(days=364)
+
+    def __post_init__(self):
+        if isinstance(self.start_date, str):
+            self.start_date = datetime.date.fromisoformat(self.start_date)
+        if isinstance(self.finish_date, str):
+            self.finish_date = datetime.date.fromisoformat(self.finish_date)
 
 
 GetActivitiesResponse = RootModel[dict[datetime.date, list[ActivityWithAssignmentsApi]]]
 
 
-def get_activities(sess, request: GetActivitiesRequest) -> GetActivitiesResponse:
+def get_activities(request: GetActivitiesRequest) -> GetActivitiesResponse:
     "get activities and assignments for date range"
+    sess = db.session
     activities_query = (
         select(func.date(Activity.activity_start), Activity)
         .where(func.date(Activity.activity_start) >= (request.start_date))
@@ -73,12 +82,12 @@ def get_activities(sess, request: GetActivitiesRequest) -> GetActivitiesResponse
     return result
 
 
-def get_staff(sess):
-    return list(sess.scalars(select(Staff)))
+def get_staff():
+    return list(db.session.scalars(select(Staff)))
 
 
-def get_locations(sess):
-    return list(sess.scalars(select(Location)))
+def get_locations():
+    return list(db.session.scalars(select(Location)))
 
 
 class ReallocateStaffDragDropEntry(BaseModel):
@@ -122,14 +131,21 @@ class ReallocateActivity:
     entries: list[Self]
 
 
-def reallocate_activities(sess: Session, entries: list[ReallocateActivity]):
+def reallocate_activities(entries: list[ReallocateActivity]):
     print(entries)
+    sess = db.session
     dates = set()
     errors = []
     for entry in entries:
         activity = sess.get(Activity, entry.activityid)
-        initialstaff = sess.get(Staff, entry.initialstaff)
-        newstaff = sess.get(Staff, entry.newstaff)
+        initialstaff = (
+            sess.get(Staff, entry.initialstaff)
+            if entry.initialstaff is not None
+            else None
+        )
+        newstaff = (
+            sess.get(Staff, entry.newstaff) if entry.newstaff is not None else None
+        )
         if entry.newdate != activity.activity_start.date():
             # is there a matching activity on that date?
             result = sess.execute(
@@ -165,7 +181,7 @@ def reallocate_activities(sess: Session, entries: list[ReallocateActivity]):
                 .where(StaffAssignment.activity_id == entry.activityid)
                 .where(StaffAssignment.staff_id == entry.initialstaff)
             )
-        if entry.newstaff:
+        if entry.newstaff and entry.newstaff != UNALLOCATED_STAFF:
             sess.add(
                 StaffAssignment(activity_id=entry.activityid, staff_id=entry.newstaff)
             )
@@ -184,7 +200,8 @@ class ReallocateStaff:
     newactivity: uuid.UUID
 
 
-def reallocate_staff(sess: Session, entry: ReallocateStaff):
+def reallocate_staff(entry: ReallocateStaff):
+    sess = db.session
     dates = set()
     errors = []
     initialactivity = sess.get(Activity, entry.initialactivity)

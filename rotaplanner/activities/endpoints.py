@@ -101,37 +101,60 @@ class DerivedField(Field):
         return self.derivation(self.form)
 
 
+def daterange(start_date, finish_date):
+    d = start_date
+    while d <= finish_date:
+        yield d
+        d += datetime.timedelta(days=1)
+
+
 @blueprint.get("/table")
 def table():
-    staff = get_staff(db.session)
+    staff = get_staff()
     query = discard_extra_kwargs(GetActivitiesRequest, request.args)
-    activities = get_activities(db.session, query)
-    dates = [
-        datetime.date(2024, 1, 1) + datetime.timedelta(days=d) for d in range(1000)
-    ]
+    activities = get_activities(query)
+    dates = list(daterange(query.start_date, query.finish_date))
+    next_page = (
+        query.finish_date + datetime.timedelta(days=1),
+        query.finish_date + datetime.timedelta(days=30),
+    )
+    prev_page = (
+        query.start_date - datetime.timedelta(days=30),
+        query.start_date - datetime.timedelta(days=1),
+    )
     return render_template(
         "table.html",
-        staff=staff,
+        y_axis=staff,
         activities=activities,
         dates=dates,
         errors=[],
+        next_page=next_page,
+        prev_page=prev_page,
     )
 
 
 @blueprint.get("/table_by_location")
 def table_by_location():
-    locations = get_locations(db.session)
+    locations = get_locations()
     query = discard_extra_kwargs(GetActivitiesRequest, request.args)
-    activities = get_activities(db.session, query)
-    dates = [
-        datetime.date(2024, 1, 1) + datetime.timedelta(days=d) for d in range(1000)
-    ]
+    activities = get_activities(query)
+    dates = list(daterange(query.start_date, query.finish_date))
+    next_page = (
+        query.finish_date + datetime.timedelta(days=1),
+        query.finish_date + datetime.timedelta(days=30),
+    )
+    prev_page = (
+        query.start_date - datetime.timedelta(days=30),
+        query.start_date - datetime.timedelta(days=1),
+    )
     return render_template(
         "table_by_location.html",
         locations=locations,
         activities=activities,
         dates=dates,
         errors=[],
+        next_page=next_page,
+        prev_page=prev_page,
     )
 
 
@@ -156,7 +179,9 @@ class ReallocateActivitySubForm(FlaskForm):
 
 
 class ReallocateActivityForm(FlaskForm):
-    entries = FieldList(FormField(ReallocateActivitySubForm, default=ReallocateStaff))
+    entries = FieldList(
+        FormField(ReallocateActivitySubForm, default=ReallocateActivity)
+    )
 
 
 @blueprint.post("/reallocate_activity")
@@ -169,7 +194,7 @@ def reallocate_activity():
     if form1.entries.data:
         obj = ReallocateActivity()
         form1.populate_obj(obj)
-        dates, errors = do_reallocate_activities(db.session, obj.entries)
+        dates, errors = do_reallocate_activities(obj.entries)
         template_name = "table.html"
     else:
         dates = []
@@ -178,9 +203,14 @@ def reallocate_activity():
         db.session.commit()
     else:
         db.session.rollback()
-    staff = get_staff(db.session)
-    activities = get_activities(db.session, GetActivitiesRequest())
-    locations = get_locations(db.session)
+    staff = get_staff()
+    activities = []
+    if dates:
+        activities = get_activities(
+            GetActivitiesRequest(start_date=min(dates), finish_date=max(dates))
+        )
+
+    locations = get_locations()
 
     return render_template(
         "table.html",
@@ -200,7 +230,7 @@ def reallocate_staff():
     if form2.staff.data:
         obj = ReallocateStaff()
         form2.populate_obj(obj)
-        dates, errors = do_reallocate_staff(db.session, obj)
+        dates, errors = do_reallocate_staff(obj)
         template_name = "table_by_location.html"
     else:
         dates = []
@@ -209,9 +239,9 @@ def reallocate_staff():
         db.session.commit()
     else:
         db.session.rollback()
-    staff = get_staff(db.session)
-    activities = get_activities(db.session, GetActivitiesRequest())
-    locations = get_locations(db.session)
+    staff = get_staff()
+    activities = get_activities(GetActivitiesRequest())
+    locations = get_locations()
 
     return render_template(
         "table_by_location.html",
@@ -418,10 +448,6 @@ def ensure_uuid(val):
     if isinstance(val, str):
         return uuid.UUID(val)
     return val
-
-
-def get_locations():
-    return db.session.scalars(select(Location))
 
 
 def get_tags():

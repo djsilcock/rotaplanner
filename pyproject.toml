@@ -33,6 +33,7 @@ dependencies = [
 "flask",
 "sqlmodel",
 "pydantic",
+"python-dateutil",
 "flask-pydantic",
 "flask-sqlalchemy",
 "unpoly",

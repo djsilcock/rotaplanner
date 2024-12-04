@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.sqlite"
 app.config["SECRET_KEY"] = "qwertyuiopasdfghjkl"
-app.config["SQLALCHEMY_ECHO"] = True
+# app.config["SQLALCHEMY_ECHO"] = True
 FlaskUnpoly().init_app(app)
 csrf = CSRFProtect(app)
 db.init_app(app)
