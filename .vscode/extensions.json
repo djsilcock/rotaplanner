@@ -1,6 +1,7 @@
 {
   "recommendations": [
     "arcanis.vscode-zipfs",
-    "dbaeumer.vscode-eslint"
+    "samuelcolvin.jinjahtml",
+    "ms-python.python"
   ]
 }
