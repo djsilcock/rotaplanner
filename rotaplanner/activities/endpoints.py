@@ -110,26 +110,14 @@ def daterange(start_date, finish_date):
 
 @blueprint.get("/table")
 def table():
+    unpoly().context
     staff = get_staff()
     query = discard_extra_kwargs(GetActivitiesRequest, request.args)
     activities = get_activities(query)
     dates = list(daterange(query.start_date, query.finish_date))
-    next_page = (
-        query.finish_date + datetime.timedelta(days=1),
-        query.finish_date + datetime.timedelta(days=30),
-    )
-    prev_page = (
-        query.start_date - datetime.timedelta(days=30),
-        query.start_date - datetime.timedelta(days=1),
-    )
+
     return render_template(
-        "table.html",
-        y_axis=staff,
-        activities=activities,
-        dates=dates,
-        errors=[],
-        next_page=next_page,
-        prev_page=prev_page,
+        "table.html.j2", y_axis=staff, activities=activities, dates=dates, errors=[]
     )
 
 

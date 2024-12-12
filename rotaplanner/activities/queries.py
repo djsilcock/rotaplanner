@@ -47,6 +47,19 @@ class ActivityWithAssignmentsApi(BaseModel):
         )
 
 
+def date_from_iso_or_ordinal(s):
+    if isinstance(s, datetime.date):
+        return s
+    if isinstance(s, int):
+        return datetime.date.fromordinal(s)
+    if isinstance(s, str):
+        try:
+            return datetime.date.fromisoformat(s)
+        except ValueError:
+            pass
+        return datetime.date.fromordinal(int(s))
+
+
 @dataclass
 class GetActivitiesRequest:
     "request"
@@ -54,10 +67,8 @@ class GetActivitiesRequest:
     finish_date: datetime.date = datetime.date.today() + datetime.timedelta(days=364)
 
     def __post_init__(self):
-        if isinstance(self.start_date, str):
-            self.start_date = datetime.date.fromisoformat(self.start_date)
-        if isinstance(self.finish_date, str):
-            self.finish_date = datetime.date.fromisoformat(self.finish_date)
+        self.start_date = date_from_iso_or_ordinal(self.start_date)
+        self.finish_date = date_from_iso_or_ordinal(self.finish_date)
 
 
 GetActivitiesResponse = RootModel[dict[datetime.date, list[ActivityWithAssignmentsApi]]]

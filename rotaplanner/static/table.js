@@ -4,7 +4,8 @@ up.on("up:deferred:load", "#entryzone", (ev, el) => {
   ev.renderOptions.onRendered = (ev) => {
     console.log(firstpos, firstpos.offsetLeft);
     console.log(document.querySelector("#rota-scrollable").scrollLeft);
-    document.querySelector("#rota-scrollable").scrollLeft = firstpos.offsetLeft;
+    document.querySelector("#rota-scrollable").scrollLeft =
+      firstpos.offsetLeft + 10;
     //      ev.fragments
     //        .filter((e) => e.matches(".column-header"))
     //        .reduce((tot, cur) => tot + cur.scrollWidth, 0),

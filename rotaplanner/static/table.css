@@ -1,6 +1,10 @@
 .activity-name {
   font-size: small;
 }
+.spans-all-rows {
+  grid-row: 1/-1;
+}
+
 #rota-names {
   display: grid;
   grid-template-rows: subgrid;

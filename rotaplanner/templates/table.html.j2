@@ -6,46 +6,43 @@
 <link rel="stylesheet" href="/static/table.css" />
 <script src="/static/table.js"></script>
 
-<style up-asset id="gridspan">
-  /*prettier-ignore */
-  .spans-all-rows {
-      grid-row: 1/ {{y_axis|length +3}};
-  }
+{%endblock%} 
 
-</style>
-{%endblock%} {%block main%}
+{%block main%}
 <main>
-  <div id="rota-table" up-main data-csrf="{{csrf_token()}}" style="grid-template-rows: repeat({{y_axis|length +3}},auto);">
+  <div id="rota-table" up-main data-csrf="{{csrf_token()}}" style="grid-template-rows: repeat({{y_axis|length +2}},auto);">
     <div id="rota-names" class="spans-all-rows">
       <div></div>
       {%for staff_or_location in y_axis%}
-      <div class="row-header" data-yaxis="{{staff_or_location.id}}">{{staff_or_location.name}}</div>
+      <div class="row-header" data-yaxis="{{loop.index}}">{{staff_or_location.name}}</div>
       {%endfor%}
+      <div class="row-header" data-yaxis="none"></div>
     </div>
-    <div class="row-header" data-staff="none"></div>
+    
     <div id="rota-scrollable" class="spans-all-rows">
-      {%if prev_page%}
+      
       <div
         id="entryzone"
         class="spans-all-rows"
         up-defer="reveal"
         up-target="#rota-grid:before,#entryzone"
-        up-href="/activities/table?start_date={{prev_page[0].isoformat()}}&finish_date={{prev_page[1].isoformat()}}"
+        up-href="/activities/table?start_date={{dates[0].toordinal()-30}}&finish_date={{dates[0].toordinal()-1}}"
       >
         <span class="spinner">.</span>
       </div>
-      {%endif%}
+      
       <div id="rota-grid" class="spans-all-rows">
           {% for date in dates %}
-          <div class="column-header" data-date="{{date.isoformat()}}">{{date.strftime('%d %b %y')}}</div>
+          <div class="column-header" data-date="{{date.toordinal()}}">{{date.strftime('%d %b %y')}}</div>
           {% for staff_or_location in y_axis%}
-          {{activity_cell(staff_or_location,date,activities)}}
+          {{activity_cell(staff_or_location,loop.index,date,activities)}}
           {%endfor%}
           <div
-            data-date="{{date.isoformat()}}"
+            up-data='{{ {"date":date.toordinal(),"yAxis":none}|tojson }}'
+            data-date="{{date.toordinal()}}"
             data-staff="none"
             class="unallocated-activities"
-            id="td-{{date.isoformat()}}-unalloc"
+            id="td-{{date.toordinal()}}-unalloc"
             up-hungry
           >
             {% for act in activities[date] %} {{activity(act,show_staff=false)}}
@@ -53,17 +50,15 @@
           </div>
           {% endfor %}
         </div>
-      {%if next_page%}
       <div
         id="endzone"
         class="spans-all-rows"
         up-defer="reveal"
         up-target="#rota-grid:after,#endzone"
-        up-href="/activities/table?start_date={{next_page[0].isoformat()}}&finish_date={{next_page[1].isoformat()}}"
+        up-href="/activities/table?start_date={{dates[-1].toordinal()+1}}&finish_date={{dates[-1].toordinal()+30}}"
       >
         <span class="spinner">ENDZONE</span>
       </div>
-      {%endif%}
       </div>
     </div>
   </div>

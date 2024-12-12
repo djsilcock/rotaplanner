@@ -1,9 +1,9 @@
-{%macro activity_cell(staff_or_location,date,activities)%}
+{%macro activity_cell(staff_or_location,i,date,activities)%}
   <div
     class="activitycell"
-    data-date="{{date.isoformat()}}"
-    data-yaxis="{{staff_or_location.id}}"
-    id="td-{{date.isoformat()}}-{{staff_or_location.id}}"
+    data-date="{{date.toordinal()}}"
+    data-yaxis="{{i}}"
+    id="td-{{date.toordinal()}}-{{i}}"
     up-hungry
   >
     {% for act in activities[date] %}
@@ -23,11 +23,8 @@
 activity(activity_def,staff_or_location=none,show_location=true,show_staff=true) -%}
 <div
   class="activity"
-  {%if staff_id%}
-    data-yaxis="{{staff_or_location}}"
-  {%endif%}
   data-activityid="{{activity_def.id}}"
-  data-activitydate="{{activity_def.activity_start.date().isoformat()}}"
+  data-activitydate="{{activity_def.activity_start.date().toordinal()}}"
   draggable="true"
 >
   <div class="activity-name">{{activity_def.name}}</div>
