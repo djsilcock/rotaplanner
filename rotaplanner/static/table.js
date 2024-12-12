@@ -1,16 +1,9 @@
 up.on("up:deferred:load", "#entryzone", (ev, el) => {
-  console.log(ev);
   const firstpos = document.querySelector(".column-header");
   ev.renderOptions.onRendered = (ev) => {
     console.log(firstpos, firstpos.offsetLeft);
     console.log(document.querySelector("#rota-scrollable").scrollLeft);
-    document.querySelector("#rota-scrollable").scrollLeft =
-      firstpos.offsetLeft + 10;
-    //      ev.fragments
-    //        .filter((e) => e.matches(".column-header"))
-    //        .reduce((tot, cur) => tot + cur.scrollWidth, 0),
-    //      0
-    //    );
+    document.querySelector("#rota-scrollable").scrollLeft = firstpos.offsetLeft;
   };
 });
 up.compiler("#rota-table", (table) => {
