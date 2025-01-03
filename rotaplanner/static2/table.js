@@ -1,11 +1,117 @@
-up.on("up:deferred:load", "#entryzone", (ev, el) => {
+/*up.on("up:deferred:load", "#entryzone", (ev, el) => {
   const firstpos = document.querySelector(".column-header");
   ev.renderOptions.onRendered = (ev) => {
     console.log(firstpos, firstpos.offsetLeft);
     console.log(document.querySelector("#rota-scrollable").scrollLeft);
     document.querySelector("#rota-scrollable").scrollLeft = firstpos.offsetLeft;
   };
-});
+});*/
+import "./table.css";
+up.compiler(
+  "#rota-scrollable",
+  (scrollContainer, { today, first, last, yAxis }) => {
+    const SEGMENT_WIDTH = 10;
+    const scrollContent = document.getElementById("rota-grid");
+    let todayCell;
+    let itemCount = 0;
+    let timeout = true;
+
+    // Function to generate a new item
+    const createItem = (id) => {
+      const wrapper = document.createElement("div");
+      wrapper.classList.add("rota-segment-wrapper");
+      const item = document.createElement("div");
+      wrapper.appendChild(item);
+      item.classList.add("rota-segment");
+
+      item.textContent = "...";
+      item.dataset.page = id;
+      wrapper.dataset.page = id;
+      item.id = `rota-segment-${id}`;
+      item.setAttribute("up-defer", "reveal");
+      item.setAttribute(
+        "up-href",
+        `/activities/rota_segment?y_axis=${yAxis}&start_date=${id}`
+      );
+
+      return wrapper;
+    };
+
+    // Function to append items to the right
+    const appendItem = () => {
+      const lastChild = scrollContent.lastChild;
+      const thisId =
+        Number(lastChild?.dataset.page || first - SEGMENT_WIDTH) +
+        SEGMENT_WIDTH;
+
+      const newItem = createItem(thisId);
+      console.log(newItem);
+      if (today >= thisId && today < thisId + SEGMENT_WIDTH) {
+        todayCell = newItem;
+        console.log("yep");
+      }
+      scrollContent.appendChild(newItem);
+      return [newItem, thisId];
+    };
+
+    // Function to prepend items to the left
+
+    // Prepopulate the scroll content with some items
+    console.log({ first, last, today });
+    for (let i = first; i <= last; i = appendItem()[1]) {}
+    if (todayCell) {
+      scrollContainer.scrollLeft = todayCell.offsetLeft;
+    }
+    document.querySelectorAll(".rota-segment").forEach((el) => up.hello(el));
+    // Handle the scroll event
+
+    const prependedObserver = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) {
+          if (e.target == scrollContent.firstChild) {
+            scrollContainer.scrollLeft -= e.target.offsetWidth;
+            prependedObserver.unobserve(e.target);
+            e.target.remove();
+          }
+        }
+      });
+    });
+    const prependObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            const firstChild = scrollContent.firstChild;
+            const firstId = Number(firstChild.dataset.page);
+
+            const newItem = createItem(firstId - SEGMENT_WIDTH);
+            console.log({ firstId, firstChild });
+            if (firstId < first) newItem.classList.add("prepend");
+            scrollContent.insertBefore(newItem, scrollContent.firstChild);
+            scrollContainer.scrollLeft = firstChild.offsetLeft;
+            console.log({ newItem, firstChild });
+            setTimeout(() => up.hello(newItem), 500);
+          }
+        });
+      },
+      { root: scrollContainer }
+    );
+    prependObserver.observe(document.querySelector("#grid-begin"));
+    const appendObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            lastitem = scrollContent.lastChild;
+            const item = appendItem()[0];
+            setTimeout(() => up.hello(item), 500);
+          }
+        });
+      },
+      { root: scrollContainer }
+    );
+    appendObserver.observe(document.querySelector("#grid-end"));
+  }
+);
+
 up.compiler("#rota-table", (table) => {
   let draglimit = "";
   let dragmode = "";

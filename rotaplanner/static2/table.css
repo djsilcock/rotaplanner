@@ -5,6 +5,12 @@
   grid-row: 1/-1;
 }
 
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 #rota-names {
   display: grid;
   grid-template-rows: subgrid;
@@ -17,10 +23,11 @@
 #rota-scrollable {
   display: grid;
   position: relative;
-  scroll-snap-type: x mandatory;
+
   grid-template-rows: subgrid;
   grid-auto-flow: column;
   overflow: auto;
+  white-space: nowrap;
 }
 #rota-grid {
   display: grid;
@@ -29,10 +36,21 @@
   grid-auto-flow: column;
   grid-row: 1/-1;
 }
-.rota-segment {
+.rota-segment-wrapper {
   display: grid;
   grid-auto-columns: auto;
   grid-template-rows: subgrid;
+  grid-template-columns: repeat(var(--segment-width, 10), minmax(5em, auto));
+  grid-row: 1/-1;
+  grid-auto-flow: column;
+}
+.rota-segment {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-template-columns: subgrid;
+  grid-row: 1/-1;
+  grid-column: 1/-1;
+  grid-auto-flow: column;
 }
 .activity {
   background-color: antiquewhite;

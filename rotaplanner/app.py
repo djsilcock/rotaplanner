@@ -3,7 +3,7 @@ from .database import db
 from flask_unpoly import FlaskUnpoly
 from flask_wtf import CSRFProtect
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path="/site")
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.sqlite"
 app.config["SECRET_KEY"] = "qwertyuiopasdfghjkl"

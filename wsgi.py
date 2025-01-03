@@ -5,12 +5,13 @@ from rotaplanner.activities.models import (
     StaffAssignment,
     Location,
 )
-from flask import Blueprint, render_template, current_app
+from flask import Blueprint, render_template, current_app, redirect
 from rotaplanner.activities.endpoints import blueprint as sched_blueprint
 import datetime
 import sys
 from uuid import UUID
 import webbrowser
+import pathlib
 
 
 @app.cli.command("initdb")
@@ -97,13 +98,20 @@ def quit():
     raise KeyboardInterrupt
 
 
-@app.get("/sidebar.html")
+@app.get("/sidebar")
+def sidebar():
+    return render_template("sidebar.html.j2")
+
+
+@app.get("/")
 def home():
-    return render_template("sidebar.html", name="world")
+    return redirect("/site/index.html")
 
 
+print(app.root_path)
 from threading import Timer
 
 if __name__ == "__main__":
+
     # Timer(5, lambda: webbrowser.open("http://localhost:5000")).start()
     app.run(debug=True)

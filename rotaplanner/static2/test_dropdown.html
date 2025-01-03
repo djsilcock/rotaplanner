@@ -1,0 +1,161 @@
+<html>
+  <head>
+    <style>
+      .selectcontainer {
+        position: relative;
+        display: grid;
+        grid-template-rows: auto auto auto;
+        grid-template-columns: 1fr 1.5em;
+        grid-template-areas: "chips chips" "textbox textbox" "options options";
+      }
+      .chips {
+        grid-area: chips;
+      }
+      .textbox {
+        display: grid;
+        grid-area: textbox;
+        grid-template-columns: subgrid;
+        border: 1px solid black;
+        border-radius: 4px;
+        padding: 3px;
+        margin: 2px;
+      }
+      .textbox input[type="text"] {
+        border: none;
+      }
+      .textbox input:focus {
+        border: none;
+      }
+      .options {
+        display: none;
+      }
+      .selectcontainer:focus-within .options {
+        display: block;
+        grid-area: options;
+      }
+      .options {
+        border: 1px solid black;
+        width: 100%;
+        border-radius: 4px;
+        padding: 4px;
+      }
+      .options .strikeout {
+        display: none;
+      }
+      .chips label {
+        display: none;
+      }
+      .chips input {
+        display: none;
+      }
+      .chips label:has(input:checked) {
+        display: inline;
+        color: white;
+        background-color: darkgray;
+        border-radius: 2px;
+        padding: 2px;
+        margin: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <select>
+        <option>option 0</option>
+        <option>option 1</option>
+      </select>
+      <hr />
+    </div>
+    <script>
+      const createElement = (tag, { classes, children = [], ...attribs }) => {
+        const newEl = document.createElement(tag);
+        if (classes) {
+          newEl.classList.add(...classes);
+        }
+        Object.entries(attribs).forEach((name, value) => {
+          newEl.setAttribute(name, value);
+        });
+        children.forEach((child) => newEl.appendChild(child));
+        return newEl;
+      };
+      const select = document.querySelector("select");
+      const chips = new Map();
+      const options = new Map();
+      const chipsDiv = createElement("div", { classes: ["chips"] });
+      const optionsDiv = createElement("div", { classes: ["options"] });
+      const textbox = createElement("input", { type: "text" });
+      const container = createElement("div", {
+        classes: ["selectcontainer"],
+        children: [
+          chipsDiv,
+          createElement("label", {
+            classes: ["textbox"],
+            children: [
+              textbox,
+              createElement("span", {
+                children: [document.createTextNode("▼")],
+              }),
+            ],
+          }),
+          optionsDiv,
+        ],
+      });
+      select.replaceWith(container);
+
+      for (let i = 0; i < select.options.length; i++) {
+        const opt = select.options.item(i);
+        const newChip = document.createElement("label");
+        newChip.innerHTML = opt.innerHTML;
+        const newCheck = document.createElement("input");
+        newCheck.type = "checkbox";
+        newChip.appendChild(newCheck);
+        chips.set(opt.value, newCheck);
+        chipsDiv.appendChild(newChip);
+        const newOption = document.createElement("div");
+        newOption.dataset.value = opt.value;
+        newOption.dataset.label = opt.label;
+        const anchorEl = document.createElement("a");
+        anchorEl.href = "";
+        anchorEl.innerHTML = opt.innerHTML;
+        newOption.appendChild(anchorEl);
+        optionsDiv.appendChild(newOption);
+      }
+
+      const redrawOptions = () => {
+        const options = optionsDiv.querySelectorAll("div");
+        options.forEach((el) => {
+          console.log(el);
+          console.log(chips.get(el.dataset.value)?.checked);
+          if (
+            !el.dataset.label.includes(textbox.value) ||
+            chips.get(el.dataset.value)?.checked
+          ) {
+            el.classList.add("strikeout");
+          } else {
+            el.classList.remove("strikeout");
+          }
+        });
+      };
+      textbox.addEventListener("input", (e) => {
+        redrawOptions();
+      });
+      redrawOptions();
+      container.addEventListener("click", (e) => {
+        console.log(e);
+        if (e.target.matches(".options a")) {
+          e.preventDefault();
+          const parent = e.target.closest("div");
+          if (chips.get(parent.dataset.value)) {
+            chips.get(parent.dataset.value).checked = true;
+            redrawOptions();
+          }
+
+          return;
+        }
+        if (e.target.matches(".chips input")) {
+          redrawOptions();
+        }
+      });
+    </script>
+  </body>
+</html>

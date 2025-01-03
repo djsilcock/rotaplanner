@@ -63,12 +63,17 @@ def date_from_iso_or_ordinal(s):
 @dataclass
 class GetActivitiesRequest:
     "request"
-    start_date: datetime.date = datetime.date.today()
-    finish_date: datetime.date = datetime.date.today() + datetime.timedelta(days=364)
+    y_axis: Literal["staff", "location"]
+    start_date: datetime.date = None
+    finish_date: datetime.date = None
 
     def __post_init__(self):
-        self.start_date = date_from_iso_or_ordinal(self.start_date)
-        self.finish_date = date_from_iso_or_ordinal(self.finish_date)
+        self.start_date = (
+            date_from_iso_or_ordinal(self.start_date) or datetime.date.today()
+        )
+        self.finish_date = date_from_iso_or_ordinal(
+            self.finish_date
+        ) or self.start_date + datetime.timedelta(days=9)
 
 
 GetActivitiesResponse = RootModel[dict[datetime.date, list[ActivityWithAssignmentsApi]]]
@@ -99,6 +104,18 @@ def get_staff():
 
 def get_locations():
     return list(db.session.scalars(select(Location)))
+
+
+def get_daterange():
+    return tuple(
+        datetime.date.fromisoformat(d)
+        for d in db.session.execute(
+            select(
+                func.date(func.min(Activity.activity_start)),
+                func.date(func.max(Activity.activity_start)),
+            )
+        ).one()
+    )
 
 
 class ReallocateStaffDragDropEntry(BaseModel):

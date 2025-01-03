@@ -1,0 +1,30 @@
+<html>
+<body>
+<main>
+<nav class="navigation" up-nav>
+      <label for="navcontroller" class="closenav">Close</label>
+      <div class="navheader">Main Menu</div>
+      <div class="navitem">
+        <a href="{{url_for('activities.table_by_staff')}}">Rota by person</a>
+      </div>
+      <div class="navitem">
+        <a href="{{url_for('activities.table_by_location')}}"
+          >Rota by location</a
+        >
+      </div>
+      <div class="navitem">
+        <a href="{{url_for('activities.activity_templates')}}"
+          >Manage activity templates</a
+        >
+      </div>
+      <div class="navitem">
+        <a href="/api/templates/supply">Manage supply templates</a>
+      </div>
+      <div class="navitem"><a href="/api/activities/table">Rota solver</a></div>
+      <div class="navitem">
+        <a href="/api/templates/supply">Import from CLW</a>
+      </div>
+      <div class="navitem"><a href="/api/config">Setup staff</a></div>
+    </nav>
+    
+</main></body></html>

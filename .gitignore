@@ -29,3 +29,4 @@ gitignore
 # System Files
 .DS_Store
 Thumbs.db
+bun.exe

@@ -9,6 +9,7 @@ from .queries import (
     reallocate_activities as do_reallocate_activities,
     get_staff,
     get_locations,
+    get_daterange,
 )
 from ..utils import get_instance_fields
 from rotaplanner.database import db
@@ -108,41 +109,61 @@ def daterange(start_date, finish_date):
         d += datetime.timedelta(days=1)
 
 
-@blueprint.get("/table")
-def table():
-    unpoly().context
+@blueprint.get("/table/staff")
+def table_by_staff():
+    return table("staff")
+
+
+@blueprint.get("/table/location")
+def table_by_location():
+    return table("location")
+
+
+def get_row_headers(y):
+    if y == "staff":
+        y_axis = get_staff()
+    elif y == "location":
+        y_axis = get_locations()
+    else:
+        raise ValueError
+    return y_axis
+
+
+def table(y):
+    row_headings = get_row_headers(y)
+    begin_date, end_date = get_daterange()
+    today = datetime.date.today().toordinal()
+
+    return render_template(
+        "table.html.j2",
+        y_axis=row_headings,
+        errors=[],
+        table_info={
+            "first": min(begin_date.toordinal(), today),
+            "last": max(end_date.toordinal(), today),
+            "today": today,
+            "yAxis": y,
+        },
+    )
+
+
+@blueprint.get("/rota_segment")
+def table_segment():
     staff = get_staff()
     query = discard_extra_kwargs(GetActivitiesRequest, request.args)
     activities = get_activities(query)
+    min_date, max_date = get_daterange()
     dates = list(daterange(query.start_date, query.finish_date))
-
     return render_template(
-        "table.html.j2", y_axis=staff, activities=activities, dates=dates, errors=[]
-    )
-
-
-@blueprint.get("/table_by_location")
-def table_by_location():
-    locations = get_locations()
-    query = discard_extra_kwargs(GetActivitiesRequest, request.args)
-    activities = get_activities(query)
-    dates = list(daterange(query.start_date, query.finish_date))
-    next_page = (
-        query.finish_date + datetime.timedelta(days=1),
-        query.finish_date + datetime.timedelta(days=30),
-    )
-    prev_page = (
-        query.start_date - datetime.timedelta(days=30),
-        query.start_date - datetime.timedelta(days=1),
-    )
-    return render_template(
-        "table_by_location.html",
-        locations=locations,
+        "rota_segment.html.j2",
+        y_axis=staff,
         activities=activities,
         dates=dates,
         errors=[],
-        next_page=next_page,
-        prev_page=prev_page,
+        begin_ordinal=0,
+        end_ordinal=700000,
+        is_prepend=(query.finish_date < min_date),
+        is_append=(query.start_date > max_date),
     )
 
 

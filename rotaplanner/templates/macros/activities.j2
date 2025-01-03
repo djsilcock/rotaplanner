@@ -5,7 +5,7 @@
     data-yaxis="{{i}}"
     id="td-{{date.toordinal()}}-{{i}}"
     up-hungry
-  >
+  > 
     {% for act in activities[date] %}
       {%if act.location==staff_or_location%}
         {{activity(act,staff_or_location,show_location=false,show_staff=true)}}
@@ -41,3 +41,27 @@ activity(activity_def,staff_or_location=none,show_location=true,show_staff=true)
   {%endif%}
 </div>
 {% endmacro %} 
+
+{%macro rota_segment(dates,y_axis,activities,is_prepend=false,is_append=false)%}
+<div class="rota-segment {{'prepend' if is_prepend else ''}} {{'append' if is_append else ''}}" id="rota-segment-{{dates[0].toordinal()}}" style="--segment-width:{{dates|length}};" data-page="{{dates[0].toordinal()}}">
+{% for date in dates %}
+  <div class="column-header" data-date="{{date.toordinal()}}">
+    {{date.strftime('%d %b %y')}}
+  </div>
+  {% for staff_or_location in y_axis%}
+    {{activity_cell(staff_or_location,loop.index,date,activities)}}
+  {%endfor%}
+  <div
+    up-data='{{ {"date":date.toordinal(),"yAxis":none}|tojson }}'
+    data-date="{{date.toordinal()}}"
+    data-staff="none"
+    class="unallocated-activities"
+    id="td-{{date.toordinal()}}-unalloc"
+    up-hungry
+  >
+    {% for act in activities[date] if show_in_unalloc%} {{activity(act,show_staff=false)}}
+    {% endfor %}
+  </div>
+  {% endfor %}
+  </div>
+{%endmacro%}
