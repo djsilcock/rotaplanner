@@ -1,7 +1,7 @@
-
 import MenuIcon from "@suid/icons-material/Menu";
 import PersonIcon from "@suid/icons-material/Person";
 import MapIcon from "@suid/icons-material/Map";
+import Build from "@suid/icons-material/Build";
 import {
   AppBar,
   Box,
@@ -17,15 +17,13 @@ import {
   Toolbar,
   Typography,
 } from "@suid/material";
-import { DrawerProps } from "@suid/material/Drawer";
-import { createMutable } from "solid-js/store";
-import { createSignal } from "solid-js";
-import { Route,HashRouter as Router,A } from "@solidjs/router";
-import { Build } from "@suid/icons-material";
+import { Route, HashRouter as Router, A, query } from "@solidjs/router";
+import { createSignal, lazy } from 'solid-js'
+import { Batcher } from './utils/batcher'
+import { set } from 'lodash'
+import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
 
-function B(props) {
-  return props.children
-}
+
 function MenuItem(props: { href: string, icon: any, text: string }) { 
   return <A href={props.href}><ListItem disablePadding>
             <ListItemButton>
@@ -59,8 +57,8 @@ function Layout(props:any) {
       <List>
         
           
-        <MenuItem href="/rota-by-person" icon={<PersonIcon />} text="Rota by person" />
-        <MenuItem href="/rota-by-location" icon={<MapIcon />} text="Rota by location" />
+        <MenuItem href="/rota-grid/staff" icon={<PersonIcon />} text="Rota by person" />
+        <MenuItem href="/rota-grid/location" icon={<MapIcon />} text="Rota by location" />
       </List>
       <Divider />
       <List>
@@ -101,8 +99,10 @@ function Layout(props:any) {
             onClose={toggleDrawer(false)}
           >
             {list()}
-          </Drawer>
+      </Drawer>
+      <div style={{padding:'1em'}}>
         {props.children}
+      </div>
     
     </div>
   );
@@ -114,9 +114,17 @@ function IndexPage() {
 function NotFound() {
   return <div>Not here!</div>
 }
+
+
+
+const queryClient = new QueryClient()
 export default function App() {
-  return <Router root={Layout} base="/site">
+  return <QueryClientProvider client={queryClient}><Router root={Layout} base="/site">
     <Route path='/' component={IndexPage} />
-    <Route path="*404" component={NotFound}/>
+  
+    <Route path="/rota-grid/:locationOrStaff" matchFilters={{locationOrStaff:['staff','location']}} component={lazy(()=>import('./table'))}/>
+    <Route path="/manage-activity-templates" component={lazy(()=>import('./edit_activity'))}/>
+    <Route path="*404" component={NotFound} />
   </Router>
+    </QueryClientProvider>
 }

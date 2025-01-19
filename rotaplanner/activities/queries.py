@@ -5,7 +5,7 @@ import itertools
 import uuid
 import enum
 
-from .models import Activity, Staff, StaffAssignment, Location
+from ..models import Activity, Staff, StaffAssignment, Location
 from pydantic import BaseModel, Field, RootModel, TypeAdapter
 from dataclasses import dataclass
 from sqlalchemy import func, or_, select, delete
@@ -48,6 +48,8 @@ class ActivityWithAssignmentsApi(BaseModel):
 
 
 def date_from_iso_or_ordinal(s):
+    if s is None:
+        return None
     if isinstance(s, datetime.date):
         return s
     if isinstance(s, int):
@@ -63,7 +65,6 @@ def date_from_iso_or_ordinal(s):
 @dataclass
 class GetActivitiesRequest:
     "request"
-    y_axis: Literal["staff", "location"]
     start_date: datetime.date = None
     finish_date: datetime.date = None
 
@@ -151,75 +152,92 @@ class RemoveStaffRequest(BaseModel):
 # StaffChangeRequest=TypeAdapter(Annotated[Union[RestaffRequest,ReallocateStaffRequest,AllocateStaffRequest,SwapStaffRequest,RemoveStaffRequest],Field(discriminator='alloctype')])
 
 
+def uuid_or_none(s):
+    if s is None:
+        return None
+    if isinstance(s, uuid.UUID):
+        return s
+
+    return uuid.UUID(s)
+
+
+@dataclass
 class ReallocateActivity:
-    activityid: uuid.UUID
-    initialstaff: uuid.UUID
-    newstaff: uuid.UUID
-    newdate: datetime.date
-    entries: list[Self]
+    activity_id: uuid.UUID
+
+    original_date: datetime.date = None
+    new_date: datetime.date = None
+    original_row: uuid.UUID = None
+    new_row: uuid.UUID = None
+
+    def __post_init__(self):
+        self.original_date = date_from_iso_or_ordinal(self.original_date)
+        self.new_date = date_from_iso_or_ordinal(self.new_date)
+        self.activity_id = uuid_or_none(self.activity_id)
+        self.original_row = uuid_or_none(self.original_row)
+        self.new_row = uuid_or_none(self.new_row)
+        if self.original_row is None and self.new_row is None:
+            raise ValueError("Either original_row or new_row must be provided")
 
 
-def reallocate_activities(entries: list[ReallocateActivity]):
-    print(entries)
+def reallocate_activity(entry: ReallocateActivity):
+
     sess = db.session
     dates = set()
     errors = []
-    for entry in entries:
-        activity = sess.get(Activity, entry.activityid)
-        initialstaff = (
-            sess.get(Staff, entry.initialstaff)
-            if entry.initialstaff is not None
-            else None
-        )
-        newstaff = (
-            sess.get(Staff, entry.newstaff) if entry.newstaff is not None else None
-        )
-        if entry.newdate != activity.activity_start.date():
-            # is there a matching activity on that date?
-            result = sess.execute(
-                select(Activity)
-                .where(func.date(Activity.activity_start) == entry.newdate)
-                .where(
-                    or_(
-                        Activity.template_id == activity.template_id,
-                        Activity.name == activity.name,
-                    )
-                )
-            ).first()
-            if result is None:
-                errors.append(
-                    f'Cannot find an activity matching {activity.name} on {entry.newdate.strftime("%d/%m/%Y")}'
-                )
-                continue
-            activity = result
+
+    activity = sess.get(Activity, entry.activity_id)
+    original_staff = sess.get(Staff, entry.original_row)
+    new_staff = sess.get(Staff, entry.new_row)
+    original_location = sess.get(Location, entry.original_row)
+    new_location = sess.get(Location, entry.new_row)
+    initial_date = entry.original_date or activity.activity_start.date()
+    new_date = entry.new_date or activity.activity_start.date()
+
+    if new_date != initial_date:
+        # is there a matching activity on that date?
         result = sess.execute(
-            select(StaffAssignment)
-            .where(StaffAssignment.activity_id == activity.id)
-            .where(StaffAssignment.staff_id == entry.newstaff)
-        ).first()
-        if result is not None:
-            errors.append(
-                f'{newstaff.name} is already assigned to {activity.name} on {entry.newdate.strftime("%d/%m/%Y")}'
+            select(Activity)
+            .where(func.date(Activity.activity_start) == new_date)
+            .where(
+                or_(
+                    Activity.template_id == activity.template_id,
+                    Activity.name == activity.name,
+                )
             )
-            continue
-        print(activity)
-        if entry.initialstaff:
+        ).first()
+        if result is None:
+            return (
+                (initial_date, new_date),
+                f'Cannot find an activity matching {activity.name} on {new_date.strftime("%d/%m/%Y")}',
+            )
+
+        activity = result
+    if new_staff != original_staff:
+        if new_staff is not None:
+            result = sess.execute(
+                select(StaffAssignment)
+                .where(StaffAssignment.activity_id == entry.activity_id)
+                .where(StaffAssignment.staff_id == entry.new_row)
+            ).first()
+            if result is not None:
+                return (
+                    (initial_date, new_date),
+                    f'{new_staff.name} is already assigned to {activity.name} on {new_date.strftime("%d/%m/%Y")}',
+                )
+
+        if original_staff is not None:
             sess.execute(
                 delete(StaffAssignment)
-                .where(StaffAssignment.activity_id == entry.activityid)
-                .where(StaffAssignment.staff_id == entry.initialstaff)
+                .where(StaffAssignment.activity_id == entry.activity_id)
+                .where(StaffAssignment.staff_id == entry.original_row)
             )
-        if entry.newstaff and entry.newstaff != UNALLOCATED_STAFF:
-            sess.add(
-                StaffAssignment(activity_id=entry.activityid, staff_id=entry.newstaff)
-            )
-        dates.update(
-            act.activity_start.date()
-            for act in sess.scalars(
-                select(Activity).where(Activity.id == entry.activityid)
-            )
-        )
-    return dates, errors
+        if new_staff is not None:
+            sess.add(StaffAssignment(activity_id=entry.activity_id, staff=new_staff))
+    if new_location != original_location:
+        activity.location = new_location
+
+    return (initial_date, new_date), None
 
 
 class ReallocateStaff:

@@ -6,7 +6,7 @@ from .queries import (
     ReallocateActivity,
     get_activities,
     reallocate_staff as do_reallocate_staff,
-    reallocate_activities as do_reallocate_activities,
+    reallocate_activity as do_reallocate_activity,
     get_staff,
     get_locations,
     get_daterange,
@@ -50,7 +50,7 @@ from rotaplanner.date_rules import (
     DateType,
     DateTag,
 )
-from .models import ActivityTemplate, Location, Requirement, ActivityTag, Skill
+from ..models import ActivityTemplate, Location, Requirement, ActivityTag, Skill
 import uuid
 from typing import Any, Self, Sequence
 from rotaplanner.utils import discard_extra_kwargs
@@ -167,6 +167,79 @@ def table_segment():
     )
 
 
+"""
+class Activity(ActivityBase):
+    "concrete activity class"
+    __mapper_args__ = {"polymorphic_identity": "concrete"}
+    id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("activity_base.id"), primary_key=True
+    )
+    activity_start: Mapped[datetime.datetime]
+    activity_finish: Mapped[datetime.datetime]
+    template_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("activity_template.id")
+    )
+    staff_assignments: Mapped[list["StaffAssignment"]] = relationship()
+
+
+class StaffAssignment(db.Model):
+    "staff assignment"
+    activity_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("activity.id"), primary_key=True
+    )
+    staff_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("staff.id"), primary_key=True
+    )
+    activity: Mapped["Activity"] = relationship(back_populates="staff_assignments")
+    staff: Mapped[Staff] = relationship(back_populates="assignments")
+    attendance: Mapped[int] = 100
+    staff: Mapped[Staff] = relationship()
+    tags: Mapped[list[AssignmentTag]] = relationship(
+        secondary=AssignmentTagAssoc.__table__
+    )
+    start_time: Mapped[datetime.datetime | None]
+    finish_time: Mapped[datetime.datetime | None]
+"""
+
+
+@blueprint.post("/by_date")
+def table_by_date(dates=None, include_all=False):
+    if dates is None:
+        dates = [datetime.date.fromisoformat(d) for d in request.json.get("dates")]
+    query = GetActivitiesRequest(start_date=min(dates), finish_date=max(dates))
+    activities = get_activities(query)
+    print(activities)
+    return [
+        {
+            "date": activity_date.isoformat(),
+            "activities": [
+                {
+                    "id": str(activity.id),
+                    "name": activity.name,
+                    "start_time": activity.activity_start.time().hour,
+                    "finish_time": activity.activity_finish.time().hour,
+                    "location": activity.location
+                    and {
+                        "id": activity.location.id,
+                        "name": activity.location.name,
+                    },
+                    "staff_assignments": [
+                        {
+                            "staff": {
+                                "id": str(assn.staff.id),
+                                "name": assn.staff.name,
+                            }
+                        }
+                        for assn in activity.staff_assignments
+                    ],
+                }
+                for activity in activities.get(activity_date, [])
+            ],
+        }
+        for activity_date in (dates if include_all else activities)
+    ]
+
+
 def nullable_UUID(data):
     try:
         return uuid.UUID(data)
@@ -195,40 +268,19 @@ class ReallocateActivityForm(FlaskForm):
 
 @blueprint.post("/reallocate_activity")
 def reallocate_activity():
-    print(request.form)
+    query = ReallocateActivity(**request.json)
 
-    form1 = ReallocateActivityForm()
-    form1.validate_on_submit()
-
-    if form1.entries.data:
-        obj = ReallocateActivity()
-        form1.populate_obj(obj)
-        dates, errors = do_reallocate_activities(obj.entries)
-        template_name = "table.html"
-    else:
-        dates = []
-        errors = ["THere is a problem with the form"]
-    if len(errors) == 0:
+    dates, error = do_reallocate_activity(query)
+    if error is None:
         db.session.commit()
     else:
         db.session.rollback()
-    staff = get_staff()
-    activities = []
-    if dates:
-        activities = get_activities(
-            GetActivitiesRequest(start_date=min(dates), finish_date=max(dates))
-        )
 
-    locations = get_locations()
-
-    return render_template(
-        "table.html",
-        staff=staff,
-        activities=activities,
-        locations=locations,
-        dates=dates,
-        errors=errors,
-    ), (200 if len(errors) == 0 else 422)
+    return {
+        "error": error,
+        "status": "error" if error else "ok",
+        "data": table_by_date(dates=dates, include_all=True),
+    }
 
 
 @blueprint.post("/reallocate_staff")

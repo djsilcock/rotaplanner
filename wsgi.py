@@ -1,5 +1,5 @@
 from rotaplanner.app import app, db
-from rotaplanner.activities.models import (
+from rotaplanner.models import (
     Activity,
     Staff,
     StaffAssignment,
@@ -7,6 +7,7 @@ from rotaplanner.activities.models import (
 )
 from flask import Blueprint, render_template, current_app, redirect
 from rotaplanner.activities.endpoints import blueprint as sched_blueprint
+from rotaplanner.config.endpoints import blueprint as config_blueprint
 import datetime
 import sys
 from uuid import UUID
@@ -90,6 +91,11 @@ def reset_db():
 app.register_blueprint(
     sched_blueprint,
     url_prefix="/activities",
+)
+
+app.register_blueprint(
+    config_blueprint,
+    url_prefix="/config",
 )
 
 

@@ -32,6 +32,7 @@ dependencies = [
 "pyhumps",
 "sqlalchemy",
 "flask",
+"flask_cors",
 "sqlmodel",
 "pydantic",
 "python-dateutil",

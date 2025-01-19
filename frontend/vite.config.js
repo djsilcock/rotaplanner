@@ -8,10 +8,18 @@ export default defineConfig(({ command }) => ({
   },
   base: "/site/",
   define: {
-    BACKEND_URL: command === "build" ? '"/"' : '"http://localhost:5000/"',
+    BACKEND_URL: command === "build" ? '""' : '"http://localhost:5000"',
   },
   build: {
     target: "esnext",
     outDir: "../rotaplanner/static",
+  },
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: ["node_modules/@testing-library/jest-dom/vitest"],
+    // if you have few tests, try commenting this
+    // out to improve performance:
+    isolate: false,
   },
 }));
