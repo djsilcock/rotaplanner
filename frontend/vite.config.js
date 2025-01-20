@@ -5,11 +5,14 @@ export default defineConfig(({ command }) => ({
   plugins: [solidPlugin()],
   server: {
     port: 3000,
-  },
+  
+    proxy: {
+      
+      '/api': {
+        target: 'http://localhost:5000'
+      }
+    },
   base: "/site/",
-  define: {
-    BACKEND_URL: command === "build" ? '""' : '"http://localhost:5000"',
-  },
   build: {
     target: "esnext",
     outDir: "../rotaplanner/static",

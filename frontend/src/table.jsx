@@ -111,7 +111,7 @@ function Table() {
   const tableConfigQuery = createQuery(() => ({
     queryKey: ["rota-grid", y_axis_type()],
     queryFn: (key) =>
-      fetch(`${BACKEND_URL}/config/rota-grid/${y_axis_type()}`)
+      fetch(`/api/config/rota-grid/${y_axis_type()}`)
         .then((r) => r.json())
         .then((r) => {
           console.log(r);
@@ -249,7 +249,7 @@ function Table() {
     console.log(activeMenu());
   });
   const reallocate = (itemid) => {
-    fetch(`${BACKEND_URL}/activities/reallocate_activity`, {
+    fetch(`/api/activities/reallocate_activity`, {
       method: "POST",
       body: JSON.stringify({
         new_row: activeMenu().staff_or_location,
@@ -351,7 +351,7 @@ function Table() {
 
 const activityFetcher = new Batcher({
   fetchFn: (keys) => {
-    return fetch(`${BACKEND_URL}/activities/by_date`, {
+    return fetch(`/api/activities/by_date`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
