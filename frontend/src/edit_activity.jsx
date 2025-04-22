@@ -1,18 +1,33 @@
-import { Show } from "solid-js/web";
-import { MultiSelect, DateField } from "./ui";
-import { createForm, getBy } from "@tanstack/solid-form";
+import { Dynamic, Show } from "solid-js/web";
+import {
+  TextField,
+  TimeField,
+  SelectField,
+  Form,
+  MultiSelect,
+  DateField,
+  Field,
+  FormRow,
+  useForm,
+} from "./ui";
+import { createForm } from "./forms";
+import { get } from "lodash";
 
 import {
   children,
+  createContext,
   createEffect,
   createMemo,
   createSignal,
   Index,
+  For,
   onCleanup,
   splitProps,
+  useContext,
 } from "solid-js";
 
 import styles from "./edit_activity_template.module.css";
+import { createStore } from "solid-js/store";
 
 const ordinal = (index) => {
   const ordinals = ["th", "st", "nd", "rd"];
@@ -20,299 +35,382 @@ const ordinal = (index) => {
   return index + (ordinals[(v - 20) % 10] || ordinals[v] || ordinals[0]);
 };
 
-function TextField(props) {
-  return <InputField type="text" {...props} />;
-}
+function RuleGroupA(props) {
+  const form = useForm().form;
+  const groupDef = form.registerField(props.name);
+  let details;
+  createEffect(() => {
+    if (groupDef.isNew) {
+      details.open = true;
+      form().change(`${props.name}.isNew`, false);
+    }
+  });
 
-function TimeField(props) {
-  return <InputField type="time" {...props} />;
-}
-function InputField(props) {
-  return (
-    <props.form.Field name={props.name}>
-      {(field) => (
-        <div class={styles.formRow}>
-          <label class={styles.fieldLabel}>
-            {props.label}
-            <input
-              type={props.type}
-              onBlur={(e) => field().handleBlur(e.target.value)}
-              onChange={(e) => field().handleChange(e.target.value)}
-              value={field().state.value}
-            />
-          </label>
-          <Show when={field().state.meta.errors.length > 0}>
-            <div class={styles.fieldError}>
-              {field().state.meta.errors.join(",")}
-            </div>
-          </Show>
-        </div>
-      )}
-    </props.form.Field>
-  );
-}
-function SelectField(props) {
-  const [local, remaining] = splitProps(props, ["multiple"]);
-  return (
-    <Show when={local.multiple} fallback={<SelectSingle {...remaining} />}>
-      <MultiSelect {...remaining} />
-    </Show>
-  );
-}
-function SelectSingle(props) {
-  const resolved = children(() => props.children);
-  const options = createMemo(
-    () =>
-      props.options?.map((o) => <option value={o.value}>{o.label}</option>) ??
-      resolved
-  );
-  return (
-    <props.form.Field name={props.name}>
-      {(field) => (
-        <div class={styles.formRow}>
-          <label class={styles.fieldLabel}>
-            {props.label}
-            <select
-              type={props.type}
-              onBlur={(e) => field().handleBlur(e.target.value)}
-              onChange={(e) => field().handleChange(e.target.value)}
-              value={field().state.value}
-            >
-              {options}
-            </select>
-          </label>
-          <Show when={field().state.meta.errors.length > 0}>
-            <div class={styles.fieldError}>
-              {field().state.meta.errors.join(",")}
-            </div>
-          </Show>
-        </div>
-      )}
-    </props.form.Field>
-  );
-}
-function RuleGroup(props) {
   return (
     <div>
-      <props.form.Field name={props.groupName}>
-        {(groupField) => (
-          <div className={styles.ruleBox}>
-            <SelectField
-              form={props.form}
-              name={`${props.groupName}.groupType`}
-              label="Type"
-            >
-              <option value="and">All of these rule must match</option>
-              <option value="or">Any of these rules must match</option>
-              <option value="not">None of these rules may match</option>
-            </SelectField>
-            <div>Groups</div>
-            <props.form.Field name={`${props.groupName}.groups`} mode="array">
-              {(field) => (
-                <div>
-                  <Index each={field().state.value} fallback={"No sub-groups"}>
-                    {(_, groupNo) => (
-                      <RuleGroup
-                        groupName={`${props.groupName}.groups[${groupNo}]`}
-                        index={groupNo}
-                        form={props.form}
-                      />
-                    )}
-                  </Index>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      props.form.pushFieldValue(`${props.groupName}.groups`, {
-                        groupType: "and",
-                        groups: [],
-                        rules: [],
-                      })
-                    }
-                  >
-                    Add group
-                  </button>
-                </div>
-              )}
-            </props.form.Field>
-            <div>Rules</div>
-            <props.form.Field
-              name={`${props.groupName}.rules`}
-              label="rules"
-              mode="array"
-            >
-              {(field) => (
-                <div>
-                  <Index
-                    each={field().state.value}
-                    fallback="No rules declared"
-                  >
-                    {(_, ruleNo) => (
-                      <Rule
-                        ruleName={`${props.groupName}.rules[${ruleNo}]`}
-                        index={ruleNo}
-                        form={props.form}
-                      />
-                    )}
-                  </Index>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      props.form.pushFieldValue(`${props.groupName}.rules`, {
-                        ruleType: "WEEKLY",
-                        weekdays: [],
-                        weekNumbers: [],
-                        months: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-                      })
-                    }
-                  >
-                    Add rule
-                  </button>
-                </div>
-              )}
-            </props.form.Field>
-
-            <div>
-              <Show
-                when={
-                  groupField().state.value?.groups?.length +
-                    groupField().state.value?.rules?.length ==
-                  0
-                }
+      <details ref={details}>
+        <summary>
+          <Field name={`${props.name}.groupType`}>
+            {(field) => (
+              <select
+                onChange={(e) => field.change(e.target.value)}
+                value={field.value}
               >
-                <div>⚠️ This group has no members</div>
-              </Show>
-            </div>
+                <option value="and">All of these rule must match</option>
+                <option value="or">Any of these rules must match</option>
+                <option value="not">None of these rules may match</option>
+              </select>
+            )}
+          </Field>
+        </summary>
+        <div class={styles.ruleBox}>
+          <Index each={groupDef().value?.groups}>
+            {(_, groupNo) => (
+              <RuleGroup
+                name={`${props.name}.groups.${groupNo}`}
+                delete={() =>
+                  form().mutators.remove(`${props.name}.groups`, groupNo)
+                }
+              />
+            )}
+          </Index>
+          <Index each={groupDef().value?.rules}>
+            {(_, ruleNo) => (
+              <Rule
+                name={`${props.name}.rules.${ruleNo}`}
+                delete={() =>
+                  form().mutators.remove(`${props.name}.groups`, groupNo)
+                }
+              />
+            )}
+          </Index>
+
+          <div>
+            <Show
+              when={
+                groupDef().value?.groups?.length +
+                  groupDef().value?.rules?.length ==
+                0
+              }
+            >
+              <div>⚠️ This group has no members</div>
+            </Show>
           </div>
-        )}
-      </props.form.Field>
+          <div>
+            <button
+              type="button"
+              onClick={() => {
+                form().mutators.push(`${props.name}.groups`, {
+                  groupType: "and",
+                  rules: [],
+                  groups: [],
+                  isNew: true,
+                });
+              }}
+            >
+              Add group
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                form().mutators.push(`${props.name}.rules`, {
+                  isNew: true,
+                  ruleType: "weekly",
+                  cycleLength: 1,
+                  weekdays: [1],
+                  weekNumbers: [1],
+                  months: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+                });
+              }}
+            >
+              Add rule
+            </button>
+          </div>
+        </div>
+      </details>
+    </div>
+  );
+}
+
+function RuleGroup(props) {
+  const form = useForm().form;
+  const [groupStore, setGroupStore] = createStore(props.group);
+  let details;
+  createEffect(() => {
+    if (groupStore.isNew) {
+      details.open = true;
+      setGroupStore("isNew", false);
+    }
+  });
+
+  return (
+    <div>
+      <details ref={details}>
+        <summary>
+          <select
+            onChange={(e) => setGroupStore("groupType", e.target.value)}
+            value={groupStore.groupType}
+          >
+            <option value="and">All of these rule must match</option>
+            <option value="or">Any of these rules must match</option>
+            <option value="not">None of these rules may match</option>
+          </select>
+          <Show when={props.delete}>
+            <button onClick={() => props.delete()}>Delete group</button>
+            <hr />
+          </Show>
+        </summary>
+        <div class={styles.groupBox}>
+          <Index each={groupStore.groups}>
+            {(group, groupNo) => (
+              <RuleGroup
+                group={group()}
+                delete={() =>
+                  setGroupStore("groups", (grp) => grp.toSpliced(groupNo, 1))
+                }
+              />
+            )}
+          </Index>
+          <Index each={groupStore.rules}>
+            {(rule, ruleNo) => (
+              <Rule
+                rule={rule()}
+                delete={() =>
+                  setGroupStore("rules", (rules) => rules.toSpliced(ruleNo, 1))
+                }
+              />
+            )}
+          </Index>
+
+          <Show when={groupStore.groups.length + groupStore.rules.length == 0}>
+            <div>⚠️ This group has no members</div>
+            <hr />
+          </Show>
+
+          <div>
+            <button
+              type="button"
+              onClick={() => {
+                setGroupStore("groups", groupStore.groups.length, {
+                  groupType: "and",
+                  rules: [],
+                  groups: [],
+                  isNew: true,
+                });
+              }}
+            >
+              Add group
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setGroupStore("rules", groupStore.rules.length, {
+                  isNew: true,
+                  ruleType: "weekly",
+                  cycleLength: 1,
+                  weekdays: [1],
+                  weekNumbers: [1],
+                  months: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+                });
+              }}
+            >
+              Add rule
+            </button>
+          </div>
+        </div>
+      </details>
     </div>
   );
 }
 
 function Rule(props) {
+  let details;
+  const [ruleDef, setRuleDef] = createStore(props.rule);
   const ruleDescription = createMemo(() => {
-    const rule = props.form.useStore((state) => {
-      console.log(state, props.ruleName, getBy(state.values, props.ruleName));
-      return getBy(state.values, props.ruleName);
-    });
-    console.log(rule().ruleType);
-    return rule().ruleType;
+    switch (ruleDef.ruleType) {
+      case "weekly":
+        const days =
+          ruleDef.weekdays
+            .map(
+              (day) =>
+                [
+                  "Monday",
+                  "Tuesday",
+                  "Wednesday",
+                  "Thursday",
+                  "Friday",
+                  "Saturday",
+                  "Sunday",
+                ][day]
+            )
+            .join(", ") || "[no days selected]";
+        if (ruleDef.cycleLength == 0) {
+          return `${
+            ruleDef.weekNumbers.map(ordinal).join(",") || "[no weeks selected]"
+          } ${days}of the month`;
+        } else if (ruleDef.cycleLength == 1) {
+          return `Every ${days}`;
+        } else {
+          return `Week${
+            ruleDef.weekNumbers.length > 1 ? "s" : ""
+          } ${ruleDef.weekNumbers
+            .map((n) => `${n}/${ruleDef.cycleLength}`)
+            .join(",")}  weeks on ${days}`;
+        }
+      case "DAILY":
+        return `Every ${ruleDef.cycleLength} days`;
+      case "MONTHLY":
+        return `Every ${ordinal(ruleDef.cycleLength)} day of the month`;
+      case "DATETAG":
+        return `Tagged days: ${ruleDef.tags.join(", ")}`;
+      default:
+        return "";
+    }
   });
+  createEffect(() => {
+    if (ruleDef.isNew) {
+      details.open = true;
+      setRuleDef("isNew", undefined);
+    }
+  });
+
   return (
     <div>
-      <details className="rule-definition" name="rule-definition-box">
-        <summary className="description">{ruleDescription()}</summary>
+      <details
+        ref={details}
+        className="rule-definition"
+        name="rule-definition-box"
+      >
+        <summary className="description">
+          {ruleDescription()}
+          <button type="button" onClick={props.delete}>
+            Delete this rule
+          </button>
+        </summary>
         <div className={styles.ruleBox}>
-          <SelectField
-            form={props.form}
-            label="Type"
-            name={`${props.ruleName}.ruleType`}
-          >
-            <option value="DAILY">Every n days</option>
-            <option value="WEEKLY">
-              Days in week (eg every 3rd Monday; 1st Monday of month)
-            </option>
-            <option value="MONTHLY">
-              Day in month (eg 1st of every month)
-            </option>
-            <option value="DATETAG">Tagged days</option>
-          </SelectField>
-          <props.form.Subscribe
-            selector={(state) => {
-              const { ruleType, cycleLength } = getBy(
-                state.values,
-                props.ruleName
-              );
-              return { ruleType, cycleLength };
-            }}
-          >
-            {(ruledef) => (
-              <Switch>
-                <Match when={ruledef().ruleType == "WEEKLY"}>
-                  <SelectField
-                    form={props.form}
-                    multiple
-                    name={`${props.ruleName}.weekdays`}
-                    label="Weekdays"
-                  >
-                    <option value={0}>Monday</option>
-                    <option value={1}>Tuesday</option>
-                    <option value={2}>Wednesday</option>
-                    <option value={3}>Thursday</option>
-                    <option value={4}>Friday</option>
-                    <option value={5}>Saturday</option>
-                    <option value={6}>Sunday</option>
-                  </SelectField>
-                  <SelectField
-                    form={props.form}
-                    name={`${props.ruleName}.cycleLength`}
-                    label="Cycle Length"
-                    options={[
-                      { value: 0, label: "weeks of month" },
-                      { value: 1, label: "every week" },
-                      { value: 2, label: "every 2 weeks" },
-                      { value: 3, label: "every 3 weeks" },
-                      { value: 4, label: "every 4 weeks" },
-                      { value: 5, label: "every 5 weeks" },
-                      { value: 6, label: "every 6 weeks" },
-                      { value: 7, label: "every 7 weeks" },
-                      { value: 8, label: "every 8 weeks" },
-                    ]}
-                  />
-                  <SelectField
-                    form={props.form}
-                    multiple
-                    name={`${props.ruleName}.weekNumbers`}
-                    label="Week Numbers"
-                  >
-                    <Index
-                      each={Array.from(
-                        { length: Number(ruledef().cycleLength) || 5 },
-                        (x, i) => i + 1
-                      )}
-                    >
-                      {(_, index) => (
-                        <option value={index + 1}>{ordinal(index + 1)}</option>
-                      )}
-                    </Index>
-                  </SelectField>
-                  <SelectField
-                    form={props.form}
-                    multiple
-                    name={`${props.ruleName}.months`}
-                    label="Months"
-                    options={[
-                      { value: 0, label: "January" },
-                      { value: 1, label: "February" },
-                      { value: 2, label: "March" },
-                      { value: 3, label: "April" },
-                      { value: 4, value: "May" },
-                      { value: 5, label: "June" },
-                      { value: 6, label: "July" },
-                      { value: 7, label: "August" },
-                      { value: 8, label: "September" },
-                      { value: 9, label: "October" },
-                      { value: 10, label: "November" },
-                      { value: 11, label: "December" },
-                    ]}
-                  />
-                </Match>
-              </Switch>
-            )}
-          </props.form.Subscribe>
+          <FormRow label="Type">
+            <SelectField
+              label="Type"
+              onChange={(value) => setRuleDef("ruleType", value)}
+              value={ruleDef.ruleType}
+            >
+              <option value="DAILY">Every n days</option>
+              <option value="weekly">
+                Days in week (eg every 3rd Monday; 1st Monday of month)
+              </option>
+              <option value="MONTHLY">
+                Day in month (eg 1st of every month)
+              </option>
+              <option value="DATETAG">Tagged days</option>
+            </SelectField>
+          </FormRow>
           <Switch>
-            <Match
-              when={props.form.getFieldValue(`${props.ruleName}.ruleType`)}
-            ></Match>
+            <Match when={ruleDef.ruleType == "weekly"}>
+              <FormRow label="Weekdays">
+                <SelectField
+                  multiple
+                  label="Weekdays"
+                  value={ruleDef.weekdays}
+                  onChange={(v) => setRuleDef("weekdays", v)}
+                  options={[
+                    { value: 0, label: "Monday" },
+                    { value: 1, label: "Tuesday" },
+                    { value: 2, label: "Wednesday" },
+                    { value: 3, label: "Thursday" },
+                    { value: 4, label: "Friday" },
+                    { value: 5, label: "Saturday" },
+                    { value: 6, label: "Sunday" },
+                  ]}
+                  validators={{
+                    onChange: ({ value }) =>
+                      value.length > 0
+                        ? undefined
+                        : "Please select at least one weekday",
+                  }}
+                />
+              </FormRow>
+              <FormRow>
+                <SelectField
+                  onChange={(v) => setRuleDef("cycleLength", v)}
+                  value={ruleDef.cycleLength}
+                  label="Cycle Length"
+                  options={[
+                    { value: 0, label: "weeks of month" },
+                    { value: 1, label: "every week" },
+                    { value: 2, label: "2 weeks" },
+                    { value: 3, label: "3 weeks" },
+                    { value: 4, label: "4 weeks" },
+                    { value: 5, label: "5 weeks" },
+                    { value: 6, label: "6 weeks" },
+                    { value: 7, label: "7 weeks" },
+                    { value: 8, label: "8 weeks" },
+                  ]}
+                />
+              </FormRow>
+              <FormRow>
+                <SelectField
+                  multiple
+                  onChange={(val) => setRuleDef("weekNumbers", val)}
+                  value={ruleDef.weekNumbers}
+                  label="Week Numbers"
+                  validators={{
+                    onChange: ({ value }) =>
+                      value.length > 0
+                        ? undefined
+                        : "Please select at least one week",
+                  }}
+                  options={Array.from(
+                    { length: Number(ruleDef.cycleLength) || 5 },
+                    (_, index) => ({
+                      value: index + 1,
+                      label: ordinal(index + 1),
+                    })
+                  )}
+                />
+              </FormRow>
+              <FormRow>
+                <SelectField
+                  multiple
+                  onChange={(value) => setRuleDef("months", value)}
+                  value={ruleDef.months}
+                  label="Months"
+                  validators={{
+                    onChange: ({ value }) =>
+                      value.length > 0
+                        ? undefined
+                        : "Please select at least one month",
+                  }}
+                  options={[
+                    { value: 0, label: "January" },
+                    { value: 1, label: "February" },
+                    { value: 2, label: "March" },
+                    { value: 3, label: "April" },
+                    { value: 4, label: "May" },
+                    { value: 5, label: "June" },
+                    { value: 6, label: "July" },
+                    { value: 7, label: "August" },
+                    { value: 8, label: "September" },
+                    { value: 9, label: "October" },
+                    { value: 10, label: "November" },
+                    { value: 11, label: "December" },
+                  ]}
+                />
+              </FormRow>
+            </Match>
           </Switch>
-          <div>
-            <DateField form={props.form} name="fred" />
-          </div>
+          <FormRow>
+            <DateField
+              label="Week 1 starts"
+              name="fred"
+              shouldDisable={(d) => d.getDay() != 1}
+              value={ruleDef.anchorDate}
+              onChange={(val) => setRuleDef("anchorDate", val)}
+            />
+          </FormRow>
+
           <div>bla</div>
           <div>bla</div>
           <div>bla</div>
-          <button type="button">Delete this rule</button>
         </div>
       </details>
     </div>
@@ -320,245 +418,189 @@ function Rule(props) {
 }
 
 function EditActivityTemplate(props) {
-  const renderLinklike = (field) => (
-    <label className="linklike">
-      {field({ "data-up-validate": true })}
-      {field.label.text}
-    </label>
+  const [store, setStore] = createStore(
+    props.activity == "new"
+      ? {
+          ruleset: { groupType: "and", groups: [], rules: [] },
+          activity_tags: [],
+        }
+      : {}
   );
-  const form = createForm(() => ({
-    defaultValues: {
-      ruleset: { groupType: "and", groups: [], rules: [] },
-      activity_tags: [],
-    },
-    validators: {
-      onChange(v) {
-        console.log(v);
-      },
-    },
-  }));
-  createEffect(() => console.log(form.state));
+
   return (
     <main>
-      <form method="post" id="edit-activity-form" data-up-submit>
+      <pre>{JSON.stringify(store)}</pre>
+      <Form onSubmit={(val) => console.log(val)}>
         <h4>Edit activity</h4>
         <div id="template-editor-settings" class={styles.formContainer}>
-          <TextField form={form} name="activity_name" label="Activity Name" />
-          This activity occurs:
-          <div id="ruleset-container">
-            <RuleGroup groupName="ruleset" form={form} />
-          </div>
-          <hr />
-          <TimeField form={form} label="Start time" name="start_time" />
-          <TimeField form={form} label="Finish time" name="finish_time" />
-          <MultiSelect
-            form={form}
-            name="activity_tags"
-            value={field().state.value}
-            label="Tags"
-          >
-            <option value="URO">Urology</option>
-            <option value="ENT">ENT</option>
-          </MultiSelect>
-          <label className={styles.formRow}>
-            Location
-            <select label="Location">
+          <FormRow label="Activity Name">
+            <input
+              name="activity_name"
+              value={store.activity_name}
+              onchange={(e) => setStore("activity_name", e.target.value)}
+            />
+          </FormRow>
+          <FormRow label="This activity occurs:">
+            <div id="ruleset-container">
+              <RuleGroup name="ruleset" group={store.ruleset} />
+            </div>
+          </FormRow>
+          <FormRow label="Start time">
+            <input
+              type="time"
+              value={store.start_time}
+              onchange={(e) => setStore("start_time", e.target.value)}
+            />
+          </FormRow>
+          <FormRow label="Finish time">
+            <input
+              type="time"
+              value={store.start_time}
+              onchange={(e) => setStore("start_time", e.target.value)}
+            />
+          </FormRow>
+          <FormRow label="Tags">
+            <MultiSelect
+              name="activity_tags"
+              value={store.activity_tags}
+              onChange={(val) => setStore("activity_tags", val)}
+            >
+              <option value="URO">Urology</option>
+              <option value="ENT">ENT</option>
+            </MultiSelect>
+          </FormRow>
+          <FormRow label="Location">
+            <SelectField
+              value={store.location}
+              onChange={(val) => setStore("location", val)}
+            >
               <option>Theatre 1</option>
               <option>Theatre 1</option>
               <option>Theatre 1</option>
               <option>Theatre 1</option>
-            </select>
-          </label>
-          <hr />
-          {`
-          <div id="requirements-container" data-up-form-group>
-            Requirements:
-            {form.requirements.length > 0 ? (
-              form.requirements.map((req, i) => (
-                <details key={i} open={req.isOpen.data}>
-                  <summary>Requirement</summary>
-                  {req.reqId}
-                  <table className="requirement">
-                    <div style={{ display: "none" }}>{req.isOpen}</div>
-                    {[
-                      req.skills,
-                      req.requirement,
-                      req.optional,
-                      req.attendance,
-                      req.geofence,
-                    ].map((field, j) => renderFormLine(field))}
-                    <tr>
-                      <td></td>
-                      <td>
-                        <label className="linklike">
-                          {req.isDeleted}Delete rule
-                        </label>
-                      </td>
-                    </tr>
-                  </table>
-                </details>
-              ))
-            ) : (
-              <div>⚠️ No requirements have been set</div>
-            )}
-            {renderLinklike(form.shouldAddRequirement)}
-          </div>`}
+            </SelectField>
+          </FormRow>
+          <FormRow label="Requirements" element="div">
+            <div>
+              <For
+                each={store.requirements}
+                fallback={<div>⚠️ No requirements have been set</div>}
+              >
+                {(req, i) => {
+                  const [thisReq, setThisReq] = createStore(req);
+                  return (
+                    <div className={styles.requirement}>
+                      <pre>{JSON.stringify(req)}</pre>
+                      <FormRow label="Skills">
+                        <MultiSelect
+                          value={req.skills}
+                          onChange={(val) => setThisReq("skills", val)}
+                          options={[
+                            { value: "iac", label: "IAC" },
+                            { value: "listrunner", label: "Listrunner" },
+                            { value: "regional", label: "Regional" },
+                            { value: "paediatric", label: "Paediatric" },
+                          ]}
+                        />
+                      </FormRow>
+                      <FormRow label="Required">
+                        <input
+                          type="number"
+                          min={0}
+                          value={req.required}
+                          onChange={(e) =>
+                            setThisReq("required", e.target.valueAsNumber)
+                          }
+                          name={`requirements[${i}].required`}
+                          label="Requirement"
+                        />
+                      </FormRow>
+                      <FormRow label="Optional">
+                        <input
+                          type="number"
+                          min={0}
+                          value={req.optional}
+                          onChange={(e) =>
+                            setThisReq("optional", e.target.valueAsNumber)
+                          }
+                        />
+                      </FormRow>
+                      <FormRow label="Attendance">
+                        <input
+                          type="number"
+                          max={100}
+                          min={0}
+                          value={req.attendance}
+                          onChange={(e) =>
+                            setThisReq("attendance", e.target.valueAsNumber)
+                          }
+                        />
+                      </FormRow>
+                      <FormRow label="Geofence">
+                        <select
+                          value={req.geofence}
+                          onChange={(e) =>
+                            setThisReq("geofence", e.target.value)
+                          }
+                        >
+                          <option value="immediate">Immediate</option>
+                          <option value="local">Local</option>
+                          <option value="remote">Remote</option>
+                          <option value="distant">Distant</option>
+                        </select>
+                      </FormRow>
+
+                      <div>
+                        <div></div>
+                        <div>
+                          <button
+                            type="button"
+                            onclick={(e) => {
+                              e.stopPropagation();
+                              console.log("delete", i());
+                              console.log(JSON.stringify(store.requirements));
+                              setStore("requirements", (requirements) =>
+                                requirements.toSpliced(i(), 1)
+                              );
+                              console.log(JSON.stringify(store.requirements));
+                            }}
+                          >
+                            Delete rule
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }}
+              </For>
+              <hr />
+              <button
+                type="button"
+                onClick={(e) => {
+                  console.log("appending", e);
+                  e.stopPropagation();
+                  setStore("requirements", (requirements) => [
+                    ...(requirements ?? []),
+                    {
+                      skills: [],
+                      required: 1,
+                      optional: 0,
+                      attendance: 100,
+                      geofence: "immediate",
+                    },
+                  ]);
+                }}
+              >
+                Add requirement
+              </button>
+            </div>
+          </FormRow>
         </div>
         <button type="submit">Save template</button>
         <a>Cancel</a>
-      </form>
+      </Form>
     </main>
   );
 }
 
 export default EditActivityTemplate;
-/*
-{%macro ordinal_options(first,last,name,value)%} {%for index in range(first,last+1)%}
-<option value="{{index}}" {%if index==value %}selected{%endif%}>
-    {%if index==1 %} Every {{name}} {%else%} Every {{ordinal(index)}} {{name}} {%endif%}
-</option>
-{%endfor%} {%endmacro%}
-
-{%macro render_linklike(field)%}
-<label class="linklike">
-    {{field(**{'up-validate':true})}}{{field.label.text}}
-</label>
-{%endmacro%}
-
-function TextField(props) {
-    return <Field name={props.name}>{(field) => <TextField label={props.label} value={field().value} onBlur={field().handleBlur} onChange={field().handleChange } /> }</Field>
-}
-
-{%macro form_line(field)%}
-<tr id="{{field.id}}-group" up-form-group {%if field.flags.usf%} up-show-for="{{field.flags.usf}}" {%endif%}>
-    <td>{{field.label}}</td>
-    <td>{%if field.errors%}
-        <div class="ui negative message">
-            {%for err in field.errors%}
-            <div>{{err}}</div>
-            {%endfor%}
-        </div>
-        {%endif%}
-        {{field(**{"up-validate":true,"up-watch-event":"blur"})}}
-    </td>
-</tr>
-{%endmacro%}
-
-
-{%macro render_group(group,rule_types,is_root=false)%}
-<li>
-    <div id="{{group._prefix}}-container" class="rule-box">
-        {{group.group_type}} <label class="linklike">{{group.should_add_rule}}Add rule</label> <label
-            class="linklike">{{group.should_add_group}}Add rule
-            group</label>
-        {%if not is_root%}<label class="linklike">{{group.is_deleted}}Delete group</label>{%endif%}
-        <ul id="{{group._prefix}}-ul" up-form-group>
-
-            {%for subgroup in group.groups%}
-            {{render_group(subgroup,rule_types)}}
-            {%endfor%}
-            {%for rule in group.rules%}
-            {{render_rule(rule,rule_types)}}
-            {%endfor%}
-            {%if group.groups|length == 0 and group.rules|length==0 %}
-            ⚠️This group has no members
-            {%endif%}
-
-        </ul>
-    </div>
-</li>
-{%endmacro%}
-
-
-
-
-
-{%macro render_rule(rule,rule_types)%}
-<li>
-    <details class="rule-definition" {%if rule.is_open.data%}open{%endif%} name="rule-definition-box">
-        <summary class="description">(rule description)</summary>
-        <div style="display:none">{{rule.is_open}}</div>
-        {{rule.rule_id}}
-        <table class="rule-box">
-            <tbody>
-                {{form_line(rule.rule_type)}}
-                {{form_line(rule.day_interval)}}
-                {{form_line(rule.week_interval)}}
-                {{form_line(rule.month_interval)}}
-                {{form_line(rule.start_date)}}
-                {{form_line(rule.finish_date)}}
-                {{form_line(rule.tag)}}
-                {{form_line(rule.date_type)}}
-                <tr>
-                    <td></td>
-                    <td>{{render_linklike(rule.is_deleted)}}
-                </tr>
-            </tbody>
-        </table>
-
-    </details>
-
-</li>
-{%endmacro%}
-
-function EditActivityForm(props) {
-    const form = createForm(() => ({
-        onSubmit:(props=>console.log(props))
-    }))
-return <main>
-    <form onSubmit={()=>form.handleSubmit()}>
-        <h4>Edit activity</h4>
-        <div id="template-editor-settings">
-            <Field name="activity_name">{field => <div><TextField value={field().value} onBlur={field().handleBlur} onChange={field().handleChange } label="Activity Name"></TextField></div>}</Field>
-            
-            This activity occurs:
-            <div id="ruleset-container" up-form-group>
-                <ul>
-                    {{render_group(form,rule_types,true)}}
-                </ul>
-            </div>
-            <hr />
-            <table>
-                <tbody>
-                    {{form_line(form.start_time)}}
-                    {{form_line(form.finish_time)}}
-                    {{form_line(form.activity_tags)}}
-                    {{form_line(form.location)}}
-                </tbody>
-            </table>
-            <hr />
-            <div id="requirements-container" up-form-group>
-                Requirements:
-                {%for req in form.requirements%}
-                <details {%if req.is_open.data%}open{%endif%}>
-                    <summary>Requirement</summary>
-                    {{req.req_id}}
-                    <table class="requirement">
-                        <div style="display:none">{{req.is_open}}</div>
-
-                        {{form_line(req.skills)}}
-                        {{form_line(req.requirement)}}
-                        {{form_line(req.optional)}}
-                        {{form_line(req.attendance)}}
-                        {{form_line(req.geofence)}}
-                        <tr>
-                            <td></td>
-                            <td><label class="linklike">
-                                    {{req.is_deleted}}Delete rule
-                                </label></td>
-                        </tr>
-
-                    </table>
-                </details>
-                {%else%}
-                <div>⚠️No requirements have been set</div>
-                {%endfor%}
-
-                {{render_linklike(form.should_add_requirement)}}
-            </div>
-        </div>
-        <button type="submit">Save template</button>
-        <a href="{{url_for('activities.activity_templates')}}">Cancel</a>
-    </form>
-</main>
-}*/

@@ -6,14 +6,15 @@ import uuid
 import enum
 
 from ..models import Activity, Staff, StaffAssignment, Location
-from pydantic import BaseModel, Field, RootModel, TypeAdapter
+from pydantic import BaseModel, Field, RootModel, TypeAdapter, model_validator
 from dataclasses import dataclass
 from sqlalchemy import func, or_, select, delete
 from typing import Literal, Annotated, Union, Self
 
 from sqlalchemy.orm import Session
-from rotaplanner.database import db
+from rotaplanner.database import engine
 from rotaplanner.constants import UNALLOCATED_STAFF
+from sqlmodel import Session
 
 
 class StaffApi(BaseModel):
@@ -80,9 +81,9 @@ class GetActivitiesRequest:
 GetActivitiesResponse = RootModel[dict[datetime.date, list[ActivityWithAssignmentsApi]]]
 
 
-def get_activities(request: GetActivitiesRequest) -> GetActivitiesResponse:
+def get_activities(request: GetActivitiesRequest, sess) -> GetActivitiesResponse:
     "get activities and assignments for date range"
-    sess = db.session
+
     activities_query = (
         select(func.date(Activity.activity_start), Activity)
         .where(func.date(Activity.activity_start) >= (request.start_date))
@@ -92,25 +93,26 @@ def get_activities(request: GetActivitiesRequest) -> GetActivitiesResponse:
     result = {
         datetime.date.fromisoformat(date): list(a[1] for a in activities)
         for date, activities in itertools.groupby(
-            sess.execute(activities_query), lambda k: k[0]
+            sess.exec(activities_query), lambda k: k[0]
         )
     }
     print(result)
     return result
 
 
-def get_staff():
-    return list(db.session.scalars(select(Staff)))
+def get_staff(sess):
+    return list(sess.scalars(select(Staff)))
 
 
-def get_locations():
-    return list(db.session.scalars(select(Location)))
+def get_locations(sess):
+    return list(sess.scalars(select(Location)))
 
 
-def get_daterange():
+def get_daterange(sess):
+
     return tuple(
         datetime.date.fromisoformat(d)
-        for d in db.session.execute(
+        for d in sess.exec(
             select(
                 func.date(func.min(Activity.activity_start)),
                 func.date(func.max(Activity.activity_start)),
@@ -161,31 +163,33 @@ def uuid_or_none(s):
     return uuid.UUID(s)
 
 
-@dataclass
-class ReallocateActivity:
+class AllocateActivity(BaseModel):
     activity_id: uuid.UUID
-
-    original_date: datetime.date = None
-    new_date: datetime.date = None
-    original_row: uuid.UUID = None
-    new_row: uuid.UUID = None
-
-    def __post_init__(self):
-        self.original_date = date_from_iso_or_ordinal(self.original_date)
-        self.new_date = date_from_iso_or_ordinal(self.new_date)
-        self.activity_id = uuid_or_none(self.activity_id)
-        self.original_row = uuid_or_none(self.original_row)
-        self.new_row = uuid_or_none(self.new_row)
-        if self.original_row is None and self.new_row is None:
-            raise ValueError("Either original_row or new_row must be provided")
+    original_date: datetime.date
+    new_date: datetime.date
+    original_row: Literal[None] = None
+    new_row: uuid.UUID
 
 
-def reallocate_activity(entry: ReallocateActivity):
+class DeAllocateActivity(BaseModel):
+    activity_id: uuid.UUID
+    original_date: datetime.date
+    new_date: datetime.date
+    original_row: uuid.UUID
+    new_row: Literal[None] = None
 
-    sess = db.session
+
+class ReallocateActivity(BaseModel):
+    activity_id: uuid.UUID
+    original_date: datetime.date
+    new_date: datetime.date
+    original_row: uuid.UUID
+    new_row: uuid.UUID
+
+
+def reallocate_activity(entry: ReallocateActivity, sess: Session):
     dates = set()
     errors = []
-
     activity = sess.get(Activity, entry.activity_id)
     original_staff = sess.get(Staff, entry.original_row)
     new_staff = sess.get(Staff, entry.new_row)
@@ -240,14 +244,14 @@ def reallocate_activity(entry: ReallocateActivity):
     return (initial_date, new_date), None
 
 
-class ReallocateStaff:
+class ReallocateStaff(BaseModel):
     staff: uuid.UUID
     initialactivity: uuid.UUID
     newactivity: uuid.UUID
 
 
-def reallocate_staff(entry: ReallocateStaff):
-    sess = db.session
+def reallocate_staff(entry: ReallocateStaff, sess):
+
     dates = set()
     errors = []
     initialactivity = sess.get(Activity, entry.initialactivity)

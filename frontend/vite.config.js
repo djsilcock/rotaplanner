@@ -4,15 +4,19 @@ import solidPlugin from "vite-plugin-solid";
 export default defineConfig(({ command }) => ({
   plugins: [solidPlugin()],
   server: {
+    host: "127.0.0.1",
     port: 3000,
-  
+
     proxy: {
-      
-      '/api': {
-        target: 'http://localhost:5000'
-      }
+      "/api": {
+        target: "http://127.0.0.1:8000",
+      },
+      "/openapi.json": {
+        target: "http://127.0.0.1:8000",
+      },
     },
-  base: "/site/",
+  },
+  base: "/",
   build: {
     target: "esnext",
     outDir: "../rotaplanner/static",

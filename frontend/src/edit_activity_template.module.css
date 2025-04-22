@@ -1,30 +1,13 @@
 input:invalid {
   border: 2px solid red;
 }
-.ruleBox {
-  border: 1px solid blue;
+.ruleBox,
+.groupBox {
+  border-left: 4px solid blue;
+  background-color: white;
   border-radius: 4px;
   padding: 5px;
-  margin: 5px;
-  display: grid;
-  grid-template-columns: auto auto;
-  grid-auto-rows: auto;
-  row-gap: 2px;
-}
-
-.ruleBox {
-  .ruleBox {
-    border: 1px solid green;
-    .ruleBox {
-      border: 1px solid red;
-      .ruleBox {
-        border: 1px solid purple;
-        .ruleBox {
-          border: 1px solid orange;
-        }
-      }
-    }
-  }
+  margin-left: 5px;
 }
 
 .linklike {
@@ -35,7 +18,8 @@ input:invalid {
     display: none;
   }
 }
-.formContainer {
+.formContainer,
+.ruleBox {
   display: grid;
   grid-template-columns: auto auto;
   grid-auto-rows: auto;
@@ -58,4 +42,10 @@ input:invalid {
 }
 .dateDropdown {
   border: 1px solid black;
+}
+.requirement {
+  border: 1px solid gray;
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-auto-rows: auto;
 }

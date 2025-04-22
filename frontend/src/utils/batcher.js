@@ -57,7 +57,6 @@ export class Batcher {
       results.forEach(([key, dataItem]) => {
         const serialisedKey = this.#keySerialiser(key);
         if (callbackMap.has(serialisedKey)) {
-          console.log("resolving", serialisedKey, dataItem);
           callbackMap.get(serialisedKey).resolve(dataItem);
           callbackMap.delete(serialisedKey);
         } else {

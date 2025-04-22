@@ -8,27 +8,31 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "generate-client": "openapi-ts"
   },
   "license": "MIT",
   "devDependencies": {
     "@solidjs/testing-library": "^0.8.10",
-    "@suid/vite-plugin": "^0.3.1",
     "@testing-library/jest-dom": "^6.6.3",
-    "jsdom": "^25.0.1",
-    "vite": "^6.0.0",
+    "jsdom": "^26.0.0",
+    "vite": "^6.0.11",
     "vite-plugin-solid": "^2.11.0",
-    "vitest": "^2.1.8"
+    "vitest": "^3.0.5"
   },
   "dependencies": {
+    "@hey-api/client-fetch": "^0.8.0",
+    "@hey-api/openapi-ts": "^0.64.1",
     "@kobalte/core": "^0.13.7",
-    "@solidjs/router": "^0.15.2",
+    "@solidjs/router": "^0.15.3",
     "@suid/icons-material": "^0.8.1",
     "@suid/material": "^0.18.0",
-    "@tanstack/solid-query": "^5.62.12",
+    "@tanstack/solid-query": "^5.66.0",
     "date-fns": "^4.1.0",
+    "final-form": "^4.20.10",
+    "final-form-arrays": "^3.1.0",
     "lodash": "^4.17.21",
     "solid-dnd-directive": "^0.2.0",
-    "solid-js": "^1.9.3"
+    "solid-js": "^1.9.4"
   }
 }

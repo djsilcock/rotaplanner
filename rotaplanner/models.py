@@ -5,15 +5,14 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from ortools.sat.python import cp_model
-from sqlalchemy import ForeignKey, ForeignKeyConstraint
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from rotaplanner.database import db
 
-from rotaplanner.date_rules import RuleGroup, RuleRoot, GroupType
+from pydantic import BaseModel, Field
+
+from rotaplanner.date_rules import RuleGroup, RuleRoot, GroupType, Schedule
 
 from functools import reduce
-
+from typing import Annotated, Union, Literal
 
 MIN_DATE = datetime.date(1900, 1, 1)
 MAX_DATE = datetime.date(2100, 12, 31)
@@ -24,211 +23,156 @@ class RequirementType(Enum):
     OR = "OR"
 
 
-class Skill(db.Model):
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
-    name: Mapped[str]
+class Skill(BaseModel):
+    id: uuid.UUID
+    name: str
 
 
-class StaffSkill(db.Model):
-    skill_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("skill.id"), primary_key=True
-    )
-    staff_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("staff.id"), primary_key=True
-    )
+class Staff(BaseModel):
+    id: uuid.UUID
+    name: str
+    skills: list[Skill]
+    assignments: list["StaffAssignment"]
 
 
-class Staff(db.Model):
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
-    name: Mapped[str]
-    skills: Mapped[list[Skill]] = relationship(secondary=StaffSkill.__table__)
-    assignments: Mapped[list["StaffAssignment"]] = relationship(back_populates="staff")
+class Location(BaseModel):
+    id: uuid.UUID
+    name: str
 
 
-class Location(db.Model):
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
-    name: Mapped[str]
+class Requirement(BaseModel):
+    rule_or_group: Literal["rule"] = "rule"
+    mandatory: int = 1  # required number of people
+    optional: int = 1  # optional extra people
+    skills: list[Skill]
 
 
-class SkillRequirement(db.Model):
-    skill_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("skill.id"), primary_key=True
-    )
-    requirement_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("requirement.id"), primary_key=True
-    )
+class RequirementGroup(BaseModel):
+    rule_or_group: Literal["group"] = "group"
+    group_type: RequirementType
+    requirements: list[
+        Annotated[
+            Union[Requirement, "RequirementGroup"], Field(discriminator="rule_or_group")
+        ]
+    ]
 
 
-class Requirement(db.Model):
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
-    activity_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("activity_base.id"))
-    mandatory: Mapped[int] = mapped_column(default=1)  # required number of people
-    optional: Mapped[int] = mapped_column(default=1)  # optional extra people
-    attendance: Mapped[int] = mapped_column(
-        default=100
-    )  # required attendance for this role (eg remote supervisor=50%)
-    geofence: Mapped[str] = mapped_column(
-        default="_immediate"
-    )  # must not clash with duty outside this zone (eg main theatre)
-    skills: Mapped[list[Skill]] = relationship(
-        secondary=SkillRequirement.__table__
-    )  # must have these skills
-
-    def clone(self):
-        return Requirement(
-            id=uuid.uuid4(),
-            mandatory=self.mandatory,
-            optional=self.optional,
-            attendance=self.attendance,
-            geofence=self.geofence,
-            skills=[s for s in self.skills],
-        )
+class ActivityTag(BaseModel):
+    id: uuid.UUID
+    name: str
 
 
-class ActivityTag(db.Model):
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
-    name: Mapped[str]
+class AssignmentTag(BaseModel):
+    id: uuid.UUID
+    name: str
 
 
-class ActivityTagAssoc(db.Model):
-    tag_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("activity_tag.id"), primary_key=True
-    )
-    activity_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("activity_base.id"), primary_key=True
-    )
+class TimeSlot(BaseModel):
+    start: datetime.datetime
+    finish: datetime.datetime
 
 
-class AssignmentTag(db.Model):
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
-    name: Mapped[str]
+class ActivityType(Enum):
+    TEMPLATE = "template"
+    CONCRETE = "concrete"
 
 
-class AssignmentTagAssoc(db.Model):
-    tag_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("assignment_tag.id"), primary_key=True
-    )
-    activity_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
-    staff_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
-    __table_args__ = (
-        ForeignKeyConstraint(
-            ("activity_id", "staff_id"),
-            ("staff_assignment.activity_id", "staff_assignment.staff_id"),
-        ),
-    )
-
-
-class ActivityBase(RuleRoot):
-    id: Mapped[uuid.UUID] = mapped_column(ForeignKey("rule_root.id"), primary_key=True)
-    name: Mapped[str]
-    activity_tags: Mapped[list[ActivityTag]] = relationship(
-        secondary=ActivityTagAssoc.__table__
-    )
-    location: Mapped[Location] = relationship()
-    location_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("location.id"))
-    requirements: Mapped[list[Requirement]] = relationship(cascade="all,delete")
-    __mapper_args__ = {"polymorphic_identity": "base"}
+class ActivityBase(BaseModel):
+    id: uuid.UUID
+    type: ActivityType
+    name: str
+    activity_tags: list[ActivityTag]
+    location_id: uuid.UUID | None = None
+    timeslots: list[TimeSlot] | None = None
+    requirements: RequirementGroup | None = None
 
 
 class ActivityTemplate(ActivityBase):
-    __mapper_args__ = {"polymorphic_identity": "template"}
-    id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("activity_base.id"), primary_key=True, default=uuid.uuid4
-    )
-    start_time: Mapped[datetime.time]
-    finish_time: Mapped[datetime.time]
-    group_type: Mapped[GroupType]
+    "activity template"
 
-    def date_range(self):
-        def maxmin(a, b):
-            if a == (None, None):
-                return (b, b)
-            return min(a[0], b), max(a[1], b)
+    type: Literal[ActivityType.TEMPLATE] = ActivityType.TEMPLATE
+    recurrence_rules: RuleGroup | None = None
+    start_time: datetime.time | None
+    duration: datetime.timedelta | None
 
-        result = reduce(
-            maxmin,
-            filter(
-                lambda d: self.matches(d),
-                (
-                    MIN_DATE + datetime.timedelta(days=i)
-                    for i in range((MAX_DATE - MIN_DATE).days + 1)
-                ),
-            ),
-            (None, None),
-        )
-        return (
-            None if result[0] == MIN_DATE else result[0],
-            None if result[1] == MAX_DATE else result[1],
-        )
-
-    def materialise(self, date, force=False):
-        "returns concrete activity for date. If force is false or not given then only returns if planned for that day"
-        if force or self.ruleset.matches(date):
-            return Activity(
-                id=uuid.uuid4(),
-                template_id=self.id,
-                name=self.name,
-                location=self.location,
-                activity_start=datetime.datetime.combine(date, self.start_time),
-                activity_finish=datetime.datetime.combine(date, self.finish_time)
-                + datetime.timedelta(
-                    days=(0 if self.finish_time > self.start_time else 1)
-                ),
-                activity_tags=[tag for tag in self.activity_tags],
-                requirements=[req.clone() for req in self.requirements],
-                location_id=self.location_id,
-            )
+    def materialise(self, activity_date: datetime.date, force=False) -> "Activity":
+        if not force:
+            if self.recurrence_rules is not None:
+                if not self.recurrence_rules.matches(activity_date):
+                    raise ValueError("activity_date does not match recurrence rules")
+        return Activity.from_template(self, activity_date=activity_date)
 
 
 class Activity(ActivityBase):
-    "concrete activity class"
-    __mapper_args__ = {"polymorphic_identity": "concrete"}
-    id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("activity_base.id"), primary_key=True
-    )
-    activity_start: Mapped[datetime.datetime]
-    activity_finish: Mapped[datetime.datetime]
-    template_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("activity_template.id")
-    )
-    staff_assignments: Mapped[list["StaffAssignment"]] = relationship()
+    "activity concrete"
+
+    type: Literal[ActivityType.CONCRETE] = ActivityType.CONCRETE
+    template_id: uuid.UUID | None = None
+    staff_assignments: list["StaffAssignment"] = []
+    activity_start: datetime.datetime
+    activity_finish: datetime.datetime
+
+    @classmethod
+    def from_template(
+        cls,
+        template: ActivityTemplate,
+        activity_date: datetime.date | None = None,
+        activity_start: datetime.datetime | None = None,
+        activity_finish: datetime.datetime | None = None,
+        location_id: uuid.UUID | None = None,
+    ):
+        if activity_date is None and activity_start is None:
+            raise ValueError("activity_date or activity_start must be provided")
+        if activity_start is None:
+            activity_start = datetime.datetime.combine(
+                activity_date, template.start_time
+            )
+        if activity_finish is None:
+            if template.duration is None:
+                raise ValueError("activity_finish or duration must be provided")
+            activity_finish = activity_start + template.duration
+        if activity_finish < activity_start:
+            raise ValueError("activity_finish must be after activity_start")
+
+        return cls(
+            id=uuid.uuid4(),
+            type=ActivityType.CONCRETE,
+            template_id=template.id,
+            name=template.name,
+            activity_tags=[at for at in template.activity_tags],
+            location_id=location_id or template.location_id,
+            requirements=template.requirements.model_copy(),
+            staff_assignments=[],
+            activity_start=activity_start,
+            activity_finish=activity_finish,
+        )
 
 
-class StaffAssignment(db.Model):
+class StaffAssignment(BaseModel):
     "staff assignment"
-    activity_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("activity.id"), primary_key=True
-    )
-    staff_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("staff.id"), primary_key=True
-    )
-    activity: Mapped["Activity"] = relationship(back_populates="staff_assignments")
-    staff: Mapped[Staff] = relationship(back_populates="assignments")
-    attendance: Mapped[int] = 100
-    staff: Mapped[Staff] = relationship()
-    tags: Mapped[list[AssignmentTag]] = relationship(
-        secondary=AssignmentTagAssoc.__table__
-    )
-    start_time: Mapped[datetime.datetime | None]
-    finish_time: Mapped[datetime.datetime | None]
+
+    activity: Activity
+    staff: Staff
+    attendance: int = 100
+    tags: list[AssignmentTag]
+    start_time: datetime.datetime | None
+    finish_time: datetime.datetime | None
 
 
-class PersonalPatternEntry(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    dateoffset: Mapped[int]
-    activity_tags: Mapped[str]
-    template_id: Mapped[uuid.UUID]
-    pattern_id: Mapped[int] = mapped_column(ForeignKey("personal_pattern.id"))
+class PersonalPatternEntry(BaseModel):
+    id: uuid.UUID
+    dateoffset: int
+    activity_tags: str
 
 
-class PersonalPattern(db.Model):
+class PersonalPattern(BaseModel):
     "template of offers of cover"
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
-    staff: Mapped[str]
-    ruleset_id: Mapped[int] = mapped_column(ForeignKey("rule_group.id"))
-    ruleset: Mapped[RuleGroup] = relationship()
-    name: Mapped[str]
-    entries: Mapped[list[PersonalPatternEntry]] = relationship(cascade="all,delete")
+
+    id: uuid.UUID
+    staff: Staff
+    ruleset: RuleGroup
+    name: str
+    entries: list[PersonalPatternEntry]
 
     def materialise(self, activities: dict[datetime.date, list["Activity"]]):
         first_date = min(activities, None)
@@ -273,6 +217,7 @@ class PersonalPattern(db.Model):
 @dataclass
 class PotentialStaffAssignment:
     "staff assignment"
+
     activity_id: uuid.UUID
     staff_id: uuid.UUID
     requirement_id: int

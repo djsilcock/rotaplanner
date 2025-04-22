@@ -1,36 +1,34 @@
-from rotaplanner.app import app, db
 from rotaplanner.models import (
     Activity,
+    ActivityType,
     Staff,
     StaffAssignment,
     Location,
+    RequirementGroup,
+    RequirementType,
 )
-from flask import Blueprint, render_template, current_app, redirect
-from rotaplanner.activities.endpoints import blueprint as sched_blueprint
-from rotaplanner.config.endpoints import blueprint as config_blueprint
+import rotaplanner
+
 import datetime
 import sys
 from uuid import UUID
 import webbrowser
 import pathlib
+import importlib
+import typer
+from sqlmodel import SQLModel, Session
+from rotaplanner.database import engine
+
+app = typer.Typer()
 
 
-@app.cli.command("initdb")
+@app.command()
 def create_db():
-    db.create_all()
+    SQLModel.metadata.create_all(engine)
 
 
-@app.cli.command("templates")
-def templates():
-    app.jinja_env.compile_templates("compiled", zip=None)
-
-
-@app.cli.command("testdata")
+@app.command()
 def test_data():
-    create_test_data()
-
-
-def create_test_data():
 
     staff = {
         "Adam": Staff(
@@ -57,67 +55,43 @@ def create_test_data():
     activities = [
         Activity(
             id=UUID("8b168c55-db64-46a8-87f9-0174267b21b3"),
+            type=ActivityType.CONCRETE,
             name="Urology",
             location=locations["Th4"],
             activity_start=datetime.datetime(2024, 1, 1, 12, 0),
             activity_finish=datetime.datetime(2024, 1, 1, 17, 0),
+            requirements=RequirementGroup(
+                rule_or_group="group", group_type=RequirementType.AND, requirements=[]
+            ),
         ),
         Activity(
             id=UUID("87d5dc36-b91b-4102-ba92-244de1fcd6cc"),
+            type=ActivityType.CONCRETE,
             name="ENT",
             location=locations["Th5"],
             activity_start=datetime.datetime(2024, 1, 1, 12, 0),
             activity_finish=datetime.datetime(2024, 1, 1, 17, 0),
+            requirements=RequirementGroup(
+                rule_or_group="group", group_type=RequirementType.AND, requirements=[]
+            ),
         ),
     ]
+    with Session(engine) as session:
+        for v in staff.values():
+            session.merge(v)
+        for l in locations.values():
+            session.merge(l)
+        staff["Adam"].assignments.append(StaffAssignment(activity=activities[0]))
+        for a in activities:
+            session.merge(a)
+        session.commit()
 
-    for v in staff.values():
-        db.session.merge(v)
-    for l in locations.values():
-        db.session.merge(l)
-    staff["Adam"].assignments.append(StaffAssignment(activity=activities[0]))
-    for a in activities:
-        db.session.merge(a)
-    db.session.commit()
 
-
-@app.cli.command("resetdb")
+@app.command()
 def reset_db():
-    db.drop_all()
-    db.create_all()
-    create_test_data()
+    SQLModel.metadata.drop_all(engine)
+    SQLModel.metadata.create_all(engine)
 
-
-app.register_blueprint(
-    sched_blueprint,
-    url_prefix="/activities",
-)
-
-app.register_blueprint(
-    config_blueprint,
-    url_prefix="/config",
-)
-
-
-@app.get("/shutdown")
-def quit():
-    raise KeyboardInterrupt
-
-
-@app.get("/sidebar")
-def sidebar():
-    return render_template("sidebar.html.j2")
-
-
-@app.get("/")
-def home():
-    return redirect("/site/index.html")
-
-
-print(app.root_path)
-from threading import Timer
 
 if __name__ == "__main__":
-
-    # Timer(5, lambda: webbrowser.open("http://localhost:5000")).start()
-    app.run(debug=True)
+    app()

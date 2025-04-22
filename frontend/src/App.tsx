@@ -115,15 +115,23 @@ function NotFound() {
   return <div>Not here!</div>
 }
 
-
+const Table=lazy(()=>import('./table'))
+function TableByStaff() {
+  return <Table y_axis_type="staff" />
+}
+function TableByLocation() {
+  return <Table y_axis_type="location" />
+}
 
 const queryClient = new QueryClient()
 export default function App() {
   return <QueryClientProvider client={queryClient}><Router root={Layout} base="/site">
     <Route path='/' component={IndexPage} />
   
-    <Route path="/rota-grid/:locationOrStaff" matchFilters={{locationOrStaff:['staff','location']}} component={lazy(()=>import('./table'))}/>
-    <Route path="/manage-activity-templates" component={lazy(()=>import('./edit_activity'))}/>
+    <Route path="/rota-grid/staff" component={TableByStaff} />
+    <Route path="/rota-grid/location" component={TableByLocation} />
+    <Route path="/manage-activity-templates" component={lazy(() => import('./activity_templates'))} />
+    <Route path="/test-form" component={lazy(() => import('./testform'))} />
     <Route path="*404" component={NotFound} />
   </Router>
     </QueryClientProvider>

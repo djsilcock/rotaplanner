@@ -1,3 +1,7 @@
+:root {
+  --widget-background: white;
+}
+
 input:invalid {
   border: 2px solid red;
 }
@@ -15,6 +19,16 @@ input {
   grid-template-columns: subgrid;
   grid-column: 1/3;
   position: relative;
+  &:nth-child(2n) {
+    background-color: #eee;
+  }
+}
+.fieldError {
+  border: 1px solid #aa0000;
+  background-color: #ffaaaa;
+  border-radius: 2px;
+  padding: 2px;
+  margin: 2px;
 }
 .notThisMonth {
   color: gray;
@@ -22,12 +36,16 @@ input {
 .isToday {
   font-weight: bold;
 }
+.dateDisabled {
+  color: lightgray;
+  cursor: not-allowed;
+}
 .dateCell {
   cursor: pointer;
 }
 .dateDropdown {
   border: 1px solid black;
-  background-color: white;
+  background-color: var(--widget-background);
   border-radius: 4px;
   position: absolute;
   left: 0;
@@ -37,6 +55,9 @@ input {
   animation-name: example;
   animation-duration: 0.2s;
   animation-direction: reverse;
+}
+.displayNone {
+  display: none;
 }
 .dropdownContainer {
   position: relative;
@@ -58,6 +79,7 @@ input {
   color: white;
   background-color: darkgray;
   white-space: nowrap;
+  margin: 2px;
   &:hover {
     background-color: lightgray;
     color: black;
@@ -69,9 +91,13 @@ input {
   }
 }
 .multiselectcontainer {
+  display: flex;
+  flex-wrap: wrap;
   border: 1px solid gray;
   border-radius: 4px;
   position: relative;
+  padding: 2px;
+  background-color: var(--widget-background);
   & input {
     appearance: none;
     border: none;
