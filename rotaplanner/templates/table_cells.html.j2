@@ -1,0 +1,45 @@
+{%macro show_toasts(toasts)%}
+<script>
+{%for t in toasts%}
+$.toast({{toast|tojson}})
+{%endfor%}
+</script>
+{%endmacro%}
+{%macro render_cell(cell)%}
+<div class="inner-cell" id="inner-{{cell.cell_id}}">
+        {%for activity in cell.activities%}
+          <div class="activity" draggable="true" data-activity-id="{{activity.activity_id}}" >
+            <div class="activity-name">{{activity.name}}</div>
+            {%if activity.location_id is not none and activity.location_id|string not in cell.cell_id|string%}
+                <div class="location">{{activity.location_name}}</div>
+            {%endif%}
+            {%for sa in activity.staff_assignments%}
+            {%if sa.staff_id|string not in cell.cell_id|string%}
+                <div class="staff-allocation" {%if grid_type=="location"%}draggable="true" {%endif%}data-staff-id="{{sa.staff_id}}">{{sa.staff_name}}</div>
+            {%endif%}
+            {%endfor%}
+                
+          </div>
+        {%endfor%}
+        <button type="button" class="add-activity">...</button>
+        </div>
+{%endmacro%}
+
+{%macro cell_stream(replacement_cells,grid_type)%}
+{%for cell in replacement_cells%}
+      <turbo-stream action="replace" target="inner-{{cell.cell_id}}">
+      <template>
+        {{render_cell(cell)}}        
+        </template>
+      </turbo-stream>
+{%endfor%}
+{%endmacro%}
+{{cell_stream(replacement_cells,grid_type)}}
+<turbo-stream action="update" target="add-activity-form">
+<template>
+<script>
+$('#add-activity-dialog').modal('hide');
+setTimeout(()=>$('#add-activity-dialog').remove(),1000);
+</script>
+</template>
+</turbo-stream>

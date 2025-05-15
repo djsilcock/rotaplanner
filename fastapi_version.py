@@ -1,9 +1,10 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
-from rotaplanner.activities.fa_endpoints import router as activities_router
+
+from rotaplanner.activities.grid_view import router as activities_router
 from rotaplanner.config.endpoints import router as config_router
 
-from rotaplanner.database import engine
 from rotaplanner.database import connection_dependency, sql_setup
 from test_data import (
     staff_list,
@@ -16,9 +17,9 @@ app = FastAPI()
 
 app.include_router(activities_router)
 app.include_router(config_router)
+app.mount("/static", StaticFiles(directory="rotaplanner/static"), name="static")
 
 
-@app.on_event("startup")
 def on_startup():
     for connection in connection_dependency():
         # instead of converting to a context manager, we can just use the connection directly

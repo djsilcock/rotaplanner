@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "@tanstack/solid-form": "^0.41.2",
-    "@tanstack/solid-virtual": "^3.11.2"
-  }
-}

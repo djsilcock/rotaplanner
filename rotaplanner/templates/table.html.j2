@@ -1,5 +1,5 @@
 {%extends "layout.html" %} {%block title%}View by name{%endblock%} 
-
+{%from 'table_cells.html.j2' import cell_stream,render_cell with context%}
 
 {%block assets%}
 <link rel="stylesheet" href="/static/table.css" />
@@ -9,22 +9,39 @@
 
 {%block main%}
 <main>
-  <div id="rota-table" up-main data-csrf="{{csrf_token()}}" style="grid-template-rows: repeat({{y_axis|length +2}},auto);">
-    <div id="rota-names" class="spans-all-rows">
-      <div></div>
-      {%for staff_or_location in y_axis%}
-      <div class="row-header" data-yaxis="{{loop.index}}">{{staff_or_location.name}}</div>
+  <table id="rota-table">
+  <thead>
+  <tr>
+  <th></th>
+  {%for d in dates%}
+    <th class="day-header" data-date="{{d}}">{{d}}</th>
+  {%endfor%}
+  </tr>
+  </thead>
+  <tbody>
+      {%for staff_or_location in y_axis.values()%}
+      <tr>
+      <td class="row-header">{{staff_or_location.name}}</td>
+      {%for d in dates%}
+        
+        {% set cell = activity_cells[(d,staff_or_location.id)] %}
+        <td class="day-cell" id="{{cell.cell_id}}" data-date="{{d}}" data-{{grid_type}}="{{staff_or_location.id|string}}">
+        
+        
+        {{render_cell(cell)}}
+        </td>
       {%endfor%}
-      <div class="row-header" data-yaxis="none"></div>
-    </div>
-    
-    <div id="rota-scrollable" class="spans-all-rows" up-data='{{table_info|tojson}}'>
-    <div id="grid-begin">&nbsp;</div>
-    <div id="rota-grid"></div>
-    <div id="grid-end">&nbsp;</div>
-    </div>
-      </div>
-    </div>
-  </div>
+      </tr>
+      {%endfor%}
+      <tr>
+      <td class="row-header">Unallocated</td>
+      {%for d in dates%}
+        <td class="day-cell" id="cell-{{d}}-None" data-date="{{d}}">
+        {{render_cell(activity_cells[(d,"None")])}}
+        </td>
+      {%endfor%}
+      </tr>
+
+  </table>
 </main>
 {%endblock%}

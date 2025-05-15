@@ -180,15 +180,6 @@ wheels = [
 ]
 
 [[package]]
-name = "blinker"
-version = "1.9.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/21/28/9b3f50ce0e048515135495f198351908d99540d69bfdc8c1d15b73dc55ce/blinker-1.9.0.tar.gz", hash = "sha256:b4ce2265a7abece45e7cc896e98dbebe6cead56bcf805a3d23136d145f5445bf", size = 22460 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/10/cb/f2ad4230dc2eb1a74edf38f1a38b9b52277f75bef262d8908e60d957e13c/blinker-1.9.0-py3-none-any.whl", hash = "sha256:ba0efaa9080b619ff2f3459d1d500c57bddea4a6b424b60a91141db6fd2f08bc", size = 8458 },
-]
-
-[[package]]
 name = "bottle"
 version = "0.13.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1596,30 +1587,36 @@ wheels = [
 name = "rotaplanner"
 source = { editable = "." }
 dependencies = [
-    { name = "blinker" },
     { name = "fastapi", extra = ["standard"] },
+    { name = "jinja2" },
     { name = "nicegui" },
     { name = "ortools" },
     { name = "pydantic" },
     { name = "pyhumps" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
+    { name = "python-multipart" },
     { name = "pywebview" },
+    { name = "starlette-wtf" },
     { name = "typer" },
+    { name = "wtforms" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "blinker", specifier = ">=1.9.0" },
     { name = "fastapi", extras = ["standard"] },
+    { name = "jinja2", specifier = ">=3.1.6" },
     { name = "nicegui", specifier = ">=2.14.1" },
     { name = "ortools" },
     { name = "pydantic" },
     { name = "pyhumps" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
+    { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "pywebview", specifier = ">=5.4" },
+    { name = "starlette-wtf", specifier = ">=0.4.5" },
     { name = "typer" },
+    { name = "wtforms", specifier = ">=3.2.1" },
 ]
 
 [[package]]
@@ -1672,6 +1669,18 @@ sdist = { url = "https://files.pythonhosted.org/packages/44/b6/fb9a32e3c5d59b1e3
 wheels = [
     { url = "https://files.pythonhosted.org/packages/41/94/8af675a62e3c91c2dee47cf92e602cfac86e8767b1a1ac3caf1b327c2ab0/starlette-0.46.0-py3-none-any.whl", hash = "sha256:913f0798bd90ba90a9156383bcf1350a17d6259451d0d8ee27fc0cf2db609038", size = 71991 },
 ]
+
+[[package]]
+name = "starlette-wtf"
+version = "0.4.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "itsdangerous" },
+    { name = "python-multipart" },
+    { name = "starlette" },
+    { name = "wtforms" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a6/15/e20a9eb32c1e51c08bec4b37859f49b5d70c76cd93d925862627d271cbd3/Starlette-WTF-0.4.5.tar.gz", hash = "sha256:411e94c19f47302fe3b12752b3c531581c0bad4cbe603a730bbe516733a99527", size = 15990 }
 
 [[package]]
 name = "tomli"
@@ -1957,6 +1966,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c9/4a/44d3c295350d776427904d73c189e10aeae66d7f555bb2feee16d1e4ba5a/wsproto-1.2.0.tar.gz", hash = "sha256:ad565f26ecb92588a3e43bc3d96164de84cd9902482b130d0ddbaa9664a85065", size = 53425 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/78/58/e860788190eba3bcce367f74d29c4675466ce8dddfba85f7827588416f01/wsproto-1.2.0-py3-none-any.whl", hash = "sha256:b9acddd652b585d75b20477888c56642fdade28bdfd3579aa24a4d2c037dd736", size = 24226 },
+]
+
+[[package]]
+name = "wtforms"
+version = "3.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "markupsafe" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/01/e4/633d080897e769ed5712dcfad626e55dbd6cf45db0ff4d9884315c6a82da/wtforms-3.2.1.tar.gz", hash = "sha256:df3e6b70f3192e92623128123ec8dca3067df9cfadd43d59681e210cfb8d4682", size = 137801 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/08/c9/2088fb5645cd289c99ebe0d4cdcc723922a1d8e1beaefb0f6f76dff9b21c/wtforms-3.2.1-py3-none-any.whl", hash = "sha256:583bad77ba1dd7286463f21e11aa3043ca4869d03575921d1a1698d0715e0fd4", size = 152454 },
 ]
 
 [[package]]

@@ -38,8 +38,8 @@ def convert_timestamp(value: bytes):
     return datetime.datetime.fromisoformat(value.decode())
 
 
-sqlite3.register_adapter(uuid.UUID, adapt_uuid)
-sqlite3.register_converter("uuid", convert_uuid)
+# sqlite3.register_adapter(uuid.UUID, adapt_uuid)
+# sqlite3.register_converter("uuid", convert_uuid)
 sqlite3.register_adapter(datetime.datetime, adapt_timestamp)
 sqlite3.register_converter("timestamp", convert_timestamp)
 

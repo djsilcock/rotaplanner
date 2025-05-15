@@ -8,66 +8,41 @@
       href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.9.3/dist/semantic.min.css"
     />
     <script src="https://cdn.jsdelivr.net/npm/fomantic-ui@2.9.3/dist/semantic.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/unpoly@3.9.1/unpoly.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/unpoly@3.9.1/unpoly.min.css"
-    />
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@latest/dist/turbo.es2017-esm.min.js"
+    ></script>
+    <script src="/static/common.js"></script>
     <link rel="stylesheet" href="/static/common.css" />
     <title>{% block title%}Rotaplanner{%endblock%}</title>
     {%block assets%} {%endblock%}
   </head>
 
   <body>
-    <div class="header">
-      <a href="/sidebar" up-layer="new drawer" up-class="menu">📃</a
-      >{{self.title()}}
-    </div>
-    <div id="unpoly-status" up-hungry>
-      {%if unpoly()%} This <b>is</b> an unpoly request {%else%} This
-      <b>is not</b> an unpoly request {%endif%}
-    </div>
-    <input type="checkbox" id="navcontroller" />
-    <!---
-    <nav class="navigation" up-nav>
-      <label for="navcontroller" class="closenav">Close</label>
-      <div class="navheader">Main Menu</div>
-      <div class="navitem">
-        <a href="{{url_for('activities.table_by_staff')}}">Rota by person</a>
-      </div>
-      <div class="navitem">
-        <a href="{{url_for('activities.table_by_location')}}"
+    <div class="ui sidebar inverted vertical menu left">
+      <div class="ui inverted vertical menu">
+        <a class="item" href="{{url_for('rota_grid_by_staff')}}"
+          >Rota by person</a
+        >
+        <a class="item" href="{{url_for('rota_grid_by_location')}}"
           >Rota by location</a
         >
-      </div>
-      <div class="navitem">
-        <a href="{{url_for('activities.activity_templates')}}"
-          >Manage activity templates</a
-        >
-      </div>
-      <div class="navitem">
-        <a href="/api/templates/supply">Manage supply templates</a>
-      </div>
-      <div class="navitem"><a href="/api/activities/table">Rota solver</a></div>
-      <div class="navitem">
-        <a href="/api/templates/supply">Import from CLW</a>
-      </div>
-      <div class="navitem"><a href="/api/config">Setup staff</a></div>
-    </nav>
-    -->
-    <label for="navcontroller" class="navbackdrop"></label>
 
-    {%block main%} ... {%endblock%}
-
-    <div style="display: none">
-      <div class="error-popup">
-        <h2>Something went wrong...</h2>
-        <ul>
-          {% for error in errors %}
-          <li>{{error}}</li>
-          {%endfor%}
-        </ul>
+        <a class="item" href="">Manage activity templates</a>
+        <a class="item" href="/api/templates/supply">Manage supply templates</a>
+        <a class="item" href="/api/activities/table">Rota solver</a>
+        <a class="item" href="/api/templates/supply">Import from CLW</a>
+        <a class="item" href="/api/config">Setup staff</a>
       </div>
+    </div>
+    <div class="pusher">
+      <div class="header">
+        <i class="bars icon" id="menubutton"></i>
+        {{self.title()}}
+      </div>
+      {%block main%} ... {%endblock%}
+      <hr />
+      <div id="additional"></div>
     </div>
   </body>
 </html>

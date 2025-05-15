@@ -1,6 +1,5 @@
-from flask_pydantic import validate
 from pydantic import BaseModel, TypeAdapter, Field
-from ..utils import get_instance_fields
+from fastapi.templating import Jinja2Templates
 
 import datetime
 from rotaplanner.date_rules import (
@@ -23,14 +22,15 @@ from ..models import (
 import uuid
 from typing import Any, Self, Sequence, Literal, Annotated, Union
 from rotaplanner.utils import discard_extra_kwargs
-from sqlalchemy import inspect, select
+import dataclasses
 
-from fastapi import APIRouter, HTTPException, Query, Response, Depends
-from sqlmodel import Session
+from fastapi import APIRouter, HTTPException, Query, Response, Depends, Request
+
 from rotaplanner.database import Connection
 
 
 router = APIRouter()
+templates = Jinja2Templates(directory="rotaplanner/templates")
 
 
 def daterange(start_date, finish_date):
@@ -73,6 +73,251 @@ class ActivitiesByDateRequest(BaseModel):
     finish_date: datetime.date | None = None
     date: list[datetime.date] | None = None
     include_all: bool = True
+
+
+@dataclasses.dataclass
+class StaffAssignmentDisplay:
+    staff: str
+    start_time: int | None = None
+    finish_time: int | None = None
+
+
+@dataclasses.dataclass
+class ActivityDisplay:
+    activity_id: uuid.UUID
+    name: str
+    start_time: datetime.datetime
+    finish_time: datetime.datetime
+    location_id: str
+    location_name: str
+    staff_assignments: list[StaffAssignmentDisplay]
+
+
+@dataclasses.dataclass
+class ActivityCell:
+    cell_id: str
+    activities: list[ActivityDisplay]
+
+
+def get_locations(connection: Connection) -> dict[uuid.UUID, Location]:
+    sql_query = """
+    SELECT id, name
+    FROM locations
+    """
+    with connection:
+        result = connection.execute(sql_query).fetchall()
+    return {row[0]: Location(id=row[0], name=row[1]) for row in result}
+
+
+def get_activities(
+    connection: Connection, start_date: datetime.date, finish_date: datetime.date
+) -> list[Activity]:
+
+    sql_query = """
+        SELECT
+            activities.id as activity_id, 
+            activities.name as activity_name, 
+            activity_start, 
+            activity_finish, 
+            locations.name as location_name,
+            locations.id as location_id,
+            staff_assignments.staff_id, 
+            staff.name
+
+        FROM activities
+        LEFT JOIN locations ON activities.location_id = locations.id
+        LEFT JOIN staff_assignments ON activities.id = staff_assignments.activity_id
+        LEFT JOIN staff on staff_assignments.staff_id = staff.id
+        WHERE date(activity_start) >= :start_date
+        AND date(activity_start) <= :finish_date
+        ORDER BY activity_start
+    """
+    with connection:
+        cursor = connection.execute(
+            sql_query,
+            {
+                "start_date": start_date,
+                "finish_date": finish_date,
+            },
+        )
+        result = cursor.fetchall()
+        activities = {}
+        earliest_date = None
+        latest_date = None
+        for (
+            activity_id,
+            name,
+            start_time,
+            finish_time,
+            location_name,
+            location_id,
+            staff_id,
+            staff_name,
+        ) in result:
+
+            if activity_id not in activities:
+                activities[activity_id] = ActivityDisplay(
+                    activity_id=activity_id,
+                    name=name,
+                    start_time=start_time,
+                    finish_time=finish_time,
+                    location_id=location_id,
+                    location_name=location_name,
+                    staff_assignments=[],
+                )
+                if earliest_date is None or start_time < earliest_date:
+                    earliest_date = start_time
+                if latest_date is None or finish_time > latest_date:
+                    latest_date = finish_time
+            if staff_id:
+                activities[activity_id].staff_assignments.append(
+                    StaffAssignmentDisplay(staff=staff_name)
+                )
+        return activities, earliest_date, latest_date
+
+
+def get_activity_cells_by_location(
+    connection: Connection,
+    start_date: datetime.date = datetime.date(1970, 1, 1),
+    finish_date: datetime.date = datetime.date(2100, 1, 1),
+    specifically_include=(),
+) -> list[ActivityCell]:
+
+    activities, earliest_date, latest_date = get_activities(
+        connection, start_date, finish_date
+    )
+
+    activity_cells = {}
+    for date, location_id in specifically_include:
+        key = f"cell-{date.isoformat()}-{location_id}"
+        if key not in activity_cells:
+            activity_cells[key] = ActivityCell(cell_id=key, activities=[])
+
+    for activity_id, activity in activities.items():
+        key = f"cell-{activity.start_time.date().isoformat()}-{activity.location_id}"
+        if key not in activity_cells:
+            activity_cells[key] = ActivityCell(cell_id=key, activities=[])
+        activity_cells[key].activities.append(activity)
+    print(activity_cells)
+    return (list(activity_cells.values()), earliest_date.date(), latest_date.date())
+
+
+@router.get("/template_test/location")
+def template_test(request: Request, connection: Connection) -> Response:
+
+    (activity_cells, earliest_date, latest_date) = get_activity_cells_by_location(
+        connection
+    )
+    y_axis = get_locations(connection)
+    dates = [
+        earliest_date + datetime.timedelta(days=i)
+        for i in range((latest_date - earliest_date).days + 1)
+    ]
+    return templates.TemplateResponse(
+        "table.html.j2",
+        {
+            "request": request,
+            "date": datetime.date.today(),
+            "dates": dates,
+            "y_axis": y_axis,
+            "replacement_cells": activity_cells,
+            "grid_type": "location",
+        },
+    )
+
+
+class LocationGridCell(BaseModel):
+    date: datetime.date
+    location: str | None = None
+
+
+class MoveActivityInLocationGrid(BaseModel):
+    activityId: str
+    from_cell: LocationGridCell
+    to_cell: LocationGridCell
+
+
+@router.post("/template_test/location", operation_id="moveActivityInLocationGrid")
+def move_activity_in_location_grid(
+    request: Request, entry: MoveActivityInLocationGrid, connection: Connection
+):
+    try:
+        print(entry)
+        datedelta = entry.to_cell.date - entry.from_cell.date
+        sql_query = """
+        SELECT activity_start, activity_finish
+        FROM activities
+        WHERE id = :activity_id
+        """
+        result = connection.execute(
+            sql_query,
+            {
+                "activity_id": entry.activityId,
+            },
+        ).fetchone()
+        print("ok so far", tuple(result))
+        if result is None:
+            raise ReallocationError("Activity not found")
+        start_time, finish_time = result
+        new_start_time = start_time + datedelta
+        new_finish_time = finish_time + datedelta
+        sql_query = """
+        UPDATE activities
+        SET activity_start = :new_start_time, activity_finish = :new_finish_time, location_id = :new_location
+        WHERE id = :activity_id
+        """
+        with connection:
+            connection.execute(
+                sql_query,
+                {
+                    "new_start_time": new_start_time,
+                    "new_finish_time": new_finish_time,
+                    "new_location": entry.to_cell.location,
+                    "activity_id": entry.activityId,
+                },
+            )
+            print(
+                connection.execute(
+                    "SELECT * FROM activities where id=?", (entry.activityId,)
+                ).fetchall()
+            )
+    except ReallocationError as e:
+        return {"status": "error", "error": str(e)}
+    activity_cells = get_activity_cells_by_location(
+        connection,
+        min(entry.from_cell.date, entry.to_cell.date),
+        max(entry.from_cell.date, entry.to_cell.date),
+        specifically_include=[
+            (entry.from_cell.date, entry.from_cell.location),
+            (entry.to_cell.date, entry.to_cell.location),
+        ],
+    )[0]
+    return templates.TemplateResponse(
+        "table_cells.html.j2",
+        {"request": request, "replacement_cells": activity_cells},
+    )
+
+
+class StaffGridCell(BaseModel):
+    date: datetime.date
+    staff: uuid.UUID | None
+
+
+class MoveActivityInStaffGrid(BaseModel):
+    activityId: uuid.UUID
+    from_cell: StaffGridCell
+    to_cell: StaffGridCell
+
+
+class MoveStaffInLocationGrid(BaseModel):
+    staffId: uuid.UUID
+    from_activity: uuid.UUID | None = None
+    to_activity: uuid.UUID | None = None
+
+
+@router.post("/rota/drag_and_drop", operation_id="dragAndDrop")
+def drag_and_drop():
+    pass
 
 
 @router.get("/api/activities/by_date", operation_id="activitiesByDate")

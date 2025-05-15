@@ -1,6 +1,5 @@
 from rotaplanner.database import Connection
 
-from flask import abort
 from rotaplanner.models import (
     Activity,
     Staff,

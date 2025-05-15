@@ -1,0 +1,44 @@
+#rota-table {
+  td.day-cell {
+    border: 2px solid transparent;
+    background-color: #eeeeee;
+  }
+  &:has(.drag-over) td.day-cell:not(.drag-over) {
+    opacity: 0.75;
+  }
+  td.day-cell.drag-over {
+    background-color: #f0f0f0;
+    border: 2px solid blue;
+    opacity: 1;
+  }
+  .activity {
+    background-color: antiquewhite;
+    padding: 2px;
+    border: 1px solid burlywood;
+    border-radius: 2px;
+    cursor: pointer;
+    &:hover {
+      box-shadow: 1px 1px;
+    }
+    &.drag-over {
+      background-color: burlywood;
+    }
+    &.selected {
+      background-color: burlywood;
+    }
+    &.dragover {
+      background-color: green;
+    }
+    .activity-name {
+      font-size: small;
+    }
+  }
+  .add-activity {
+    cursor: pointer;
+    padding: 2px;
+    text-align: center;
+    width: 100%;
+    position: relative;
+    border: none;
+  }
+}
