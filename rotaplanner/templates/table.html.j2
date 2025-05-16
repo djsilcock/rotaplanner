@@ -9,7 +9,7 @@
 
 {%block main%}
 <main>
-  <table id="rota-table">
+  <table id="rota-table" data-turbo-prefetch="false">
   <thead>
   <tr>
   <th></th>
@@ -29,6 +29,7 @@
         
         
         {{render_cell(cell)}}
+        <a href="/rota_grid/add_activity?date={{d}}&{{grid_type}}={{staff_or_location.id}}">...</a>
         </td>
       {%endfor%}
       </tr>

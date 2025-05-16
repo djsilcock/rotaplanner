@@ -576,6 +576,7 @@ def add_activity_dialog(
             "location": location,
             "activity_form": activity_form,
         },
+        media_type="text/vnd.turbo-stream.html",
     )
 
 

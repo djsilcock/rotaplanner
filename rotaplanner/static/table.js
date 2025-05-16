@@ -131,16 +131,5 @@ function setupTable() {
       dropTarget = null;
     }
   });
-
-  table.addEventListener("click", function (event) {
-    if (event.target.matches(".add-activity")) {
-      event.preventDefault();
-      const containingCell = event.target.closest(".day-cell");
-      const searchParams = new URLSearchParams(containingCell.dataset);
-      fetch("/rota_grid/add_activity?" + searchParams.toString()).then(
-        processFetch
-      );
-    }
-  });
 }
 document.addEventListener("DOMContentLoaded", setupTable);
