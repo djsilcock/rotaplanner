@@ -12,16 +12,16 @@
 {%endmacro%}
 
 {%macro form_line(field)%}
-<tr id="{{field.id}}-group" up-form-group {%if field.flags.usf%} up-show-for="{{field.flags.usf}}" {%endif%}>
-    <td>{{field.label}}</td>
-    <td>{%if field.errors%}
+<div id="{{field.id}}-group" class="field">
+    {{field.label}}
+    {%if field.errors%}
         <div class="ui negative message">
             {%for err in field.errors%}
             <div>{{err}}</div>
             {%endfor%}
         </div>
         {%endif%}
-        {{field(**{"up-validate":true,"up-watch-event":"blur"})}}
+        {{field}}
     </td>
 </tr>
 {%endmacro%}
@@ -60,7 +60,6 @@
     <details class="rule-definition" {%if rule.is_open.data%}open{%endif%} name="rule-definition-box">
         <summary class="description">(rule description)</summary>
         <div style="display:none">{{rule.is_open}}</div>
-        {{rule.rule_id}}
         <table class="rule-box">
             <tbody>
                 {{form_line(rule.rule_type)}}
@@ -71,10 +70,7 @@
                 {{form_line(rule.finish_date)}}
                 {{form_line(rule.tag)}}
                 {{form_line(rule.date_type)}}
-                <tr>
-                    <td></td>
-                    <td>{{render_linklike(rule.is_deleted)}}
-                </tr>
+                
             </tbody>
         </table>
 
@@ -82,15 +78,27 @@
 
 </li>
 {%endmacro%}
+{%macro datetime_field(field)%}
+<div class="field">
+{{field.label}}
+<div class="ui calendar" id="{{field.id}}">
+                    <div class="ui input left icon">
+                    <input type="text" name="{{field.name}}" placeholder="{{field.label.text}}">
+                    <i class="time icon"></i>
+                </div>
+                </div>
+                </div>
+                <script>$("#{{field.id}}").calendar()</script>
 
+{%endmacro%}
 {%block main%}
-<main>
+<turbo-frame id="add-activity-form">
     <form method="post" id="edit-activity-form" up-submit>
-        <span up-hungry id="edit-activity-form-csrf">{{form.csrf_token}}</span>
-        {{form.id}}
+        <span id="edit-activity-form-csrf">{{form.csrf_token}}</span>
+        {{form.activity_id}}
         <h4>Edit activity</h4>
-        <div id="template-editor-settings">
-            <div>{{form.name.label}} {{form.name}}</div>
+        <div class="ui form" id="template-editor-settings">
+            <div class="field">{{form.name.label}} {{form.name}}</div>
             This activity occurs:
             <div id="ruleset-container" up-form-group>
                 <ul>
@@ -100,14 +108,15 @@
             <hr />
             <table>
                 <tbody>
-                    {{form_line(form.start_time)}}
-                    {{form_line(form.finish_time)}}
+                {{datetime_field(form.start_time)}}
+                    
+                    {{datetime_field(form.finish_time)}}
                     {{form_line(form.activity_tags)}}
                     {{form_line(form.location)}}
                 </tbody>
             </table>
             <hr />
-            <div id="requirements-container" up-form-group>
+            <div id="requirements-container">
                 Requirements:
                 {%for req in form.requirements%}
                 <details {%if req.is_open.data%}open{%endif%}>
@@ -121,12 +130,7 @@
                         {{form_line(req.optional)}}
                         {{form_line(req.attendance)}}
                         {{form_line(req.geofence)}}
-                        <tr>
-                            <td></td>
-                            <td><label class="linklike">
-                                    {{req.is_deleted}}Delete rule
-                                </label></td>
-                        </tr>
+                        
 
                     </table>
                 </details>
@@ -134,11 +138,10 @@
                 <div>⚠️No requirements have been set</div>
                 {%endfor%}
 
-                {{render_linklike(form.should_add_requirement)}}
             </div>
         </div>
         <button type="submit">Save template</button>
-        <a href="{{url_for('activities.activity_templates')}}">Cancel</a>
+        
     </form>
-</main>
+</turbo-frame>
 {%endblock%}

@@ -1,6 +1,6 @@
 from flask import Flask
 from .database import db
-from flask_unpoly import FlaskUnpoly
+from scrapyard.flask_unpoly import FlaskUnpoly
 from flask_wtf import CSRFProtect
 from flask_cors import CORS
 import pathlib

@@ -16,7 +16,7 @@ from .queries import (
 )
 from ..utils import get_instance_fields
 
-from flask_unpoly import unpoly
+from scrapyard.flask_unpoly import unpoly
 import datetime
 from flask_wtf import FlaskForm
 from wtforms import widgets

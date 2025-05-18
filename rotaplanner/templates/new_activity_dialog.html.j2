@@ -7,7 +7,7 @@
     <div>Location:{{location}}</div>
     <div>Date:{{date}}</div>
     <turbo-frame id="add-activity-form">
-      <form id="add-activity-form" method="post" action="{{url_for('add_activity_dialog')}}">
+      <form id="add-activity-form" method="post" action="/rota_grid/add_activity">
         {{activity_form.staff}}
         {{activity_form.location}}
         {{activity_form.date}}
@@ -24,7 +24,7 @@
           </div>
           <button type="submit" name="action" value="template" class="ui button">Create</button>
           <hr/>
-          <a href="/create_new_activity" class="ui button">Create new activity</a>
+          <button type="submit" name="action" value="new" class="ui button">Create new activity</button>
           <hr/>
           </div>
         
