@@ -1,11 +1,9 @@
-<turbo-stream target="additional" action="update">  
+<turbo-stream target="dialog-content" action="update">  
 <template>
-<div class="ui modal" id="add-activity-dialog">
+
     <div class="header">Add activity</div>
     <div class="content">
-    <div>Staff:{{staff_id}}</div>
-    <div>Location:{{location}}</div>
-    <div>Date:{{date}}</div>
+    
     <turbo-frame id="add-activity-form">
       <form id="add-activity-form" method="post" action="/rota_grid/add_activity">
         {{activity_form.staff}}
@@ -13,18 +11,18 @@
         {{activity_form.date}}
         <div class="ui form">
           <div class="field">
-            <label>Allocate existing activity</label>
+            
             {{activity_form.existing_activity}}
           </div>
-          <button type="submit" name="action" value="existing" class="ui button">Allocate</button>
+          <sl-button type="submit" name="action" value="existing" class="ui button">Allocate</sl-button>
           <hr/>
           <div class="field">
-            <label>Create from template</label>
+            
             {{activity_form.from_template}}
           </div>
-          <button type="submit" name="action" value="template" class="ui button">Create</button>
+          <sl-button type="submit" name="action" value="template" class="ui button">Create</sl-button>
           <hr/>
-          <button type="submit" name="action" value="new" class="ui button">Create new activity</button>
+          <sl-button type="submit" name="action" value="new" class="ui button">Create new activity</sl-button>
           <hr/>
           </div>
         
@@ -34,16 +32,7 @@
     <div class="actions">
       <div class="ui cancel button">Cancel</div>
     </div>
-    </div>
-<script>
-$('#add-activity-dialog').modal({autoShow:true});
-document.getElementById('add-activity-form').addEventListener('turbo:submit-end', function(event) {
-  console.log(event)
-    if (event.detail.success) {
-        
-
-    }
-});
-</script>
+    
+    
 </template>
     </turbo-stream>

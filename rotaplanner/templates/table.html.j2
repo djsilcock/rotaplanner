@@ -29,7 +29,7 @@
         
         
         {{render_cell(cell)}}
-        <a href="/rota_grid/add_activity?date={{d}}&{{grid_type}}={{staff_or_location.id}}">...</a>
+        <a class="show-activity" data-turbo-stream href="/rota_grid/add_activity?date={{d}}&{{grid_type}}={{staff_or_location.id}}">...</a>
         </td>
       {%endfor%}
       </tr>
@@ -44,5 +44,6 @@
       </tr>
 
   </table>
+  <sl-dialog id="activity-dialog"><div id="dialog-content">...</div></sl-dialog>
 </main>
 {%endblock%}

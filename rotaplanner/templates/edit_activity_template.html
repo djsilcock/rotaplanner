@@ -12,16 +12,16 @@
 {%endmacro%}
 
 {%macro form_line(field)%}
-<div id="{{field.id}}-group" class="field">
-    
-    {%if field.errors%}
+<tr id="{{field.id}}-group" up-form-group {%if field.flags.usf%} up-show-for="{{field.flags.usf}}" {%endif%}>
+    <td>{{field.label}}</td>
+    <td>{%if field.errors%}
         <div class="ui negative message">
             {%for err in field.errors%}
             <div>{{err}}</div>
             {%endfor%}
         </div>
         {%endif%}
-        {{field}}
+        {{field(**{"up-validate":true,"up-watch-event":"blur"})}}
     </td>
 </tr>
 {%endmacro%}
@@ -60,17 +60,21 @@
     <details class="rule-definition" {%if rule.is_open.data%}open{%endif%} name="rule-definition-box">
         <summary class="description">(rule description)</summary>
         <div style="display:none">{{rule.is_open}}</div>
+        {{rule.rule_id}}
         <table class="rule-box">
             <tbody>
-                {{rule.rule_type}}
-                {{rule.day_interval}}
-                {{rule.week_interval}}
-                {{rule.month_interval}}
-                {{rule.start_date}}
-                {{rule.finish_date}}
-                {{rule.tag}}
-                {{rule.date_type}}
-                
+                {{form_line(rule.rule_type)}}
+                {{form_line(rule.day_interval)}}
+                {{form_line(rule.week_interval)}}
+                {{form_line(rule.month_interval)}}
+                {{form_line(rule.start_date)}}
+                {{form_line(rule.finish_date)}}
+                {{form_line(rule.tag)}}
+                {{form_line(rule.date_type)}}
+                <tr>
+                    <td></td>
+                    <td>{{render_linklike(rule.is_deleted)}}
+                </tr>
             </tbody>
         </table>
 
@@ -78,36 +82,32 @@
 
 </li>
 {%endmacro%}
-{%macro datetime_field(field)%}
-<div class="field">
-{{field.label}}
-<div class="ui calendar" id="{{field.id}}">
-                    <div class="ui input left icon">
-                    <input type="text" name="{{field.name}}" placeholder="{{field.label.text}}">
-                    <i class="time icon"></i>
-                </div>
-                </div>
-                </div>
-                
 
-{%endmacro%}
 {%block main%}
-<turbo-frame id="add-activity-form">
-    <form method="post" id="edit-activity-form">
-        <span id="edit-activity-form-csrf">{{form.csrf_token}}</span>
-        {{form.activity_id}}
+<main>
+    <form method="post" id="edit-activity-form" up-submit>
+        <span up-hungry id="edit-activity-form-csrf">{{form.csrf_token}}</span>
+        {{form.id}}
         <h4>Edit activity</h4>
-        <div class="ui form" id="template-editor-settings">
-            {{form.name}}
-            
-                {{form.start_time}}
-                    
-                    {{form.finish_time}}
-                    {{form.activity_tags}}
-                    {{form.location}}
-                
+        <div id="template-editor-settings">
+            <div>{{form.name.label}} {{form.name}}</div>
+            This activity occurs:
+            <div id="ruleset-container" up-form-group>
+                <ul>
+                    {{render_group(form,rule_types,true)}}
+                </ul>
+            </div>
             <hr />
-            <div id="requirements-container">
+            <table>
+                <tbody>
+                    {{form_line(form.start_time)}}
+                    {{form_line(form.finish_time)}}
+                    {{form_line(form.activity_tags)}}
+                    {{form_line(form.location)}}
+                </tbody>
+            </table>
+            <hr />
+            <div id="requirements-container" up-form-group>
                 Requirements:
                 {%for req in form.requirements%}
                 <details {%if req.is_open.data%}open{%endif%}>
@@ -121,7 +121,12 @@
                         {{form_line(req.optional)}}
                         {{form_line(req.attendance)}}
                         {{form_line(req.geofence)}}
-                        
+                        <tr>
+                            <td></td>
+                            <td><label class="linklike">
+                                    {{req.is_deleted}}Delete rule
+                                </label></td>
+                        </tr>
 
                     </table>
                 </details>
@@ -129,10 +134,11 @@
                 <div>⚠️No requirements have been set</div>
                 {%endfor%}
 
+                {{render_linklike(form.should_add_requirement)}}
             </div>
         </div>
         <button type="submit">Save template</button>
-        
+        <a href="{{url_for('activities.activity_templates')}}">Cancel</a>
     </form>
-</turbo-frame>
+</main>
 {%endblock%}

@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <link
       rel="stylesheet"
-      type="text/css"
-      href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.9.3/dist/semantic.min.css"
+      href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/themes/light.css"
     />
-    <script src="https://cdn.jsdelivr.net/npm/fomantic-ui@2.9.3/dist/semantic.min.js"></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace-autoloader.js"
+    ></script>
+
     <script
       type="module"
       src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@latest/dist/turbo.es2017-esm.min.js"
@@ -20,29 +22,47 @@
 
   <body>
     <div class="ui sidebar inverted vertical menu left">
-      <div class="ui inverted vertical menu">
-        <a class="item" href="{{url_for('rota_grid_by_staff')}}"
-          >Rota by person</a
-        >
-        <a class="item" href="{{url_for('rota_grid_by_location')}}"
-          >Rota by location</a
-        >
+      <sl-drawer
+        label="Drawer"
+        placement="start"
+        class="drawer-placement-start"
+      >
+        <nav class="ui inverted vertical menu">
+          <a class="item" href="{{url_for('rota_grid_by_staff')}}"
+            >Rota by person</a
+          >
+          <a class="item" href="{{url_for('rota_grid_by_location')}}"
+            >Rota by location</a
+          >
 
-        <a class="item" href="">Manage activity templates</a>
-        <a class="item" href="/api/templates/supply">Manage supply templates</a>
-        <a class="item" href="/api/activities/table">Rota solver</a>
-        <a class="item" href="/api/templates/supply">Import from CLW</a>
-        <a class="item" href="/api/config">Setup staff</a>
-      </div>
+          <a class="item" href="">Manage activity templates</a>
+          <a class="item" href="/api/templates/supply"
+            >Manage supply templates</a
+          >
+          <a class="item" href="/api/activities/table">Rota solver</a>
+          <a class="item" href="/api/templates/supply">Import from CLW</a>
+          <a class="item" href="/api/config">Setup staff</a>
+        </nav>
+        <sl-button slot="footer" variant="primary">Close</sl-button>
+      </sl-drawer>
     </div>
     <div class="pusher">
       <div class="header">
-        <i class="bars icon" id="menubutton"></i>
+        <sl-button
+          ><sl-icon name="layout-text-sidebar-reverse" id="menubutton"></sl-icon
+        ></sl-button>
         {{self.title()}}
       </div>
       {%block main%} ... {%endblock%}
       <hr />
       <div id="additional"></div>
     </div>
+    <script>
+      const menuButton = document.getElementById("menubutton");
+      const drawer = document.querySelector("sl-drawer");
+      menuButton.addEventListener("click", () => {
+        drawer.show();
+      });
+    </script>
   </body>
 </html>

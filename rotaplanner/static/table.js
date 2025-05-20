@@ -19,7 +19,12 @@ function setupTable() {
       console.error("Error:", error);
     }
   }
-
+  table.addEventListener("click", function (event) {
+    if (event.target.matches(".show-activity")) {
+      const dialog = document.getElementById("activity-dialog");
+      dialog.show();
+    }
+  });
   table.addEventListener("dragstart", function (event) {
     if (event.target.matches(".activity")) {
       event.dataTransfer.setData(

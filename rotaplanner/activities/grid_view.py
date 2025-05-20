@@ -8,7 +8,7 @@ from typing import Literal
 import dataclasses
 
 from fastapi import APIRouter, Response, Request
-from fastapi.responses import HTMLResponse,RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from rotaplanner.database import Connection
 from sqlite3 import IntegrityError
@@ -16,8 +16,17 @@ from sqlite3 import IntegrityError
 router = APIRouter()
 templates = Jinja2Templates(directory="rotaplanner/templates")
 
-from wtforms import Form, SelectField, HiddenField,BooleanField,IntegerField,SelectMultipleField,StringField,FieldList,TimeField,FormField
-from wtforms.validators import Optional,NumberRange
+from wtforms import Form
+from rotaplanner.shoelace_fields import (
+    SelectField,
+    HiddenField,
+    BooleanField,
+    SelectMultipleField,
+    StringField,
+    DateTimeField,
+)
+from wtforms import IntegerField, FieldList, FormField
+from wtforms.validators import Optional, NumberRange
 
 
 class ReallocationError(Exception):
@@ -641,24 +650,28 @@ async def add_activity(
                 "date": date,
                 "staff": staff_id,
             } if staff_id:
-                return RedirectResponse(f'/create_new_activity?date={date}&staff_id={staff_id}',303)
+                return RedirectResponse(
+                    f"/create_new_activity?date={date}&staff_id={staff_id}", 303
+                )
             case {
                 "action": "new",
                 "date": date,
-                "location": location_id
+                "location": location_id,
             } if location_id:
-                return RedirectResponse(f'/create_new_activity?date={date}&location_id={location_id}',303)
+                return RedirectResponse(
+                    f"/create_new_activity?date={date}&location_id={location_id}", 303
+                )
 
     return HTMLResponse(
         """<turbo-frame id="add-activity-form">
                         Replacement text
                         </turbo-frame>"""
     )
+
+
 class RequirementForm(Form):
-    
-    skills = SelectMultipleField(
-        "Skills", choices=()
-    )
+
+    skills = SelectMultipleField("Skills", choices=())
     requirement = IntegerField(
         "Required people", default=1, validators=[NumberRange(min=0)]
     )
@@ -686,21 +699,28 @@ class RequirementForm(Form):
     is_deleted = BooleanField("Delete requirement")
     is_open = BooleanField(render_kw={"class": "is-open"})
 
+
 class EditActivityForm(Form):
-    activity_id=HiddenField()
+    activity_id = HiddenField()
     name = StringField("Activity Name")
-    activity_tags = SelectMultipleField(
-        "Tags"
-    )
-    start_time = TimeField("Start time")
-    finish_time = TimeField("Finish Time")
-    duration = TimeField("Duration")
+    activity_tags = SelectMultipleField("Tags")
+    start_time = DateTimeField("Start time")
+    finish_time = DateTimeField("Finish Time")
+
     location = SelectField(choices=())
     requirements = FieldList(FormField(RequirementForm))
 
 
 @router.get("/create_new_activity")
-def create_new_activity(request:Request,staff_id=None,location_id=None,date=None):
-    form=EditActivityForm()
-    return templates.TemplateResponse('edit_activity_template.html.j2',{'form':form,'request':request}
+def create_new_activity(
+    request: Request, connection: Connection, staff_id=None, location_id=None, date=None
+):
+    form = EditActivityForm(
+        data={"name": "bleah", "staff_id": staff_id, "location": location_id}
+    )
+    form.location.choices = [
+        (location.id, location.name) for location in get_locations(connection).values()
+    ]
+    return templates.TemplateResponse(
+        "edit_activity_template.html.j2", {"form": form, "request": request}
     )

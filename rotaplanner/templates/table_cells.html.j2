@@ -35,11 +35,3 @@ $.toast({{toast|tojson}})
 {%endfor%}
 {%endmacro%}
 {{cell_stream(replacement_cells,grid_type)}}
-<turbo-stream action="update" target="add-activity-form">
-<template>
-<script>
-$('#add-activity-dialog').modal('hide');
-setTimeout(()=>$('#add-activity-dialog').remove(),1000);
-</script>
-</template>
-</turbo-stream>
