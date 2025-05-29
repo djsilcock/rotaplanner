@@ -16,17 +16,15 @@ from sqlite3 import IntegrityError
 router = APIRouter()
 templates = Jinja2Templates(directory="rotaplanner/templates")
 
-from wtforms import Form
+from wtforms import Form, Field
 from rotaplanner.shoelace_fields import (
     SelectField,
     HiddenField,
     BooleanField,
     SelectMultipleField,
-    StringField,
-    DateTimeField,
 )
-from wtforms import IntegerField, FieldList, FormField
-from wtforms.validators import Optional, NumberRange
+from wtforms import DateTimeLocalField, StringField, IntegerField, FieldList, FormField
+from wtforms.validators import Optional, NumberRange, InputRequired
 
 
 class ReallocationError(Exception):
@@ -551,15 +549,14 @@ def move_activity_in_staff_grid(
 
 class AddActivityForm(Form):
     existing_activity = SelectField("Existing Activity", validate_choice=False)
-    from_template = SelectField("Create from Template", validate_choice=False)
-    action = SelectField("", choices=["existing", "template", "new"])
+    
     staff = HiddenField("staff")
     date = HiddenField("date")
     location = HiddenField("location")
 
 
-@router.get("/rota_grid/add_activity", operation_id="addActivity")
-def add_activity_dialog(
+@router.get("/rota_grid/context_menu", operation_id="tableContextMenu")
+def table_context_menu(
     request: Request,
     connection: Connection,
     staff: str = None,
@@ -572,13 +569,13 @@ def add_activity_dialog(
     activity_form = AddActivityForm(
         data={"staff": staff, "date": date, "location": location}
     )
-    print(request.headers)
+    
     activity_form.existing_activity.choices = [
         (activity.activity_id, activity.name) for activity in activities.values()
-    ]
+    ]+[('--new--', 'Create new activity')]
     # print("existing activities", activity_form.existing_activity.choices)
     return templates.TemplateResponse(
-        "new_activity_dialog.html.j2",
+        "table_context_menu.html.j2",
         {
             "request": request,
             "date": date,
@@ -603,7 +600,15 @@ async def add_activity(
         form_results = activity_form.data
         match form_results:
             case {
-                "action": "existing",
+                "existing_activity": "--new--",
+                "date": date,
+                "staff": staff_id,
+                "location": location_id,
+            }:
+                return create_new_activity(request=request,date=date,staff_id=staff_id,location_id=location_id,connection=connection)
+            
+            case {
+                
                 "existing_activity": activity_id,
                 "location": location_id,
                 "date": date,
@@ -623,7 +628,7 @@ async def add_activity(
                     connection=connection,
                 )
             case {
-                "action": "existing",
+                
                 "existing_activity": activity_id,
                 "staff": staff_id,
                 "date": date,
@@ -645,22 +650,7 @@ async def add_activity(
                 raise ValueError("Do not understand request")
             case {"action": "template", "from_template": template_id}:
                 print("todo: create activity from template")
-            case {
-                "action": "new",
-                "date": date,
-                "staff": staff_id,
-            } if staff_id:
-                return RedirectResponse(
-                    f"/create_new_activity?date={date}&staff_id={staff_id}", 303
-                )
-            case {
-                "action": "new",
-                "date": date,
-                "location": location_id,
-            } if location_id:
-                return RedirectResponse(
-                    f"/create_new_activity?date={date}&location_id={location_id}", 303
-                )
+            
 
     return HTMLResponse(
         """<turbo-frame id="add-activity-form">
@@ -702,25 +692,46 @@ class RequirementForm(Form):
 
 class EditActivityForm(Form):
     activity_id = HiddenField()
-    name = StringField("Activity Name")
+    name = StringField("Activity Name", validators=[InputRequired()])
     activity_tags = SelectMultipleField("Tags")
-    start_time = DateTimeField("Start time")
-    finish_time = DateTimeField("Finish Time")
+    start_time = DateTimeLocalField("Start time")
+    finish_time = DateTimeLocalField("Finish Time")
 
     location = SelectField(choices=())
     requirements = FieldList(FormField(RequirementForm))
+
+
+def recurse(value):
+
+    yield value
+    try:
+        i = iter(value)
+    except TypeError:
+        return
+    for x in i:
+        yield from recurse(x)
 
 
 @router.get("/create_new_activity")
 def create_new_activity(
     request: Request, connection: Connection, staff_id=None, location_id=None, date=None
 ):
-    form = EditActivityForm(
-        data={"name": "bleah", "staff_id": staff_id, "location": location_id}
-    )
+    form = EditActivityForm(data={"staff_id": staff_id, "location": location_id})
     form.location.choices = [
         (location.id, location.name) for location in get_locations(connection).values()
     ]
+    form.activity_tags.choices = [
+        (location.id, location.name) for location in get_locations(connection).values()
+    ]
+    form.validate()
+    errors = {}
+    for f in recurse(form):
+        try:
+            if isinstance(f.name, str):
+                errors.setdefault(f.name, []).extend(f.errors)
+        except AttributeError:
+            pass
+    print(errors)
     return templates.TemplateResponse(
-        "edit_activity_template.html.j2", {"form": form, "request": request}
+        "edit_activity_template.html.j2", {"form": form, "request": request},media_type="text/vnd.turbo-stream.html"
     )

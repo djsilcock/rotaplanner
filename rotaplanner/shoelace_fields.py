@@ -246,6 +246,8 @@ class Select:
                 if (self.multiple and field.data is not None)
                 else field.data
             )
+        if "max_options_visible" in kwargs:
+            kwargs["max-options-visible"] = kwargs.pop("max_options_visible")
         select_params = html_params(name=field.name, **kwargs)
         html = [f"<sl-select {select_params}>"]
         if field.has_groups():

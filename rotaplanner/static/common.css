@@ -1,0 +1,38 @@
+.if-only-child:not(:only-child) {
+  display: none;
+}
+input[type="datetime-local"] {
+  font-family: inherit;
+}
+
+select[multiple]:has(option:nth-child(1):checked) + .pills :nth-child(1) {
+  color: red;
+}
+select[multiple]:has(option:nth-child(2):checked) + .pills :nth-child(2) {
+  color: blue;
+}
+select[multiple]:has(option:nth-child(3):checked) + .pills :nth-child(3) {
+  color: green;
+}
+select[multiple]:has(option:nth-child(4):checked) + .pills :nth-child(4) {
+  color: orange;
+}
+select[multiple]:has(option:nth-child(5):checked) + .pills :nth-child(5) {
+  color: purple;
+}
+
+select[multiple]:has(option:nth-child(1):checked) ~ select :nth-child(1) {
+  display: none;
+}
+select[multiple]:has(option:nth-child(2):checked) ~ select :nth-child(2) {
+  display: none;
+}
+select[multiple]:has(option:nth-child(3):checked) ~ select :nth-child(3) {
+  display: none;
+}
+select[multiple]:has(option:nth-child(4):checked) ~ select :nth-child(4) {
+  display: none;
+}
+select[multiple]:has(option:nth-child(5):checked) ~ select :nth-child(5) {
+  display: none;
+}

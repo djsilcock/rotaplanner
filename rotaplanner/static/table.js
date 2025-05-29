@@ -19,12 +19,7 @@ function setupTable() {
       console.error("Error:", error);
     }
   }
-  table.addEventListener("click", function (event) {
-    if (event.target.matches(".show-activity")) {
-      const dialog = document.getElementById("activity-dialog");
-      dialog.show();
-    }
-  });
+
   table.addEventListener("dragstart", function (event) {
     if (event.target.matches(".activity")) {
       event.dataTransfer.setData(
@@ -136,5 +131,27 @@ function setupTable() {
       dropTarget = null;
     }
   });
+  table.addEventListener("contextmenu", function (event) {
+    const targetCell = event.target.closest("td");
+    const linkParams = new URLSearchParams(targetCell?.dataset);
+
+    if (!targetCell) {
+      return; // If not a valid cell or no link, do nothing
+    }
+    event.preventDefault(); // prevent default context menu
+    fetch(`/rota_grid/context_menu?${linkParams.toString()}`, {
+      headers: { Accept: "text/vnd.turbo-stream.html" },
+    }).then(processFetch);
+  });
 }
 document.addEventListener("DOMContentLoaded", setupTable);
+document.addEventListener("click", function (event) {
+  if (
+    !event.target.closest("#context-menu") &&
+    document.querySelector("#context-menu:not(:empty)")
+  ) {
+    // If the click is outside the context menu, remove it
+    event.preventDefault();
+    document.querySelector("#context-menu").innerHTML = "";
+  }
+});

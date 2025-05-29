@@ -1,4 +1,4 @@
-{%extends "activity_templates.html"%}
+
 {%macro ordinal_options(first,last,name,value)%} {%for index in range(first,last+1)%}
 <option value="{{index}}" {%if index==value %}selected{%endif%}>
     {%if index==1 %} Every {{name}} {%else%} Every {{ordinal(index)}} {{name}} {%endif%}
@@ -92,7 +92,9 @@
 
 {%endmacro%}
 {%block main%}
-<turbo-frame id="add-activity-form">
+<turbo-stream target="context-menu" action="update"><template></template></turbo-stream>
+<turbo-stream target="activity-dialog" action="update"><template>
+<div class="dialog-content">
     <form method="post" id="edit-activity-form">
         <span id="edit-activity-form-csrf">{{form.csrf_token}}</span>
         {{form.activity_id}}
@@ -103,13 +105,15 @@
                 {{form.start_time}}
                     
                     {{form.finish_time}}
-                    {{form.activity_tags}}
+                    {{form.activity_tags(max_options_visible=0)}}
                     {{form.location}}
                 
             <hr />
-            <div id="requirements-container">
+            <div id="{{form.requirements.id}}">
                 Requirements:
-                {%for req in form.requirements%}
+                <div class="requirement-container">
+                <div class="if-only-child empty-requirements">⚠️No requirements have been set</div>
+                {%-for req in form.requirements%}
                 <details {%if req.is_open.data%}open{%endif%}>
                     <summary>Requirement</summary>
                     {{req.req_id}}
@@ -121,18 +125,24 @@
                         {{form_line(req.optional)}}
                         {{form_line(req.attendance)}}
                         {{form_line(req.geofence)}}
+
                         
 
                     </table>
                 </details>
-                {%else%}
-                <div>⚠️No requirements have been set</div>
                 {%endfor%}
+                
+                </div>
+                <button type="submit" formnovalidate name="add-requirement" value="{{form.requirements.name}}">Add requirement</button>
+                
+                
+                {{form.requirements.name}}
 
             </div>
         </div>
         <button type="submit">Save template</button>
-        
+        </div>
     </form>
-</turbo-frame>
+    </template>
+</turbo-stream>
 {%endblock%}

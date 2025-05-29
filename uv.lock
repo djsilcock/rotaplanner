@@ -394,6 +394,14 @@ standard = [
 ]
 
 [[package]]
+name = "fontawesomefree"
+version = "6.6.0"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bb/e9/d43f5133b73e7ef9047bda28daaa6905e00b7d39f093b547f7e78ee2fc40/fontawesomefree-6.6.0-py3-none-any.whl", hash = "sha256:599b574431c9bd92ed5fc054d1045a07c42335da36c17884f2b934755eef9089", size = 25645298 },
+]
+
+[[package]]
 name = "frozenlist"
 version = "1.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1588,6 +1596,7 @@ name = "rotaplanner"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi", extra = ["standard"] },
+    { name = "fontawesomefree" },
     { name = "jinja2" },
     { name = "nicegui" },
     { name = "ortools" },
@@ -1605,6 +1614,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", extras = ["standard"] },
+    { name = "fontawesomefree", specifier = ">=6.6.0" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "nicegui", specifier = ">=2.14.1" },
     { name = "ortools" },

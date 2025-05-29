@@ -36,6 +36,7 @@ dependencies = [
     "python-multipart>=0.0.20",
     "wtforms>=3.2.1",
     "starlette-wtf>=0.4.5",
+    "fontawesomefree>=6.6.0",
 ]
 
 [project.urls]

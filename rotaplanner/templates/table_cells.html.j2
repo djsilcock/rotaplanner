@@ -34,4 +34,5 @@ $.toast({{toast|tojson}})
       </turbo-stream>
 {%endfor%}
 {%endmacro%}
+<turbo-stream target="context-menu" action="update"><template></template></turbo-stream>
 {{cell_stream(replacement_cells,grid_type)}}

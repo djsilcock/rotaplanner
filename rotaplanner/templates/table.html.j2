@@ -25,11 +25,14 @@
       {%for d in dates%}
         
         {% set cell = activity_cells[(d,staff_or_location.id)] %}
-        <td class="day-cell" id="{{cell.cell_id}}" data-date="{{d}}" data-{{grid_type}}="{{staff_or_location.id|string}}">
-        
-        
+        <td 
+          class="day-cell" 
+          id="{{cell.cell_id}}" 
+          data-date="{{d}}" 
+          data-{{grid_type}}="{{staff_or_location.id|string}}" 
+          style="anchor-name:--{{cell.cell_id}}">        
         {{render_cell(cell)}}
-        <a class="show-activity" data-turbo-stream href="/rota_grid/add_activity?date={{d}}&{{grid_type}}={{staff_or_location.id}}">...</a>
+        
         </td>
       {%endfor%}
       </tr>
@@ -44,6 +47,7 @@
       </tr>
 
   </table>
-  <sl-dialog id="activity-dialog"><div id="dialog-content">...</div></sl-dialog>
+  <div id="context-menu"></div>
+  <div id="activity-dialog"></div>
 </main>
 {%endblock%}
