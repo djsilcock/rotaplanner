@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from fastapi.templating import Jinja2Templates
 
 import datetime
 
@@ -13,17 +12,42 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from rotaplanner.database import Connection
 from sqlite3 import IntegrityError
 
+from mako.lookup import TemplateLookup
+
 router = APIRouter()
-templates = Jinja2Templates(directory="rotaplanner/templates")
+
+
+class MakoTemplates:
+    def __init__(self, *directories, module_directory=None):
+        self.lookup = TemplateLookup(
+            directories=[*directories], module_directory=module_directory
+        )
+
+    def get_template(self, template_name):
+        return self.lookup.get_template(template_name)
+
+    def TemplateResponse(self, template_name, context, **kwargs):
+        content = self.lookup.get_template(template_name).render(**context)
+        return HTMLResponse(content, **kwargs)
+
+
+templates = MakoTemplates(
+    "rotaplanner/templates", module_directory="rotaplanner/template_modules"
+)
+
 
 from wtforms import Form, Field
-from rotaplanner.shoelace_fields import (
+from wtforms import (
+    DateTimeLocalField,
+    StringField,
+    IntegerField,
+    FieldList,
+    FormField,
     SelectField,
+    SelectMultipleField,
     HiddenField,
     BooleanField,
-    SelectMultipleField,
 )
-from wtforms import DateTimeLocalField, StringField, IntegerField, FieldList, FormField
 from wtforms.validators import Optional, NumberRange, InputRequired
 
 
@@ -247,7 +271,7 @@ def rota_grid_by_location(request: Request, connection: Connection) -> Response:
     ]
     activity_cells._logging = False
     return templates.TemplateResponse(
-        "table.html.j2",
+        "table.html.mako",
         {
             "request": request,
             "date": datetime.date.today(),
@@ -272,7 +296,7 @@ def rota_grid_by_staff(request: Request, connection: Connection) -> Response:
     ]
     activity_cells._logging = True
     return templates.TemplateResponse(
-        "table.html.j2",
+        "table.html.mako",
         {
             "request": request,
             "date": datetime.date.today(),
@@ -356,7 +380,7 @@ def move_activity_in_location_grid(
         ],
     )[0]
     return templates.TemplateResponse(
-        "table_cells.html.j2",
+        "table_cells.html.mako",
         {
             "replacement_cells": activity_cells.values(),
             "grid_type": "location",
@@ -437,7 +461,7 @@ def move_staff_in_location_grid(
     )[0]
 
     return templates.TemplateResponse(
-        "table_cells.html.j2",
+        "table_cells.html.mako",
         {
             "replacement_cells": activity_cells.values(),
             "request": request,
@@ -531,7 +555,7 @@ def move_activity_in_staff_grid(
             ],
         )[0]
         return templates.TemplateResponse(
-            "table_cells.html.j2",
+            "table_cells.html.mako",
             {
                 "replacement_cells": activity_cells.values(),
                 "grid_type": "staff",
@@ -549,7 +573,7 @@ def move_activity_in_staff_grid(
 
 class AddActivityForm(Form):
     existing_activity = SelectField("Existing Activity", validate_choice=False)
-    
+
     staff = HiddenField("staff")
     date = HiddenField("date")
     location = HiddenField("location")
@@ -569,13 +593,13 @@ def table_context_menu(
     activity_form = AddActivityForm(
         data={"staff": staff, "date": date, "location": location}
     )
-    
+
     activity_form.existing_activity.choices = [
         (activity.activity_id, activity.name) for activity in activities.values()
-    ]+[('--new--', 'Create new activity')]
+    ] + [("--new--", "Create new activity")]
     # print("existing activities", activity_form.existing_activity.choices)
     return templates.TemplateResponse(
-        "table_context_menu.html.j2",
+        "table_context_menu.html.mako",
         {
             "request": request,
             "date": date,
@@ -605,10 +629,15 @@ async def add_activity(
                 "staff": staff_id,
                 "location": location_id,
             }:
-                return create_new_activity(request=request,date=date,staff_id=staff_id,location_id=location_id,connection=connection)
-            
+                return create_new_activity(
+                    request=request,
+                    date=date,
+                    staff_id=staff_id,
+                    location_id=location_id,
+                    connection=connection,
+                )
+
             case {
-                
                 "existing_activity": activity_id,
                 "location": location_id,
                 "date": date,
@@ -628,7 +657,6 @@ async def add_activity(
                     connection=connection,
                 )
             case {
-                
                 "existing_activity": activity_id,
                 "staff": staff_id,
                 "date": date,
@@ -650,7 +678,6 @@ async def add_activity(
                 raise ValueError("Do not understand request")
             case {"action": "template", "from_template": template_id}:
                 print("todo: create activity from template")
-            
 
     return HTMLResponse(
         """<turbo-frame id="add-activity-form">
@@ -698,7 +725,7 @@ class EditActivityForm(Form):
     finish_time = DateTimeLocalField("Finish Time")
 
     location = SelectField(choices=())
-    requirements = FieldList(FormField(RequirementForm))
+    requirements = FieldList(FormField(RequirementForm), min_entries=1, max_entries=10)
 
 
 def recurse(value):
@@ -733,5 +760,22 @@ def create_new_activity(
             pass
     print(errors)
     return templates.TemplateResponse(
-        "edit_activity_template.html.j2", {"form": form, "request": request},media_type="text/vnd.turbo-stream.html"
+        "edit_activity_template.html.mako",
+        {"form": form, "request": request},
+        media_type="text/vnd.turbo-stream.html",
+    )
+
+
+@router.get("/edit_activity_add_requirement")
+def edit_activity_add_requirement(
+    after: str,
+):
+    root, index = after.rsplit("-", 1)
+    index = int(index) + 1
+    form = RequirementForm(prefix=f"{root}-{index}-")
+    return HTMLResponse(
+        templates.get_template("edit_activity_template.html.mako")
+        .get_def("new_requirement_form")
+        .render(old_ref=after, new_ref=f"{root}-{index}", req=form),
+        media_type="text/vnd.turbo-stream.html",
     )

@@ -7,19 +7,17 @@
     ></script>
     <script src="/static/common.js"></script>
     <link rel="stylesheet" href="/static/common.css" />
-    <title>{% block title%}Rotaplanner{%endblock%}</title>
-    {%block assets%} {%endblock%}
+    <title>
+      <%block name="title">Rotaplanner</%block>
+    </title>
+    <%block name="assets"></%block>
   </head>
 
   <body>
     <div class="ui sidebar inverted vertical menu left">
       <nav class="ui inverted vertical menu">
-        <a class="item" href="{{url_for('rota_grid_by_staff')}}"
-          >Rota by person</a
-        >
-        <a class="item" href="{{url_for('rota_grid_by_location')}}"
-          >Rota by location</a
-        >
+        <a class="item" href="/rota-grid/staff/grid">Rota by person</a>
+        <a class="item" href="/rota-grid/location/grid">Rota by location</a>
 
         <a class="item" href="">Manage activity templates</a>
         <a class="item" href="/api/templates/supply">Manage supply templates</a>
@@ -34,9 +32,9 @@
         <button>
           <sl-icon name="layout-text-sidebar-reverse" id="menubutton"></sl-icon>
         </button>
-        {{self.title()}}
+        ${self.title()}
       </div>
-      {%block main%} ... {%endblock%}
+      <%block name="main"> ... </%block>
       <hr />
       <div id="additional"></div>
     </div>

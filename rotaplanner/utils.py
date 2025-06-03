@@ -12,3 +12,11 @@ def discard_extra_kwargs(fn, kwargs={}, **_kwargs):
         if p.name in kwargs:
             new_kwargs[p.name] = kwargs[p.name]
     return fn(**new_kwargs)
+
+
+from mako.runtime import supports_caller
+
+
+@supports_caller
+def dump_context(context):
+    print(context)
