@@ -1,7 +1,8 @@
-from pydantic import BaseModel
-
+from pydantic import BaseModel, RootModel
+from typing_extensions import TypeAliasType
 import datetime
-
+from itertools import groupby
+import uuid
 
 from typing import Literal
 import dataclasses
@@ -17,21 +18,6 @@ from rotaplanner.utils import get_locations, get_staff
 router = APIRouter()
 
 
-from wtforms import Form, Field
-from wtforms import (
-    DateTimeLocalField,
-    StringField,
-    IntegerField,
-    FieldList,
-    FormField,
-    SelectField,
-    SelectMultipleField,
-    HiddenField,
-    BooleanField,
-)
-from wtforms.validators import Optional, NumberRange, InputRequired
-
-
 class ReallocationError(Exception):
     pass
 
@@ -43,34 +29,81 @@ def daterange(start_date, finish_date):
         d += datetime.timedelta(days=1)
 
 
+class DateRange(BaseModel):
+    start: datetime.date
+    finish: datetime.date
+
+
+class LabelledUUID(BaseModel):
+    id: uuid.UUID
+    name: str
+
+
+class RotaConfig(BaseModel):
+    date_range: DateRange
+    staff: list[LabelledUUID]
+    locations: list[LabelledUUID]
+
+
+@router.get(
+    "/api/config/rota-grid/",
+    description="Row and column headings for the rota grid",
+    operation_id="tableConfig",
+)
+def rota_grid(connection: Connection) -> RotaConfig:
+    with connection:
+
+        staff = [
+            LabelledUUID(id=staff[0], name=staff[1])
+            for staff in connection.execute(
+                "SELECT id,name FROM staff ORDER BY name"
+            ).fetchall()
+        ]
+
+        locations = [
+            LabelledUUID(id=location[0], name=location[1])
+            for location in connection.execute(
+                "SELECT id,name FROM locations ORDER BY name"
+            ).fetchall()
+        ]
+
+        # get start and end dates from the database
+        start_date, finish_date = connection.execute(
+            "SELECT DATE(MIN(activity_start)),DATE(MAX(activity_finish)) FROM activities"
+        ).fetchone()
+
+    return RotaConfig(
+        staff=staff,
+        locations=locations,
+        date_range=DateRange(start=start_date, finish=finish_date),
+    )
+
+
 @dataclasses.dataclass
 class StaffAssignmentDisplay:
-    staff_name: str
-    staff_id: str
+    staff: LabelledUUID
     start_time: int | None = None
     finish_time: int | None = None
 
 
 @dataclasses.dataclass
-class ActivityDisplay:
+class LocationDisplay:
+    location_id: str
+    name: str
+
+
+class ActivityDisplay(BaseModel):
     activity_id: str
     name: str
     start_time: datetime.datetime
     finish_time: datetime.datetime
-    location_id: str
-    location_name: str
+    location: LabelledUUID | None
     staff_assignments: list[StaffAssignmentDisplay]
 
 
-@dataclasses.dataclass
-class ActivityCell:
-    date: str
-    row: str
-    activities: list[ActivityDisplay]
-
-    @property
-    def cell_id(self):
-        return f"cell-{self.date}-{self.row}"
+ActivityResponse = TypeAliasType(
+    "ActivityResponse", dict[datetime.date, list[ActivityDisplay]]
+)
 
 
 def get_activities(
@@ -126,8 +159,14 @@ def get_activities(
                     name=name,
                     start_time=start_time,
                     finish_time=finish_time,
-                    location_id=str(location_id),
-                    location_name=location_name,
+                    location=(
+                        LabelledUUID(
+                            id=location_id,
+                            name=location_name,
+                        )
+                        if location_id
+                        else None
+                    ),
                     staff_assignments=[],
                 )
                 if earliest_date is None or start_time < earliest_date:
@@ -137,125 +176,29 @@ def get_activities(
             if staff_id:
                 activities[activity_id].staff_assignments.append(
                     StaffAssignmentDisplay(
-                        staff_name=staff_name, staff_id=str(staff_id)
+                        staff=LabelledUUID(id=staff_id, name=staff_name)
                     )
                 )
         return activities, earliest_date or start_date, latest_date or finish_date
 
 
-def get_activity_cells_by_location(
+@router.get("/activities_by_date", operation_id="getActivitiesByDate")
+def get_activities_grouped_by_date(
     connection: Connection,
     start_date: datetime.date = datetime.date(1970, 1, 1),
     finish_date: datetime.date = datetime.date(2100, 1, 1),
-    specifically_include=(),
-) -> list[ActivityCell]:
-
+) -> ActivityResponse:
+    """Get activities grouped by date."""
     activities, earliest_date, latest_date = get_activities(
         connection, start_date, finish_date
     )
-
-    activity_cells = ActivityCellDict()
-    activity_cells._logging = True
-    for date, location_id in specifically_include:
-        key = (date.isoformat(), location_id)
-        activity_cells[key]
-
-    for activity_id, activity in activities.items():
-        key = (activity.start_time.date().isoformat(), activity.location_id)
-        activity_cells[key].activities.append(activity)
-    # print(activity_cells)
-    return (activity_cells, earliest_date.date(), latest_date.date())
-
-
-class ActivityCellDict(dict):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._logging = False
-
-    def __missing__(self, key):
-        (date, row_id) = key
-        # if self._logging:
-        # print("Creating new cell", key)
-        self[key] = ActivityCell(date=date, row=row_id, activities=[])
-        return self[key]
-
-
-def get_activity_cells_by_staff(
-    connection: Connection,
-    start_date: datetime.date = datetime.date(1970, 1, 1),
-    finish_date: datetime.date = datetime.date(2100, 1, 1),
-    specifically_include=(),
-) -> list[ActivityCell]:
-
-    activities, earliest_date, latest_date = get_activities(
-        connection, start_date, finish_date
-    )
-
-    activity_cells = ActivityCellDict()
-    for date, staff_id in specifically_include:
-        key = (date.isoformat(), staff_id)
-        activity_cells[key]
-    for activity_id, activity in activities.items():
-        if len(activity.staff_assignments) == 0:
-            # print("No staff assignment for activity", activity_id)
-            activity_cells[
-                (activity.start_time.date().isoformat(), None)
-            ].activities.append(activity)
-        for staff_assignment in activity.staff_assignments:
-            # print("Staff assignment for activity", activity_id, staff_assignment.staff_id)
-            key = (activity.start_time.date().isoformat(), staff_assignment.staff_id)
-            activity_cells[key].activities.append(activity)
-    return (activity_cells, earliest_date.date(), latest_date.date())
-
-
-@router.get("/rota_grid/location/grid")
-def rota_grid_by_location(request: Request, connection: Connection) -> Response:
-
-    (activity_cells, earliest_date, latest_date) = get_activity_cells_by_location(
-        connection
-    )
-    y_axis = get_locations(connection)
-    dates = [
-        earliest_date + datetime.timedelta(days=i)
-        for i in range((latest_date - earliest_date).days + 1)
-    ]
-    activity_cells._logging = False
-    return templates.TemplateResponse(
-        "table.html.mako",
-        {
-            "request": request,
-            "date": datetime.date.today(),
-            "dates": [d.isoformat() for d in dates],
-            "y_axis": y_axis,
-            "activity_cells": activity_cells,
-            "grid_type": "location",
-        },
-    )
-
-
-@router.get("/rota_grid/staff/grid")
-def rota_grid_by_staff(request: Request, connection: Connection) -> Response:
-
-    (activity_cells, earliest_date, latest_date) = get_activity_cells_by_staff(
-        connection
-    )
-    y_axis = get_staff(connection)
-    dates = [
-        earliest_date + datetime.timedelta(days=i)
-        for i in range((latest_date - earliest_date).days + 1)
-    ]
-    activity_cells._logging = True
-    return templates.TemplateResponse(
-        "table.html.mako",
-        {
-            "request": request,
-            "date": datetime.date.today(),
-            "dates": [d.isoformat for d in dates],
-            "y_axis": y_axis,
-            "activity_cells": activity_cells,
-            "grid_type": "staff",
-        },
-    )
+    grouped = {}
+    for activity in activities.values():
+        date = activity.start_time.date()
+        if date not in grouped:
+            grouped[date] = []
+        grouped[date].append(activity)
+    return grouped
 
 
 class LocationGridCell(BaseModel):
@@ -519,14 +462,6 @@ def move_activity_in_staff_grid(
             },
             media_type="text/vnd.turbo-stream.html",
         )
-
-
-class AddActivityForm(Form):
-    existing_activity = SelectField("Existing Activity", validate_choice=False)
-
-    staff = HiddenField("staff")
-    date = HiddenField("date")
-    location = HiddenField("location")
 
 
 @router.get("/rota_grid/context_menu", operation_id="tableContextMenu")

@@ -16,7 +16,7 @@ import {
 import { differenceInCalendarDays, addDays, parseISO } from "date-fns";
 import { createQuery, useQueryClient } from "@tanstack/solid-query";
 import styles from "./table.module.css";
-import { Batcher } from "./utils/batcher";
+import { Batcher } from "../../../frontend/src/utils/batcher";
 import { useParams } from "@solidjs/router";
 import { createStore, produce ,unwrap,reconcile} from "solid-js/store";
 import { create, debounce, get, set } from "lodash";
@@ -25,21 +25,37 @@ import Menu from "@suid/material/Menu";
 import MenuItem from "@suid/material/MenuItem";
 import { Match } from "solid-js";
 
+
 import {
-  activitiesByDate,
+  getActivitiesByDate,
   tableConfig as getTableConfig,
   moveActivityInLocationGrid,
   moveActivityInStaffGrid,
   
-} from "./client/sdk.gen";
-import { LabelledUuid ,ActivityResponse} from "./client/types.gen";
+} from "../../generatedTypes/sdk.gen";
+import { LabelledUuid ,ActivityDisplay,ActivityResponse} from "../../generatedTypes/types.gen";
 import {
   activitiesByDateOptions,
   activitiesByDateQueryKey,
   tableConfigOptions,
-} from "./client/@tanstack/solid-query.gen";
+} from "../../../frontend/src/client/@tanstack/solid-query.gen";
 
 const epoch = new Date(2021, 0, 1);
+
+function retry(fn: (...arg:any) => Promise<any>, { retries = 3, delay = 500 }): () => Promise<any> {
+  return async (...arg) => {
+    let lastError;
+    for (let i = 0; i < retries; i++) {
+      try {
+        return await fn(...arg);
+      } catch (error) {
+        lastError = error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+    throw lastError;
+  }
+}
 
 /**
  * Converts a date to its ordinal representation based on a fixed epoch.
@@ -50,90 +66,23 @@ export function toOrdinal(date:Date): number {
   return differenceInCalendarDays(date, epoch);
 }
 
-interface TableSegmentProps{
-  date: Date;
-  activities: Array<ActivityResponse>;
-  y_axis: Array<LabelledUuid>;
-  y_axis_type: string;
-}
-/**
- * TableSegment component to render a column of the table.
- * @param {Object} props - The properties passed to the component.
- * @param {Date} props.date - The date for the segment.
- * @param {Array} props.activities - Array of activities for the segment.
- * @param {Array} props.y_axis - Array of y-axis data.
- * @param {string} props.y_axis_type - Type of y-axis data.
- * @returns {JSX.Element} - The rendered TableSegment component.
- */
-const TableSegment: Component<TableSegmentProps> = (props): JSX.Element => {
-  const activitiesByRow = createMemo(() => {
-    return Object.fromEntries((props.y_axis || []).map((staff_or_location) => {
-      return [
-        staff_or_location.id,
-        props.activities.filter((activity) => {
-          if (props.y_axis_type === "staff") {
-            return activity.staff_assignments.some(
-              (assignment) => assignment.staff.id === staff_or_location.id
-            );
-          } else if (props.y_axis_type === "location") {
-            return activity.location?.id === staff_or_location.id;
-          }
-          return false;
-        }),
-      ];
-    }));
-  })
-  const unassignedActivities = createMemo(() => {
-    return props.activities.filter((activity) => {
-      if (props.y_axis_type === "staff") {
+function filterActivities(activities: ActivityResponse, date: Date, staff_or_location: string|undefined, y_axis_type: string): Array<ActivityDisplay> {
+  const activitiesForDay=activities[date.toISOString().slice(0, 10)] || [];
+  return activitiesForDay.filter((activity) => {
+    if (y_axis_type === "staff") {
+      if (!staff_or_location) {
         return activity.staff_assignments.length === 0;
-      } else if (props.y_axis_type === "location") {
-        return !activity.location;
       }
-      return false;
-    });
-   })
-  return (
-    <div class={styles.rotaSegment}>
-      <div
-        classList={{
-          [styles.columnHeader]: true,
-          [styles.weekend]:
-            props.date.getDay() === 0 || props.date.getDay() === 6,
-        }}
-      >
-        {props.date.toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })}
-      </div>
-
-      <For each={props.y_axis}>
-        {(staff_or_location, index) => (
-          <ActivityCell
-            staff_or_location={staff_or_location.id}
-            activities={activitiesByRow()[staff_or_location.id]}
-            staff={props.y_axis_type == "staff" ? staff_or_location.id : null}
-            location={
-              props.y_axis_type == "location" ? staff_or_location.id : null
-            }
-            y_axis_type={props.y_axis_type}
-            i={index()}
-            date={props.date}
-          />
-        )}
-      </For>
-      <ActivityCell
-        date={props.date}
-        activities={unassignedActivities()}
-        i={props.y_axis?.length}
-        staff_or_location={undefined}
-        y_axis_type={props.y_axis_type}
-      />
-    </div>
-  );
+      return activity.staff_assignments.some(
+        (assignment) => assignment.staff.id === staff_or_location
+      );
+    } else if (y_axis_type === "location") {
+      return activity.location?.id === staff_or_location;
+    }
+    return false;
+  });
 }
+
 
 interface ActiveMenuInfo {
   ref: HTMLElement;
@@ -145,34 +94,22 @@ const [activeMenu, setActiveMenu] = createSignal<ActiveMenuInfo|null>(null);
 
 const DEFAULT_SEGMENT_WIDTH = 1;
 
-async function throwIfError<T>(resource: Promise<{ data: T; error: any }>):Promise<T> { 
-  const { data, error } = await resource;
+function throwIfError<T>({ data, error}:{data:T,error:any}):T { 
   if (error) {
     throw error;
   }
   return data;
 }
-function createDeepSignal<T>(value: T): Signal<T> {
-  const [store, setStore] = createStore({
-    value,
-  })
-  return [
-    () => store.value,
-    (v: T) => {
-      const unwrapped = unwrap(store.value)
-      typeof v === "function" && (v = v(unwrapped))
-      setStore("value", reconcile(v))
-      return store.value
-    },
-  ] as Signal<T>
-}
+
 
 interface TableConfig {
-    y_axis: LabelledUuid[];
-    dates: Date[]
-    
-    activitiesByDate: Record<string, ActivityResponse[]> 
-  }
+  staff: LabelledUuid[];
+  locations: LabelledUuid[];
+  dates: Date[];
+}
+  
+interface TableProps {
+  y_axis_type: "location" | "staff";}
 /**
  *
  * @param {object} props
@@ -180,36 +117,41 @@ interface TableConfig {
  * @returns {JSX.Element}
  * Table component to render the main table.
  */
-function Table(props: { y_axis_type: "location"|"staff"; }): JSX.Element {
+function Table(props: TableProps): JSX.Element {
   const client = useQueryClient();
-  
-  const [tableConfig, editTable] = createStore <TableConfig>({
-    y_axis: [],
-    dates: [],
-    activitiesByDate: {},
-  });
-  
-  createEffect(async () => {
-    const tableConfig = await throwIfError(getTableConfig({
-      path: { location_or_staff: props.y_axis_type }
-    }));
-    editTable("y_axis", tableConfig?.y_axis!);
-    const dates = Array.from(
-      { length: differenceInCalendarDays(parseISO(tableConfig?.date_range.finish!), parseISO(tableConfig?.date_range.start!)) },
-      (_, i) => {
-        return addDays(parseISO(tableConfig?.date_range.start!), i);
+  const [tableConfigResponse, { refetch: refetchTableConfig }] = createResource(() => getTableConfig().then(throwIfError))
+  const tableConfig: TableConfig = (() => {
+    const datesMemo = createMemo(() => {
+      if (!tableConfigResponse()?.date_range) return [];
+      // Generate dates from start to finish date in the date range
+      const start = parseISO(tableConfigResponse()?.date_range.start || "");
+      const finish = parseISO(tableConfigResponse()?.date_range.finish || "");
+      return Array.from(
+        { length: differenceInCalendarDays(finish, start) + 1 },
+        (_, i) => addDays(start, i)
+      );
+    })
+    return {
+      get staff() { return tableConfigResponse()?.staff ?? [] },
+      get locations() { return tableConfigResponse()?.locations ?? [] },
+    
+      get dates() {
+        return datesMemo();
       }
-    )
-    editTable("dates", dates);
-    const activitiesData = await throwIfError(activitiesByDate({
-      query: { start_date: tableConfig?.date_range.start, finish_date: tableConfig?.date_range.finish },
-    }));
-    activitiesData?.forEach((item) => {
-      editTable("activitiesByDate", item.date, item.activities);
-    });
+    }
+  })()
+
+  const [activitiesData, updateActivitiesData] = createStore({})
+  
+  const c = (retry(
+    (_) => getActivitiesByDate({
+      query: {},
+    })
+      .then(throwIfError), { retries: 3 }))()
+    c.then((data) => {
+    updateActivitiesData(data);
   });
-  
-  
+
   
   let parentRef;
 
@@ -243,6 +185,12 @@ function Table(props: { y_axis_type: "location"|"staff"; }): JSX.Element {
     }
     setActiveMenu(null);
   };
+  const y_axis = createMemo(() => {
+    if (props.y_axis_type === "staff") {
+      return tableConfig.staff;
+    }
+    return tableConfig.locations;
+  });
 
   return (
     <Show when={true} fallback={<div>Loading...</div>}>
@@ -278,32 +226,41 @@ function Table(props: { y_axis_type: "location"|"staff"; }): JSX.Element {
           )}
         </For>
       </Menu>
-      <div
+      <table
         class={styles.rotaTable}
-        style={{
-          "grid-template-rows": `repeat(${tableConfig.y_axis.length + 2},auto)`,
-        }}
-      >
-        <div class={styles.rowHeader}></div>
-        <For each={tableConfig.y_axis} fallback={<div></div>}>
+        
+      ><thead>
+        <tr>
+          <td></td>
+          <For each={tableConfig.dates} fallback={<td></td>}>
+            {(date) => (<td>{date.toISOString().slice(0, 10)}</td>)}
+          </For>
+          </tr>
+        </thead>
+        <tbody>
+        <For each={y_axis()}>
+          
           {(staff_or_location, index) => (
-            <div class={styles.rowHeader}>{staff_or_location.name}</div>
-          )}
+            <tr>
+              <td class={styles.rowHeader}>{staff_or_location.name}</td>
+              <For each={tableConfig.dates} fallback={<td></td>}>
+                {(date) => (
+                  <ActivityCell
+                    activities={activitiesData}
+                    row_id={staff_or_location?.id}
+                    row_id={staff_or_location.id}
+                    y_axis_type={props.y_axis_type}
+                    i={index()}
+                    date={date}
+                  />
+                  
+                )}
+              </For>
+            </tr>
+            )}
         </For>
-
-        <For each={tableConfig.dates} fallback={<div></div>}>
-          {(date) => {
-            return (
-              <TableSegment
-                date={date}
-                activities={tableConfig.activitiesByDate[date.toISOString().slice(0, 10)]}
-                y_axis={tableConfig.y_axis}
-                y_axis_type={props.y_axis_type}
-              />
-            );
-          }}
-        </For>
-      </div>
+        </tbody>
+      </table>
     </Show>
   );
 }
@@ -356,43 +313,17 @@ function filterActivitiesLocationView(date:string, activities:ActivityResponse[]
 interface ActivityCellProps {
   date: Date;
   y_axis_type: string;
-  staff_or_location?: string;
+  row_id?: string;
   i?: number;
-  activities: ActivityResponse[];
+  activities: ActivityResponse;
 }
-/**
- * ActivityCell component to render a cell in the table.
- * @param {Object} props - The properties passed to the component.
- * @param {Date} props.date - The date for the cell.
- * @param {string} props.y_axis_type - Type of y-axis data (staff or location).
- * @param {string} [props.staff_or_location] - The staff or location ID.
- * @param {number} [props.i] - Index of the cell.
- * @returns {JSX.Element} - The rendered ActivityCell component.
- */
+
 export const ActivityCell:Component<ActivityCellProps>=(props)=>{
   const isoDate = () => props.date.toISOString().slice(0, 10);
-  const selector = (data:ActivityResponse[]) => {
-    if (props.y_axis_type === "staff") {
-      return filterActivitiesStaffView(
-        isoDate(),
-        data,
-        props.staff_or_location
-      );
-    }
-    if (props.y_axis_type === "location") {
-      return filterActivitiesLocationView(
-        isoDate(),
-        data,
-        props.staff_or_location
-      );
-    }
-    throw new Error("Invalid y_axis_type");
-  };
+  
   const [items, setItems] = createSignal([]);
-  const cellActivities = createMemo(()=>selector(props.activities))
-  createEffect(() => {
-    if (cellActivities.data) setItems(selector(cellActivities.data));
-  });
+  const cellActivities = createMemo(()=>filterActivities(props.activities,props.date,props.row_id,props.y_axis_type));
+  
 
   const handleMove = ({ detail }) => {
     setItems(detail.items);
@@ -448,7 +379,7 @@ export const ActivityCell:Component<ActivityCellProps>=(props)=>{
           setActiveMenu({
             ref: e.target,
             date: isoDate(),
-            staff_or_location: props.staff_or_location,
+            staff_or_location: props.row_id,
             items: cellActivities.data,
           });
           e.preventDefault();
@@ -476,7 +407,7 @@ export const ActivityCell:Component<ActivityCellProps>=(props)=>{
  * @param {Object} [props.staff_or_location=null] - The staff or location data.
  * @returns {JSX.Element} - The rendered Activity component.
  */
-export function Activity(props: { activity_def: object; staff_or_location?: object; }): JSX.Element {
+export function Activity(props: { activity_def: ActivityDisplay; staff_or_location?: object; }): JSX.Element {
   return (
     <div class={styles.activity}>
       <div class={styles.activityName}>{props.activity_def.name}</div>

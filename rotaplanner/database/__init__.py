@@ -7,10 +7,10 @@ from typing import Annotated
 from fastapi import Depends
 from contextlib import contextmanager
 
-sqlite_file_name = pathlib.Path(__file__).parent.parent.joinpath(
-    "instance", "database.db"
-)
-with open(pathlib.Path(__file__).parent.parent.joinpath("instance", "setup.sql")) as f:
+sqlite_file_name = pathlib.Path(__file__, "..", "database.db").resolve()
+sqlite_setup_file = pathlib.Path(__file__, "..", "setup.sql").resolve()
+
+with open(sqlite_setup_file) as f:
     sql_setup = f.read()
 
 sqlite_url = f"sqlite:///{sqlite_file_name}"
@@ -20,12 +20,6 @@ connect_args = {"check_same_thread": False}
 
 def adapt_uuid(value: uuid.UUID):
     return value.hex
-
-
-def convert_uuid(value: bytes):
-    if value == "NULL":
-        return None
-    return uuid.UUID(value.decode())
 
 
 def adapt_timestamp(value: datetime.datetime):
@@ -38,8 +32,6 @@ def convert_timestamp(value: bytes):
     return datetime.datetime.fromisoformat(value.decode())
 
 
-# sqlite3.register_adapter(uuid.UUID, adapt_uuid)
-# sqlite3.register_converter("uuid", convert_uuid)
 sqlite3.register_adapter(datetime.datetime, adapt_timestamp)
 sqlite3.register_converter("timestamp", convert_timestamp)
 

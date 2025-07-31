@@ -1,11 +1,10 @@
-
 dist
-.solid
+.wrangler
 .output
 .vercel
 .netlify
 .vinxi
-.yarn
+app.config.timestamp_*.js
 
 # Environment
 .env
@@ -13,7 +12,6 @@ dist
 
 # dependencies
 /node_modules
-*/__pycache__
 
 # IDEs and editors
 /.idea
@@ -21,7 +19,6 @@ dist
 .classpath
 *.launch
 .settings/
-*.pyc
 
 # Temp
 gitignore
@@ -29,5 +26,3 @@ gitignore
 # System Files
 .DS_Store
 Thumbs.db
-bun.exe
-rotarunner_ui/generatedTypes

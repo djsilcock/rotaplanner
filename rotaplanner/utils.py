@@ -1,22 +1,35 @@
-import inspect
+"general utility functions for rotaplanner"
+
+import dataclasses
+from rotaplanner.database import Connection
 
 
-def discard_extra_kwargs(fn, kwargs={}, **_kwargs):
-    kwargs = {**kwargs, **_kwargs}
-    kwargs.update(_kwargs)
-    sig = inspect.signature(fn)
-    new_kwargs = {}
-    for p in sig.parameters.values():
-        if p.kind == inspect.Parameter.VAR_KEYWORD:
-            return fn(**kwargs)
-        if p.name in kwargs:
-            new_kwargs[p.name] = kwargs[p.name]
-    return fn(**new_kwargs)
+@dataclasses.dataclass
+class Location:
+    id: str
+    name: str
 
 
-from mako.runtime import supports_caller
+class Staff:
+    id: str
+    name: str
 
 
-@supports_caller
-def dump_context(context):
-    print(context)
+def get_locations(connection: Connection) -> dict[str, Location]:
+    sql_query = """
+    SELECT id, name
+    FROM locations
+    """
+    with connection:
+        result = connection.execute(sql_query).fetchall()
+    return {row[0]: Location(id=str(row[0]), name=row[1]) for row in result}
+
+
+def get_staff(connection: Connection) -> dict[str, Staff]:
+    sql_query = """
+    SELECT id, name
+    FROM staff
+    """
+    with connection:
+        result = connection.execute(sql_query).fetchall()
+    return {row[0]: Staff(id=str(row[0]), name=row[1]) for row in result}

@@ -115,7 +115,7 @@ function NotFound() {
   return <div>Not here!</div>
 }
 
-const Table=lazy(()=>import('./table'))
+const Table=lazy(()=>import('../../rotarunner_ui/pages/table'))
 function TableByStaff() {
   return <Table y_axis_type="staff" />
 }
@@ -130,7 +130,7 @@ export default function App() {
   
     <Route path="/rota-grid/staff" component={TableByStaff} />
     <Route path="/rota-grid/location" component={TableByLocation} />
-    <Route path="/manage-activity-templates" component={lazy(() => import('./activity_templates'))} />
+    <Route path="/manage-activity-templates" component={lazy(() => import('../../rotarunner_ui/pages/activity_templates'))} />
     <Route path="/test-form" component={lazy(() => import('./testform'))} />
     <Route path="*404" component={NotFound} />
   </Router>

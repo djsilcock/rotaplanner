@@ -38,6 +38,7 @@ dependencies = [
     "starlette-wtf>=0.4.5",
     "fontawesomefree>=6.6.0",
     "mako>=1.3.10",
+    "pywinpty>=2.0.15",
 ]
 
 [project.urls]
