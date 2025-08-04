@@ -226,10 +226,8 @@ function Table(props: TableProps): JSX.Element {
           )}
         </For>
       </Menu>
-      <table
-        class={styles.rotaTable}
-        
-      ><thead>
+      <table class={styles.rotaTable}>
+        <thead>
         <tr>
           <td></td>
           <For each={tableConfig.dates} fallback={<td></td>}>
@@ -265,12 +263,12 @@ function Table(props: TableProps): JSX.Element {
   );
 }
 
-function filterActivitiesStaffView(date:string, activities:ActivityResponse[], staff:string|undefined) {
+function filterActivitiesStaffView(date:string, activities:ActivityDisplay[], staff:string|undefined) {
   //filter and map activities in staff view
   console.log("filterActivitiesStaffView", date, activities, staff);
   return (
     activities
-      .filter((activity) => {
+      ?.filter((activity) => {
         try {
           if (staff) {
             return activity.staff_assignments.some(
@@ -292,11 +290,11 @@ function filterActivitiesStaffView(date:string, activities:ActivityResponse[], s
       })) ?? []
   );
 }
-function filterActivitiesLocationView(date:string, activities:ActivityResponse[], location:string|undefined) {
+function filterActivitiesLocationView(date:string, activities:ActivityDisplay[], location:string|undefined) {
   //filter and map activities in location view
 
   return activities
-    .filter((activity) => {
+    ?.filter((activity) => {
       if (location) {
         return activity.location?.id === location;
       }
@@ -312,7 +310,7 @@ function filterActivitiesLocationView(date:string, activities:ActivityResponse[]
 }
 interface ActivityCellProps {
   date: Date;
-  y_axis_type: string;
+  y_axis_type: "staff" | "location";
   row_id?: string;
   i?: number;
   activities: ActivityResponse;
@@ -322,8 +320,7 @@ export const ActivityCell:Component<ActivityCellProps>=(props)=>{
   const isoDate = () => props.date.toISOString().slice(0, 10);
   
   const [items, setItems] = createSignal([]);
-  const cellActivities = createMemo(()=>filterActivities(props.activities,props.date,props.row_id,props.y_axis_type));
-  
+  const cellActivities = createMemo(()=>((props.y_axis_type=="staff"?filterActivitiesStaffView:filterActivitiesLocationView)(isoDate(),props.activities[isoDate()],props.row_id)));
 
   const handleMove = ({ detail }) => {
     setItems(detail.items);
@@ -360,7 +357,8 @@ export const ActivityCell:Component<ActivityCellProps>=(props)=>{
   let cellRef;
   return (
     <Suspense fallback={<div></div>}>
-      <div
+      <td
+        title={JSON.stringify(cellActivities())}
         classList={{
           [styles.activityCell]: !!props.staff_or_location,
           [styles.unallocatedActivities]: !props.staff_or_location,
@@ -380,13 +378,13 @@ export const ActivityCell:Component<ActivityCellProps>=(props)=>{
             ref: e.target,
             date: isoDate(),
             staff_or_location: props.row_id,
-            items: cellActivities.data,
+            items: props.activities[isoDate()],
           });
           e.preventDefault();
         }}
         ref={cellRef}
       >
-        <For each={items()} fallback={<div>&nbsp;</div>}>
+        <For each={cellActivities()} fallback={<div>&nbsp;</div>}>
           {(act) => (
             <Activity
               activity_def={act}
@@ -395,7 +393,7 @@ export const ActivityCell:Component<ActivityCellProps>=(props)=>{
             />
           )}
         </For>
-      </div>
+      </td>
     </Suspense>
   );
 }

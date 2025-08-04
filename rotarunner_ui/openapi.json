@@ -5,7 +5,7 @@
     "version": "0.1.0"
   },
   "paths": {
-    "/api/config/rota-grid/": {
+    "/api/api/config/rota-grid/": {
       "get": {
         "summary": "Rota Grid",
         "description": "Row and column headings for the rota grid",
@@ -24,7 +24,7 @@
         }
       }
     },
-    "/activities_by_date": {
+    "/api/activities_by_date": {
       "get": {
         "summary": "Get Activities Grouped By Date",
         "description": "Get activities grouped by date.",
@@ -77,7 +77,7 @@
         }
       }
     },
-    "/rota_grid/location/drag_activity": {
+    "/api/rota_grid/location/drag_activity": {
       "post": {
         "summary": "Move Activity In Location Grid",
         "operationId": "moveActivityInLocationGrid",
@@ -113,7 +113,7 @@
         }
       }
     },
-    "/rota_grid/location/drag_staff": {
+    "/api/rota_grid/location/drag_staff": {
       "post": {
         "summary": "Move Staff In Location Grid",
         "operationId": "moveStaffInLocationGrid",
@@ -149,7 +149,7 @@
         }
       }
     },
-    "/rota_grid/staff/drag_activity": {
+    "/api/rota_grid/staff/drag_activity": {
       "post": {
         "summary": "Move Activity In Staff Grid",
         "operationId": "moveActivityInStaffGrid",
@@ -185,7 +185,7 @@
         }
       }
     },
-    "/rota_grid/context_menu": {
+    "/api/rota_grid/context_menu": {
       "get": {
         "summary": "Table Context Menu",
         "operationId": "tableContextMenu",
@@ -240,7 +240,7 @@
         }
       }
     },
-    "/rota_grid/add_activity": {
+    "/api/rota_grid/add_activity": {
       "post": {
         "summary": "Add Activity",
         "operationId": "addActivity",
@@ -256,10 +256,10 @@
         }
       }
     },
-    "/create_new_activity": {
+    "/api/create_new_activity": {
       "get": {
         "summary": "Create New Activity",
-        "operationId": "create_new_activity_create_new_activity_get",
+        "operationId": "create_new_activity_api_create_new_activity_get",
         "parameters": [
           {
             "name": "staff_id",
@@ -311,10 +311,10 @@
         }
       }
     },
-    "/edit_activity_add_requirement": {
+    "/api/edit_activity_add_requirement": {
       "get": {
         "summary": "Edit Activity Add Requirement",
-        "operationId": "edit_activity_add_requirement_edit_activity_add_requirement_get",
+        "operationId": "edit_activity_add_requirement_api_edit_activity_add_requirement_get",
         "parameters": [
           {
             "name": "after",
@@ -348,7 +348,7 @@
         }
       }
     },
-    "/api/config/test-data": {
+    "/api/api/config/test-data": {
       "get": {
         "summary": "Make Test Data",
         "operationId": "testData",

@@ -25,15 +25,14 @@
 }
 .rotaTable {
   position: relative;
-  display: grid;
-  grid-template-columns: auto;
-  grid-auto-columns: minmax(5em, 8em);
   width: 80vw;
   overflow: auto;
   row-gap: 1px;
-
   border: 1px solid grey;
-  grid-auto-flow: column;
+  td {
+    border: 1px solid grey;
+    padding: 0.5em;
+  }
 }
 .rotaScrollable {
   display: grid;

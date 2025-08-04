@@ -22,9 +22,6 @@ import { createSignal, lazy } from "solid-js";
 import { QueryClient, QueryClientProvider } from "@tanstack/solid-query";
 import { client } from "../generatedTypes/client.gen";
 
-client.setConfig({
-  baseUrl: "http://localhost:8000",
-});
 /**
  * @typedef {Object} MenuItemProps
  * @property {string} href

@@ -1,7 +1,10 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, HTTPException, Response, APIRouter
+from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 import json
+import httpx
+import asyncio
 
 
 from rotarunner_ui.pages.table import router as grid_view_router
@@ -29,9 +32,7 @@ async def lifespan(app: FastAPI):
     print("OpenAPI schema written to rotarunner_ui/openapi.json")
     generate_types()
     on_startup()
-    build_frontend()
-    async for devserver in run_vite_dev_server2():
-        yield devserver
+    yield
 
 
 def on_startup():
@@ -63,8 +64,10 @@ def on_startup():
 
 app = FastAPI(lifespan=lifespan)
 
+api_app = APIRouter()
 
-app.include_router(grid_view_router)
-app.include_router(activities_router)
-app.include_router(config_router)
+api_app.include_router(grid_view_router)
+api_app.include_router(activities_router)
+api_app.include_router(config_router)
 app.mount("/static", StaticFiles(directory="rotaplanner/static"), name="static")
+app.include_router(api_app, prefix="/api")
