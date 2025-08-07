@@ -39,6 +39,7 @@ import {
   activitiesByDateQueryKey,
   tableConfigOptions,
 } from "../../../frontend/src/client/@tanstack/solid-query.gen";
+import { Celebration } from "@suid/icons-material";
 
 const epoch = new Date(2021, 0, 1);
 
@@ -146,9 +147,12 @@ function Table(props: TableProps): JSX.Element {
   const c = (retry(
     (_) => getActivitiesByDate({
       query: {},
-    })
-      .then(throwIfError), { retries: 3 }))()
-    c.then((data) => {
+    }), { retries: 3 }))()
+  c.then(({ data, error }) => {
+    if (error) {
+      console.error("Error fetching activities:", error);
+      return;
+    }
     updateActivitiesData(data);
   });
 
@@ -249,10 +253,12 @@ function Table(props: TableProps): JSX.Element {
                     row_id={staff_or_location.id}
                     y_axis_type={props.y_axis_type}
                     i={index()}
-                    date={date}
-                  />
-                  
-                )}
+                      date={date}
+                      updateActivities={(newActivities: ActivityResponse) => {
+                        updateActivitiesData(newActivities);
+                      }}
+                    />
+                  )}
               </For>
             </tr>
             )}
@@ -285,12 +291,18 @@ function filterActivitiesStaffView(date:string, activities:ActivityDisplay[], st
         ...item,
         original_date: date,
         original_staff: staff,
-        id: `${item.id}-${staff}`,
-        activity_id: item.id,
+        id: `${item.activity_id}-${staff}`,
+        activity_id: item.activity_id,
       })) ?? []
   );
 }
-function filterActivitiesLocationView(date:string, activities:ActivityDisplay[], location:string|undefined) {
+interface DraggableActivity extends ActivityDisplay {
+  original_date: string;
+  original_staff?: string;
+  original_location?: string;
+  id: string; // Unique ID for the draggable item
+}
+function filterActivitiesLocationView(date:string, activities:ActivityDisplay[], location:string|undefined): DraggableActivity[] {
   //filter and map activities in location view
 
   return activities
@@ -304,8 +316,7 @@ function filterActivitiesLocationView(date:string, activities:ActivityDisplay[],
       ...item,
       original_date: date,
       original_location: location,
-      id: `${item.id}-${location}`,
-      activity_id: item.id,
+      id: `${item.activity_id}-${location}`
     }));
 }
 interface ActivityCellProps {
@@ -314,39 +325,64 @@ interface ActivityCellProps {
   row_id?: string;
   i?: number;
   activities: ActivityResponse;
+  updateActivities: (newActivities: ActivityResponse) => void;
 }
-
+type APIResponse<R> = { error: any; data: undefined } | { error: undefined; data: R };
 export const ActivityCell:Component<ActivityCellProps>=(props)=>{
   const isoDate = () => props.date.toISOString().slice(0, 10);
   
-  const [items, setItems] = createSignal([]);
-  const cellActivities = createMemo(()=>((props.y_axis_type=="staff"?filterActivitiesStaffView:filterActivitiesLocationView)(isoDate(),props.activities[isoDate()],props.row_id)));
-
+  const [items, setItems] = createSignal<DraggableActivity[]>([]);
+  const cellActivities = createMemo(() => ((props.y_axis_type == "staff" ? filterActivitiesStaffView : filterActivitiesLocationView)(isoDate(), props.activities[isoDate()], props.row_id)) ?? [])
+  createEffect(() => {
+    // Update items when cellActivities changes
+    setItems(cellActivities());
+  });
   const handleMove = ({ detail }) => {
     setItems(detail.items);
   };
   const client = useQueryClient();
+  const handleMoveResponse = ({ error, data }: APIResponse<ActivityResponse>) => {
+          if (error) {
+            console.error("Error moving activity:", error);
+            return;
+          }
+          props.updateActivities(data as ActivityResponse);
+        }
   const handleFinalMove = ({ detail }) => {
     setItems(detail.items);
     if (detail.info.trigger == TRIGGERS.DROPPED_INTO_ZONE) {
-      const movedItem = items().find((i) => i.id == detail.info.id);
+      console.log("Finalizing move", detail);
+      const movedItem = detail.items.find((i) => i.id == detail.info.id);
+      if (!movedItem) {
+        console.error("Moved item not found in cellActivities", detail.info.id,detail.items);
+        return;
+      }
       if (props.y_axis_type == "staff") {
         moveActivityInStaffGrid({
           body: {
-            original_date: movedItem.original_date,
-            new_date: isoDate(),
-            original_staff: movedItem.original_staff,
-            new_staff: props.staff_or_location,
+            from_cell: {
+              date: movedItem.original_date,
+              staff: movedItem.original_staff,
+            },
+            to_cell: {
+              date: isoDate(),
+              staff: props.row_id,
+            },
             activity_id: movedItem.activity_id,
           },
-        }).then(handleMoveResponse);
+          
+        }).then();
       } else if (props.y_axis_type == "location") {
         moveActivityInLocationGrid({
           body: {
-            original_date: movedItem.original_date,
-            new_date: isoDate(),
-            original_location: movedItem.original_location,
-            new_location: props.staff_or_location,
+            from_cell: {
+              date: movedItem.original_date,
+              location: movedItem.original_location,
+            },
+            to_cell: {
+              date: isoDate(),
+              location: props.row_id,
+            },
             activity_id: movedItem.activity_id,
           },
         }).then(handleMoveResponse);
@@ -355,13 +391,17 @@ export const ActivityCell:Component<ActivityCellProps>=(props)=>{
   };
 
   let cellRef;
+  const handlednd = (...args) => {
+    console.log(args); return dndzone(...args)
+  }
   return (
-    <Suspense fallback={<div></div>}>
-      <td
+    <Suspense>
+      <td>
+      <div
         title={JSON.stringify(cellActivities())}
         classList={{
-          [styles.activityCell]: !!props.staff_or_location,
-          [styles.unallocatedActivities]: !props.staff_or_location,
+          [styles.activityCell]: !!props.row_id,
+          [styles.unallocatedActivities]: !props.row_id,
           [styles.weekend]:
             props.date.getDay() === 0 || props.date.getDay() === 6,
         }}
@@ -384,16 +424,16 @@ export const ActivityCell:Component<ActivityCellProps>=(props)=>{
         }}
         ref={cellRef}
       >
-        <For each={cellActivities()} fallback={<div>&nbsp;</div>}>
+        <For each={items()} fallback={<div>&nbsp;</div>}>
           {(act) => (
             <Activity
               activity_def={act}
-              staff_or_location={props.staff_or_location}
+              staff_or_location={props.row_id}
               show_staff={true}
             />
           )}
         </For>
-      </td>
+      </div></td>
     </Suspense>
   );
 }
@@ -402,10 +442,10 @@ export const ActivityCell:Component<ActivityCellProps>=(props)=>{
  * Activity component to render an activity.
  * @param {Object} props - The properties passed to the component.
  * @param {Object} props.activity_def - The activity definition.
- * @param {Object} [props.staff_or_location=null] - The staff or location data.
+ * @param {string|undefined} [props.staff_or_location=null] - The staff or location data.
  * @returns {JSX.Element} - The rendered Activity component.
  */
-export function Activity(props: { activity_def: ActivityDisplay; staff_or_location?: object; }): JSX.Element {
+export function Activity(props: { activity_def: ActivityDisplay; staff_or_location?: string; }): JSX.Element {
   return (
     <div class={styles.activity}>
       <div class={styles.activityName}>{props.activity_def.name}</div>
@@ -417,7 +457,7 @@ export function Activity(props: { activity_def: ActivityDisplay; staff_or_locati
         }
       >
         <div class={styles.activityLocation}>
-          {props.activity_def.location.name}
+          {props.activity_def.location?.name}
         </div>
       </Show>
 

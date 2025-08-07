@@ -96,7 +96,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityResponse"
+                }
               }
             }
           },
@@ -507,9 +509,9 @@
       },
       "MoveActivityInLocationGrid": {
         "properties": {
-          "activityId": {
+          "activity_id": {
             "type": "string",
-            "title": "Activityid"
+            "title": "Activity Id"
           },
           "from_cell": {
             "$ref": "#/components/schemas/LocationGridCell"
@@ -520,7 +522,7 @@
         },
         "type": "object",
         "required": [
-          "activityId",
+          "activity_id",
           "from_cell",
           "to_cell"
         ],
@@ -528,17 +530,9 @@
       },
       "MoveActivityInStaffGrid": {
         "properties": {
-          "dragEffect": {
+          "activity_id": {
             "type": "string",
-            "enum": [
-              "move",
-              "copy"
-            ],
-            "title": "Drageffect"
-          },
-          "activityId": {
-            "type": "string",
-            "title": "Activityid"
+            "title": "Activity Id"
           },
           "from_cell": {
             "$ref": "#/components/schemas/StaffGridCell"
@@ -549,8 +543,7 @@
         },
         "type": "object",
         "required": [
-          "dragEffect",
-          "activityId",
+          "activity_id",
           "from_cell",
           "to_cell"
         ],

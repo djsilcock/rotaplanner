@@ -208,7 +208,7 @@ class LocationGridCell(BaseModel):
 
 class MoveActivityInLocationGrid(BaseModel):
 
-    activityId: str
+    activity_id: str
     from_cell: LocationGridCell
     to_cell: LocationGridCell
 
@@ -224,7 +224,7 @@ class MoveStaffInLocationGrid(BaseModel):
 )
 def move_activity_in_location_grid(
     request: Request, entry: MoveActivityInLocationGrid, connection: Connection
-):
+) -> ActivityResponse:
     try:
         # print(entry)
         datedelta = entry.to_cell.date - entry.from_cell.date
@@ -236,7 +236,7 @@ def move_activity_in_location_grid(
         result = connection.execute(
             sql_query,
             {
-                "activity_id": entry.activityId,
+                "activity_id": entry.activity_id,
             },
         ).fetchone()
         # print("ok so far", tuple(result))
@@ -257,35 +257,18 @@ def move_activity_in_location_grid(
                     "new_start_time": new_start_time,
                     "new_finish_time": new_finish_time,
                     "new_location": entry.to_cell.location,
-                    "activity_id": entry.activityId,
+                    "activity_id": entry.activity_id,
                 },
             )
 
-    except ReallocationError as e:
-        return {"toasts": [{"class": "error", "message": str(e)}]}
-    activity_cells = get_activity_cells_by_location(
+    # except ReallocationError as e:
+    #    return {"toasts": [{"class": "error", "message": str(e)}]}
+    finally:
+        pass
+    return get_activities_grouped_by_date(
         connection,
-        min(entry.from_cell.date, entry.to_cell.date),
-        max(entry.from_cell.date, entry.to_cell.date),
-        specifically_include=[
-            (entry.from_cell.date, original_location),
-            (entry.to_cell.date, entry.to_cell.location),
-        ],
-    )[0]
-    return templates.TemplateResponse(
-        "table_cells.html.mako",
-        {
-            "replacement_cells": activity_cells.values(),
-            "grid_type": "location",
-            "request": request,
-            "toasts": [
-                {
-                    "class": "success",
-                    "message": f"Move successful",
-                }
-            ],
-        },
-        media_type="text/vnd.turbo-stream.html",
+        start_date=min(entry.from_cell.date, entry.to_cell.date),
+        finish_date=max(entry.from_cell.date, entry.to_cell.date),
     )
 
 
@@ -376,8 +359,7 @@ class StaffGridCell(BaseModel):
 
 
 class MoveActivityInStaffGrid(BaseModel):
-    dragEffect: Literal["move", "copy"]
-    activityId: str
+    activity_id: str
     from_cell: StaffGridCell
     to_cell: StaffGridCell
 
