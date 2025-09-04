@@ -1,33 +1,12 @@
 import { Dynamic, Show } from "solid-js/web";
-import {
-  TextField,
-  TimeField,
-  SelectField,
-  Form,
-  MultiSelect,
-  DateField,
-  Field,
-  FormRow,
-  useForm,
-} from "./ui";
-import { createForm } from "./forms";
-import { get } from "lodash";
-
-import {
-  children,
-  createContext,
-  createEffect,
-  createMemo,
-  createSignal,
-  Index,
-  For,
-  onCleanup,
-  splitProps,
-  useContext,
-} from "solid-js";
-
+import { useParams } from "@solidjs/router";
+import { For, Index, createMemo, createEffect, createSignal } from "solid-js";
+import { Button } from "@suid/material";
+import { Dialog, useDialogContext } from "../ui/textfield.jsx";
+import { createForm } from "@tanstack/solid-form";
 import styles from "./edit_activity_template.module.css";
 import { createStore } from "solid-js/store";
+import { useAppForm, FormRow } from "./ui";
 
 const ordinal = (index) => {
   const ordinals = ["th", "st", "nd", "rd"];
@@ -603,4 +582,251 @@ function EditActivityTemplate(props) {
   );
 }
 
-export default EditActivityTemplate;
+function RequirementDescription(props) {
+  return (
+    <div>
+      {props.requirementSpec.required}{" "}
+      {props.requirementSpec.optional > 0
+        ? `- ${props.requirementSpec.optional + props.requirementSpec.required}`
+        : ""}
+      staff with {props.requirementSpec.skills.join(", ")} skills;{" "}
+      {props.requirementSpec.attendance}% attendance required; Geofence:{" "}
+      {props.requirementSpec.geofence}
+    </div>
+  );
+}
+function RequirementForm(props) {
+  const form = useAppForm(() => ({
+    defaultValues: props.requirementSpec,
+    onSubmit: (values) => {
+      props.onSubmit(values);
+    },
+  }));
+  const dialogContext = useDialogContext();
+  return (
+    <div>
+      <pre>*{JSON.stringify(props.requirementSpec)}*</pre>
+      <form.AppField name={"skills"}>
+        {(field) => {
+          return (
+            <FormRow label="Skills">
+              <field.SelectField
+                multiple
+                label="Skills"
+                options={[
+                  { value: "iac", label: "IAC" },
+                  {
+                    value: "listrunner",
+                    label: "Listrunner",
+                  },
+                  { value: "regional", label: "Regional" },
+                  {
+                    value: "paediatric",
+                    label: "Paediatric",
+                  },
+                ]}
+              />
+            </FormRow>
+          );
+        }}
+      </form.AppField>
+      <form.AppField name={"required"}>
+        {(field) => {
+          return (
+            <FormRow label="Required">
+              <field.NumberField min={0} label="Required" />
+            </FormRow>
+          );
+        }}
+      </form.AppField>
+
+      <FormRow label="Optional">
+        <form.AppField name={"optional"}>
+          {(field) => {
+            return (
+              <FormRow label="Optional">
+                <field.NumberField min={0} label="Optional" />
+              </FormRow>
+            );
+          }}
+        </form.AppField>
+      </FormRow>
+      <FormRow label="Attendance">
+        <form.AppField name={"attendance"}>
+          {(field) => {
+            return (
+              <FormRow label="Attendance">
+                <field.NumberField min={0} max={100} label="Attendance" />
+              </FormRow>
+            );
+          }}
+        </form.AppField>
+      </FormRow>
+      <FormRow label="Geofence">
+        <form.AppField name={"geofence"}>
+          {(field) => {
+            return (
+              <FormRow label="Geofence">
+                <field.SelectField
+                  label="Geofence"
+                  options={["Immediate", "Local", "Remote", "Distant"]}
+                />
+              </FormRow>
+            );
+          }}
+        </form.AppField>
+      </FormRow>
+      <Button
+        onClick={() => {
+          form.handleSubmit().then(() => dialogContext.close());
+        }}
+      >
+        Save
+      </Button>
+      <Button onClick={() => dialogContext.close()}>Close</Button>
+    </div>
+  );
+}
+function EditActivity(props) {
+  const form = useAppForm(() => ({
+    defaultValues: {
+      activity_name: "Untitled",
+      activity_date: new Date(),
+      start_time: "09:00",
+      finish_time: "17:00",
+      activity_tags: [],
+      location: "",
+      requirements: [],
+    },
+    onSubmit: (values) => {
+      console.log("Form submitted:", values);
+    },
+  }));
+  return (
+    <Dialog open={!!props.activity} title="Edit Activity">
+      <div id="template-editor-settings">
+        <FormRow>
+          <form.AppField name="activity_name">
+            {(field) => <field.TextField label="Activity Name" />}
+          </form.AppField>
+        </FormRow>
+        <FormRow>
+          <form.AppField name="activity_date">
+            {(field) => <field.DateField label="Activity Date" />}
+          </form.AppField>
+        </FormRow>
+        <FormRow>
+          <form.AppField name="start_time">
+            {(field) => <field.TimeField label="Start Time" />}
+          </form.AppField>
+        </FormRow>
+
+        <FormRow>
+          <form.AppField name="finish_time">
+            {(field) => <field.TimeField label="Finish Time" />}
+          </form.AppField>
+        </FormRow>
+        <FormRow label="Tags">
+          <form.AppField name="activity_tags">
+            {(field) => (
+              <field.SelectField
+                label="Activity Tags"
+                multiple
+                options={[
+                  { value: "URO", label: "Urology" },
+                  { value: "ENT", label: "ENT" },
+                ]}
+              />
+            )}
+          </form.AppField>
+        </FormRow>
+        <FormRow label="Location">
+          <form.AppField name="location">
+            {(field) => (
+              <field.SelectField
+                label="Location"
+                options={[
+                  { value: "Theatre 1", label: "Theatre 1" },
+                  { value: "Theatre 2", label: "Theatre 2" },
+                  { value: "Theatre 3", label: "Theatre 3" },
+                ]}
+              />
+            )}
+          </form.AppField>
+        </FormRow>
+        <FormRow label="Requirements" element="div">
+          <form.AppField name="requirements">
+            {(groupField) => (
+              <div>
+                <Index
+                  each={groupField().state.value}
+                  fallback={<div>⚠️ No requirements have been set</div>}
+                >
+                  {(req, i) => (
+                    <form.AppField name={`requirements.${i}`}>
+                      {(req) => {
+                        const [open, setOpen] = createSignal(false);
+                        return (
+                          <div>
+                            <RequirementDescription
+                              requirementSpec={req().state.value}
+                            />
+
+                            <Button
+                              onClick={(e) => {
+                                groupField().removeValue(i);
+                                e.stopPropagation();
+                                console.log("delete", i);
+                              }}
+                            >
+                              Delete rule
+                            </Button>
+                            <Dialog
+                              trigger={<Button>Edit rule</Button>}
+                              title="Edit requirement"
+                              open={open()}
+                              setOpen={setOpen}
+                            >
+                              <RequirementForm
+                                requirementSpec={req().state.value}
+                                onSubmit={({ value }) => {
+                                  groupField().replaceValue(i, value);
+                                }}
+                              />
+                            </Dialog>
+
+                            <div></div>
+                          </div>
+                        );
+                      }}
+                    </form.AppField>
+                  )}
+                </Index>
+                <hr />
+
+                <Dialog
+                  title="Add requirement"
+                  trigger={<Button>Add rule</Button>}
+                >
+                  <RequirementForm
+                    onSubmit={({ value }) => {
+                      groupField().pushValue(value);
+                    }}
+                  />
+                </Dialog>
+              </div>
+            )}
+          </form.AppField>
+        </FormRow>
+      </div>
+
+      <div>
+        <Button onClick={props.onClose}>Disagree</Button>
+        <Button onClick={props.onClose} autoFocus>
+          Agree
+        </Button>
+      </div>
+    </Dialog>
+  );
+}
+export default EditActivity;

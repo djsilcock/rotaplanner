@@ -53,6 +53,26 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Toast"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Toasts"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -134,7 +154,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityResponse"
+                }
               }
             }
           },
@@ -170,7 +192,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityResponse"
+                }
               }
             }
           },
@@ -419,16 +443,34 @@
         "title": "ActivityDisplay"
       },
       "ActivityResponse": {
-        "additionalProperties": {
-          "items": {
-            "$ref": "#/components/schemas/ActivityDisplay"
+        "properties": {
+          "data": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/ActivityDisplay"
+              },
+              "type": "array"
+            },
+            "propertyNames": {
+              "format": "date"
+            },
+            "type": "object",
+            "title": "Data"
           },
-          "type": "array"
+          "toasts": {
+            "items": {
+              "$ref": "#/components/schemas/Toast"
+            },
+            "type": "array",
+            "title": "Toasts"
+          }
         },
-        "propertyNames": {
-          "format": "date"
-        },
-        "type": "object"
+        "type": "object",
+        "required": [
+          "data",
+          "toasts"
+        ],
+        "title": "ActivityResponse"
       },
       "DateRange": {
         "properties": {
@@ -670,6 +712,33 @@
           "date"
         ],
         "title": "StaffGridCell"
+      },
+      "Toast": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "success",
+              "error"
+            ],
+            "title": "Kind"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "title",
+          "description"
+        ],
+        "title": "Toast"
       },
       "ValidationError": {
         "properties": {

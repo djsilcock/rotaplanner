@@ -1,49 +1,40 @@
 import {
   createEffect,
-  createReaction,
   createSignal,
-  Signal,
   For,
-  onCleanup,
   Show,
   Suspense,
   createMemo,
-  Switch,
   createResource,
   JSX,
   Component,
+  lazy,
 } from "solid-js";
 import { differenceInCalendarDays, addDays, parseISO } from "date-fns";
 import { createQuery, useQueryClient } from "@tanstack/solid-query";
 import styles from "./table.module.css";
-import { Batcher } from "../../../frontend/src/utils/batcher";
-import { useParams } from "@solidjs/router";
-import { createStore, produce ,unwrap,reconcile} from "solid-js/store";
-import { create, debounce, get, set } from "lodash";
+import { createStore } from "solid-js/store";
 import { dndzone, TRIGGERS } from "solid-dnd-directive";
-import Menu from "@suid/material/Menu";
-import MenuItem from "@suid/material/MenuItem";
-import { Match } from "solid-js";
-
 
 import {
   getActivitiesByDate,
   tableConfig as getTableConfig,
   moveActivityInLocationGrid,
   moveActivityInStaffGrid,
-  
 } from "../../generatedTypes/sdk.gen";
-import { LabelledUuid ,ActivityDisplay,ActivityResponse} from "../../generatedTypes/types.gen";
 import {
-  activitiesByDateOptions,
-  activitiesByDateQueryKey,
-  tableConfigOptions,
-} from "../../../frontend/src/client/@tanstack/solid-query.gen";
-import { Celebration } from "@suid/icons-material";
+  LabelledUuid,
+  ActivityDisplay,
+  ActivityResponse,
+} from "../../generatedTypes/types.gen";
 
+const EditActivityModal = lazy(() => import("../edit_activity"));
 const epoch = new Date(2021, 0, 1);
 
-function retry(fn: (...arg:any) => Promise<any>, { retries = 3, delay = 500 }): () => Promise<any> {
+function retry(
+  fn: (...arg: any) => Promise<any>,
+  { retries = 3, delay = 500 }
+): () => Promise<any> {
   return async (...arg) => {
     let lastError;
     for (let i = 0; i < retries; i++) {
@@ -55,7 +46,7 @@ function retry(fn: (...arg:any) => Promise<any>, { retries = 3, delay = 500 }): 
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
     throw lastError;
-  }
+  };
 }
 
 /**
@@ -63,54 +54,29 @@ function retry(fn: (...arg:any) => Promise<any>, { retries = 3, delay = 500 }): 
  * @param {Date} date - The date to convert.
  * @returns {number} - The ordinal representation of the date.
  */
-export function toOrdinal(date:Date): number {
+export function toOrdinal(date: Date): number {
   return differenceInCalendarDays(date, epoch);
 }
 
-function filterActivities(activities: ActivityResponse, date: Date, staff_or_location: string|undefined, y_axis_type: string): Array<ActivityDisplay> {
-  const activitiesForDay=activities[date.toISOString().slice(0, 10)] || [];
-  return activitiesForDay.filter((activity) => {
-    if (y_axis_type === "staff") {
-      if (!staff_or_location) {
-        return activity.staff_assignments.length === 0;
-      }
-      return activity.staff_assignments.some(
-        (assignment) => assignment.staff.id === staff_or_location
-      );
-    } else if (y_axis_type === "location") {
-      return activity.location?.id === staff_or_location;
-    }
-    return false;
-  });
-}
-
-
-interface ActiveMenuInfo {
-  ref: HTMLElement;
-  date: string;
-  staff_or_location: string;
-  items: any[];
-}
-const [activeMenu, setActiveMenu] = createSignal<ActiveMenuInfo|null>(null);
-
 const DEFAULT_SEGMENT_WIDTH = 1;
 
-function throwIfError<T>({ data, error}:{data:T,error:any}):T { 
+function throwIfError<T>({ data, error }: { data: T; error: any }): T {
   if (error) {
     throw error;
   }
   return data;
 }
 
-
 interface TableConfig {
   staff: LabelledUuid[];
   locations: LabelledUuid[];
   dates: Date[];
 }
-  
+
 interface TableProps {
-  y_axis_type: "location" | "staff";}
+  y_axis_type: "location" | "staff";
+  children?: JSX.Element;
+}
 /**
  *
  * @param {object} props
@@ -119,8 +85,9 @@ interface TableProps {
  * Table component to render the main table.
  */
 function Table(props: TableProps): JSX.Element {
-  const client = useQueryClient();
-  const [tableConfigResponse, { refetch: refetchTableConfig }] = createResource(() => getTableConfig().then(throwIfError))
+  const [tableConfigResponse, { refetch: refetchTableConfig }] = createResource(
+    () => getTableConfig().then(throwIfError)
+  );
   const tableConfig: TableConfig = (() => {
     const datesMemo = createMemo(() => {
       if (!tableConfigResponse()?.date_range) return [];
@@ -131,147 +98,109 @@ function Table(props: TableProps): JSX.Element {
         { length: differenceInCalendarDays(finish, start) + 1 },
         (_, i) => addDays(start, i)
       );
-    })
+    });
     return {
-      get staff() { return tableConfigResponse()?.staff ?? [] },
-      get locations() { return tableConfigResponse()?.locations ?? [] },
-    
+      get staff() {
+        return tableConfigResponse()?.staff ?? [];
+      },
+      get locations() {
+        return tableConfigResponse()?.locations ?? [];
+      },
+
       get dates() {
         return datesMemo();
-      }
-    }
-  })()
+      },
+    };
+  })();
 
-  const [activitiesData, updateActivitiesData] = createStore({})
-  
-  const c = (retry(
-    (_) => getActivitiesByDate({
-      query: {},
-    }), { retries: 3 }))()
-  c.then(({ data, error }) => {
-    if (error) {
-      console.error("Error fetching activities:", error);
-      return;
-    }
-    updateActivitiesData(data);
+  const [activitiesData, updateActivitiesData] = createStore({});
+
+  const c = retry(
+    (_) =>
+      getActivitiesByDate({
+        responseStyle: "data",
+        query: {},
+      }),
+    { retries: 3 }
+  )();
+  c.then((data) => {
+    console.log("Fetched activities data:", data);
+
+    updateActivitiesData(data.data);
   });
 
-  
   let parentRef;
-
-  const allocateToStaff = (itemid:string) => {
-    if (activeMenu()==null) return;
-    moveActivityInStaffGrid({
-      body: {
-        new_staff: activeMenu()!.staff_or_location,
-        activity_id: itemid,
-      },
-    }).then(handleMoveResponse);
-  };
-  const moveActivityHere = (itemid:string) => {
-    throwIfError(moveActivityInLocationGrid({
-      body: {
-        new_location: activeMenu()!.staff_or_location,
-        activity_id: itemid,
-      },
-    }));
-  };
-  const handleMoveResponse = (response) => {
-    if (response.error) {
-      alert(response.error);
-    } else {
-      response.data.data.forEach((item) =>
-        client.setQueryData(
-          activitiesByDateQueryKey({ query: { date: item.date } }),
-          item.activities
-        )
-      );
-    }
-    setActiveMenu(null);
-  };
+  const [editActivity, setEditActivity] = createSignal(null);
   const y_axis = createMemo(() => {
     if (props.y_axis_type === "staff") {
       return tableConfig.staff;
+    } else if (props.y_axis_type === "location") {
+      return tableConfig.locations;
     }
-    return tableConfig.locations;
+    return [];
   });
 
   return (
     <Show when={true} fallback={<div>Loading...</div>}>
-      <Menu
-        open={!!activeMenu()}
-        anchorEl={activeMenu()?.ref}
-        onClose={() => setActiveMenu(null)}
+      <Show when={editActivity()}>
+        <EditActivityModal
+          activity={editActivity()}
+          onClose={() => setEditActivity(null)}
+        />
+      </Show>
+      <table
+        class={styles.rotaTable}
+        on:dblclick={(e) => {
+          console.log("Double click event:", e);
+          const activityId = (
+            e.target.closest("[data-activity-id]") as HTMLElement
+          )?.dataset.activityId;
+          setEditActivity(activityId);
+        }}
       >
-        <MenuItem>Create Activity</MenuItem>
-        <For each={activeMenu()?.items}>
-          {(item) => (
-            <Switch>
-              <Match when={props.y_axis_type == "staff"}>
-                <MenuItem
-                  onClick={() => {
-                    allocateToStaff(item.id);
-                  }}
-                >
-                  Allocate to {item.name}
-                </MenuItem>
-              </Match>
-
-              <Match when={props.y_axis_type == "location"}>
-                <MenuItem
-                  onClick={() => {
-                    moveActivityHere(item.id);
-                  }}
-                >
-                  Move {item.name} here
-                </MenuItem>
-              </Match>
-            </Switch>
-          )}
-        </For>
-      </Menu>
-      <table class={styles.rotaTable}>
         <thead>
-        <tr>
-          <td></td>
-          <For each={tableConfig.dates} fallback={<td></td>}>
-            {(date) => (<td>{date.toISOString().slice(0, 10)}</td>)}
-          </For>
+          <tr>
+            <td></td>
+            <For each={tableConfig.dates} fallback={<td></td>}>
+              {(date) => <td>{date.toISOString().slice(0, 10)}</td>}
+            </For>
           </tr>
         </thead>
         <tbody>
-        <For each={y_axis()}>
-          
-          {(staff_or_location, index) => (
-            <tr>
-              <td class={styles.rowHeader}>{staff_or_location.name}</td>
-              <For each={tableConfig.dates} fallback={<td></td>}>
-                {(date) => (
-                  <ActivityCell
-                    activities={activitiesData}
-                    row_id={staff_or_location?.id}
-                    row_id={staff_or_location.id}
-                    y_axis_type={props.y_axis_type}
-                    i={index()}
+          <For each={y_axis()}>
+            {(staff_or_location, index) => (
+              <tr>
+                <td class={styles.rowHeader}>{staff_or_location.name}</td>
+                <For each={tableConfig.dates} fallback={<td></td>}>
+                  {(date) => (
+                    <ActivityCell
+                      activities={activitiesData}
+                      row_id={staff_or_location?.id}
+                      y_axis_type={props.y_axis_type}
+                      i={index()}
                       date={date}
                       updateActivities={(newActivities: ActivityResponse) => {
-                        updateActivitiesData(newActivities);
+                        updateActivitiesData(newActivities.data);
                       }}
                     />
                   )}
-              </For>
-            </tr>
+                </For>
+              </tr>
             )}
-        </For>
+          </For>
         </tbody>
       </table>
     </Show>
   );
 }
 
-function filterActivitiesStaffView(date:string, activities:ActivityDisplay[], staff:string|undefined) {
+function filterActivitiesStaffView(
+  date: string,
+  activities: ActivityDisplay[],
+  staff: string | undefined
+) {
   //filter and map activities in staff view
-  console.log("filterActivitiesStaffView", date, activities, staff);
+
   return (
     activities
       ?.filter((activity) => {
@@ -302,7 +231,11 @@ interface DraggableActivity extends ActivityDisplay {
   original_location?: string;
   id: string; // Unique ID for the draggable item
 }
-function filterActivitiesLocationView(date:string, activities:ActivityDisplay[], location:string|undefined): DraggableActivity[] {
+function filterActivitiesLocationView(
+  date: string,
+  activities: ActivityDisplay[],
+  location: string | undefined
+): DraggableActivity[] {
   //filter and map activities in location view
 
   return activities
@@ -316,7 +249,7 @@ function filterActivitiesLocationView(date:string, activities:ActivityDisplay[],
       ...item,
       original_date: date,
       original_location: location,
-      id: `${item.activity_id}-${location}`
+      id: `${item.activity_id}-${location}`,
     }));
 }
 interface ActivityCellProps {
@@ -324,15 +257,26 @@ interface ActivityCellProps {
   y_axis_type: "staff" | "location";
   row_id?: string;
   i?: number;
-  activities: ActivityResponse;
+  activities: ActivityResponse["data"];
   updateActivities: (newActivities: ActivityResponse) => void;
 }
-type APIResponse<R> = { error: any; data: undefined } | { error: undefined; data: R };
-export const ActivityCell:Component<ActivityCellProps>=(props)=>{
+type APIResponse<R> =
+  | { error: any; data: undefined }
+  | { error: undefined; data: R };
+export const ActivityCell: Component<ActivityCellProps> = (props) => {
   const isoDate = () => props.date.toISOString().slice(0, 10);
-  
+
   const [items, setItems] = createSignal<DraggableActivity[]>([]);
-  const cellActivities = createMemo(() => ((props.y_axis_type == "staff" ? filterActivitiesStaffView : filterActivitiesLocationView)(isoDate(), props.activities[isoDate()], props.row_id)) ?? [])
+  const cellActivities = createMemo(
+    () =>
+      (props.y_axis_type == "staff"
+        ? filterActivitiesStaffView
+        : filterActivitiesLocationView)(
+        isoDate(),
+        props.activities[isoDate()],
+        props.row_id
+      ) ?? []
+  );
   createEffect(() => {
     // Update items when cellActivities changes
     setItems(cellActivities());
@@ -340,25 +284,37 @@ export const ActivityCell:Component<ActivityCellProps>=(props)=>{
   const handleMove = ({ detail }) => {
     setItems(detail.items);
   };
-  const client = useQueryClient();
-  const handleMoveResponse = ({ error, data }: APIResponse<ActivityResponse>) => {
-          if (error) {
-            console.error("Error moving activity:", error);
-            return;
-          }
-          props.updateActivities(data as ActivityResponse);
-        }
-  const handleFinalMove = ({ detail }) => {
+
+  const handleMoveResponse = (data: ActivityResponse) => {
+    if (data) {
+      // Update the activities in the query cache
+
+      if (data.toasts.length > 0) {
+        data.toasts.forEach((toast) => {
+          console.warn("Toast:", toast);
+        });
+      }
+      props.updateActivities(data);
+    }
+  };
+  const handleFinalMove = async ({ detail }) => {
     setItems(detail.items);
     if (detail.info.trigger == TRIGGERS.DROPPED_INTO_ZONE) {
-      console.log("Finalizing move", detail);
-      const movedItem = detail.items.find((i) => i.id == detail.info.id);
+      const movedItem = detail.items.find(
+        (i: DraggableActivity) => i.id == detail.info.id
+      );
       if (!movedItem) {
-        console.error("Moved item not found in cellActivities", detail.info.id,detail.items);
+        console.error(
+          "Moved item not found in cellActivities",
+          detail.info.id,
+          detail.items
+        );
+        setItems(cellActivities()); //undo changes
         return;
       }
+      let data, error;
       if (props.y_axis_type == "staff") {
-        moveActivityInStaffGrid({
+        ({ data, error } = await moveActivityInStaffGrid({
           body: {
             from_cell: {
               date: movedItem.original_date,
@@ -370,10 +326,9 @@ export const ActivityCell:Component<ActivityCellProps>=(props)=>{
             },
             activity_id: movedItem.activity_id,
           },
-          
-        }).then();
+        }));
       } else if (props.y_axis_type == "location") {
-        moveActivityInLocationGrid({
+        ({ data, error } = await moveActivityInLocationGrid({
           body: {
             from_cell: {
               date: movedItem.original_date,
@@ -385,58 +340,62 @@ export const ActivityCell:Component<ActivityCellProps>=(props)=>{
             },
             activity_id: movedItem.activity_id,
           },
-        }).then(handleMoveResponse);
+        }));
+      } else {
+        console.error("Unknown y_axis_type", props.y_axis_type);
+        setItems(cellActivities()); //undo changes
+        return;
       }
+      if (error) {
+        console.error("Error moving activity:", error);
+        setItems(cellActivities()); //undo changes
+        return;
+      }
+      handleMoveResponse(data!);
     }
   };
 
   let cellRef;
   const handlednd = (...args) => {
-    console.log(args); return dndzone(...args)
-  }
+    console.log(args);
+    return dndzone(...args);
+  };
   return (
     <Suspense>
       <td>
-      <div
-        title={JSON.stringify(cellActivities())}
-        classList={{
-          [styles.activityCell]: !!props.row_id,
-          [styles.unallocatedActivities]: !props.row_id,
-          [styles.weekend]:
-            props.date.getDay() === 0 || props.date.getDay() === 6,
-        }}
-        data-date={toOrdinal(props.date)}
-        data-yaxis={props.i}
-        id={`td-${toOrdinal(props.date)}-${props.i}`}
-        use:dndzone={{
-          items,
-        }}
-        on:consider={handleMove}
-        on:finalize={handleFinalMove}
-        on:contextmenu={(e) => {
-          setActiveMenu({
-            ref: e.target,
-            date: isoDate(),
-            staff_or_location: props.row_id,
-            items: props.activities[isoDate()],
-          });
-          e.preventDefault();
-        }}
-        ref={cellRef}
-      >
-        <For each={items()} fallback={<div>&nbsp;</div>}>
-          {(act) => (
-            <Activity
-              activity_def={act}
-              staff_or_location={props.row_id}
-              show_staff={true}
-            />
-          )}
-        </For>
-      </div></td>
+        <div
+          title={JSON.stringify(cellActivities())}
+          classList={{
+            [styles.activityCell]: !!props.row_id,
+            [styles.unallocatedActivities]: !props.row_id,
+            [styles.weekend]:
+              props.date.getDay() === 0 || props.date.getDay() === 6,
+          }}
+          data-date={isoDate()}
+          data-yaxis={props.i}
+          data-row={props.row_id}
+          id={`td-${toOrdinal(props.date)}-${props.i}`}
+          use:dndzone={{
+            items,
+          }}
+          on:consider={handleMove}
+          on:finalize={handleFinalMove}
+          ref={cellRef}
+        >
+          <For each={items()} fallback={<div>&nbsp;</div>}>
+            {(act) => (
+              <Activity
+                activity_def={act}
+                staff_or_location={props.row_id}
+                show_staff={true}
+              />
+            )}
+          </For>
+        </div>
+      </td>
     </Suspense>
   );
-}
+};
 
 /**
  * Activity component to render an activity.
@@ -445,9 +404,20 @@ export const ActivityCell:Component<ActivityCellProps>=(props)=>{
  * @param {string|undefined} [props.staff_or_location=null] - The staff or location data.
  * @returns {JSX.Element} - The rendered Activity component.
  */
-export function Activity(props: { activity_def: ActivityDisplay; staff_or_location?: string; }): JSX.Element {
+export function Activity(props: {
+  activity_def: ActivityDisplay;
+  staff_or_location?: string;
+}): JSX.Element {
   return (
-    <div class={styles.activity}>
+    <div
+      class={styles.activity}
+      data-activity-id={props.activity_def.activity_id}
+      id={`activity-${props.activity_def.activity_id}`}
+    >
+      <div class={styles.activityTime}>
+        {props.activity_def.start_time.slice(11, 16)} -{" "}
+        {props.activity_def.finish_time.slice(11, 16)}
+      </div>
       <div class={styles.activityName}>{props.activity_def.name}</div>
       <Show
         when={

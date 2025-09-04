@@ -1,18 +1,10 @@
-import {
-  createForm as ff_createForm,
-  FormApi as FF_FormApi,
-  Config,
-  configOptions,
-  formSubscriptionItems,
-  fieldSubscriptionItems,
-  FieldConfig,
-  FieldState,
-  FormState,
-} from "final-form";
-import mutators from "final-form-arrays";
+import { createFormHook } from "@tanstack/solid-form";
+
 import { onCleanup } from "solid-js";
 
 import { createStore, reconcile, Store } from "solid-js/store";
+
+const { use };
 
 export function createForm<T>(options: Config<T>) {
   const [formState, setFormState] = createStore({});

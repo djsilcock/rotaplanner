@@ -3,6 +3,10 @@
 .activityLocation {
   font-size: small;
 }
+.activityTime {
+  font-size: x-small;
+  color: grey;
+}
 .spansAllRows {
   grid-row: 1/-1;
 }
@@ -89,7 +93,7 @@
   min-width: 5em;
   max-width: 8em;
   background-color: white;
-  border: 1px solid grey;
+
   padding-bottom: 1em;
 }
 .activityCell:hover {

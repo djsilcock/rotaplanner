@@ -101,9 +101,15 @@ class ActivityDisplay(BaseModel):
     staff_assignments: list[StaffAssignmentDisplay]
 
 
-ActivityResponse = TypeAliasType(
-    "ActivityResponse", dict[datetime.date, list[ActivityDisplay]]
-)
+class Toast(BaseModel):
+    kind: Literal["success", "error"]
+    title: str
+    description: str
+
+
+class ActivityResponse(BaseModel):
+    data: dict[datetime.date, list[ActivityDisplay]]
+    toasts: list[Toast]
 
 
 def get_activities(
@@ -187,6 +193,7 @@ def get_activities_grouped_by_date(
     connection: Connection,
     start_date: datetime.date = datetime.date(1970, 1, 1),
     finish_date: datetime.date = datetime.date(2100, 1, 1),
+    toasts: list[Toast] | None = None,
 ) -> ActivityResponse:
     """Get activities grouped by date."""
     activities, earliest_date, latest_date = get_activities(
@@ -198,7 +205,7 @@ def get_activities_grouped_by_date(
         if date not in grouped:
             grouped[date] = []
         grouped[date].append(activity)
-    return grouped
+    return ActivityResponse(data=grouped, toasts=toasts or [])
 
 
 class LocationGridCell(BaseModel):
@@ -225,6 +232,7 @@ class MoveStaffInLocationGrid(BaseModel):
 def move_activity_in_location_grid(
     request: Request, entry: MoveActivityInLocationGrid, connection: Connection
 ) -> ActivityResponse:
+    toasts = []
     try:
         # print(entry)
         datedelta = entry.to_cell.date - entry.from_cell.date
@@ -261,21 +269,28 @@ def move_activity_in_location_grid(
                 },
             )
 
-    # except ReallocationError as e:
-    #    return {"toasts": [{"class": "error", "message": str(e)}]}
-    finally:
-        pass
+    except ReallocationError as e:
+        toasts.append(
+            Toast(
+                kind="error",
+                title="Error moving activity",
+                description=str(e),
+            )
+        )
+
     return get_activities_grouped_by_date(
         connection,
         start_date=min(entry.from_cell.date, entry.to_cell.date),
         finish_date=max(entry.from_cell.date, entry.to_cell.date),
+        toasts=toasts,
     )
 
 
 @router.post("/rota_grid/location/drag_staff", operation_id="moveStaffInLocationGrid")
 def move_staff_in_location_grid(
     request: Request, entry: MoveStaffInLocationGrid, connection: Connection
-):
+) -> ActivityResponse:
+    toasts = []
     try:
         # print(entry)
         if entry.from_activity == entry.to_activity:
@@ -324,32 +339,22 @@ def move_staff_in_location_grid(
                 raise ReallocationError("Staff already assigned to activity")
 
     except ReallocationError as e:
-        return {"toasts": [{"class": "error", "message": str(e)}]}
+        toasts.append(
+            Toast(
+                kind="error",
+                title="Error moving staff",
+                description=str(e),
+            )
+        )
     start1, location_id1 = original_activities[0]
     start2, location_id2 = original_activities[1]
     # print("start1", start1, location_id1)
     # print("start2", start2, location_id2)
-    activity_cells = get_activity_cells_by_location(
+    return get_activities_grouped_by_date(
         connection,
-        min(start1, start2),
-        max(start1, start2),
-        specifically_include=[(start1, location_id1), (start2, location_id2)],
-    )[0]
-
-    return templates.TemplateResponse(
-        "table_cells.html.mako",
-        {
-            "replacement_cells": activity_cells.values(),
-            "request": request,
-            "grid_type": "location",
-            "toasts": [
-                {
-                    "class": "success",
-                    "message": f"Move successful",
-                }
-            ],
-        },
-        media_type="text/vnd.turbo-stream.html",
+        start_date=min(start1, start2),
+        finish_date=max(start1, start2),
+        toasts=toasts,
     )
 
 
@@ -367,7 +372,8 @@ class MoveActivityInStaffGrid(BaseModel):
 @router.post("/rota_grid/staff/drag_activity", operation_id="moveActivityInStaffGrid")
 def move_activity_in_staff_grid(
     request: Request, entry: MoveActivityInStaffGrid, connection: Connection
-):
+) -> ActivityResponse:
+    toasts = []
     with connection:
         try:
             # print(entry)
@@ -398,7 +404,7 @@ def move_activity_in_staff_grid(
                 connection.execute(
                     sql_query,
                     {
-                        "activity_id": entry.activityId,
+                        "activity_id": entry.activity_id,
                         "staff_id": entry.from_cell.staff,
                     },
                 )
@@ -412,37 +418,26 @@ def move_activity_in_staff_grid(
                     connection.execute(
                         sql_query,
                         {
-                            "activity_id": entry.activityId,
+                            "activity_id": entry.activity_id,
                             "staff_id": entry.to_cell.staff,
                         },
                     )
                 except IntegrityError:
                     raise ReallocationError("Staff already assigned to activity")
         except ReallocationError as e:
-            return {"toasts": [{"class": "error", "message": str(e)}]}
-        activity_cells = get_activity_cells_by_staff(
+            toasts.append(
+                Toast(
+                    kind="error",
+                    title="Error moving activity",
+                    description=str(e),
+                )
+            )
+
+        return get_activities_grouped_by_date(
             connection,
-            entry.to_cell.date,
-            entry.to_cell.date,
-            specifically_include=[
-                (entry.to_cell.date, entry.to_cell.staff),
-                (entry.from_cell.date, entry.from_cell.staff),
-            ],
-        )[0]
-        return templates.TemplateResponse(
-            "table_cells.html.mako",
-            {
-                "replacement_cells": activity_cells.values(),
-                "grid_type": "staff",
-                "request": request,
-                "toasts": [
-                    {
-                        "class": "success",
-                        "message": f"Move successful",
-                    }
-                ],
-            },
-            media_type="text/vnd.turbo-stream.html",
+            start_date=min(entry.from_cell.date, entry.to_cell.date),
+            finish_date=max(entry.from_cell.date, entry.to_cell.date),
+            toasts=toasts,
         )
 
 

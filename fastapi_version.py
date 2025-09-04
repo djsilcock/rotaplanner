@@ -7,7 +7,7 @@ import httpx
 import asyncio
 
 
-from rotarunner_ui.pages.table import router as grid_view_router
+from rotarunner_ui import router as ui_router
 from rotaplanner.activities.edit_activities import router as activities_router
 from rotaplanner.config.endpoints import router as config_router
 from rotarunner_ui.run_development_server import (
@@ -66,7 +66,7 @@ app = FastAPI(lifespan=lifespan)
 
 api_app = APIRouter()
 
-api_app.include_router(grid_view_router)
+api_app.include_router(ui_router)
 api_app.include_router(activities_router)
 api_app.include_router(config_router)
 app.mount("/static", StaticFiles(directory="rotaplanner/static"), name="static")
