@@ -389,6 +389,39 @@
           }
         }
       }
+    },
+    "/graphql": {
+      "get": {
+        "summary": "Handle Http Get",
+        "operationId": "handle_http_get_graphql_get",
+        "responses": {
+          "200": {
+            "description": "The GraphiQL integrated development environment.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not found if GraphiQL or query via GET are not enabled."
+          }
+        }
+      },
+      "post": {
+        "summary": "Handle Http Post",
+        "operationId": "handle_http_post_graphql_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -403,15 +436,12 @@
             "type": "string",
             "title": "Name"
           },
-          "start_time": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Start Time"
-          },
-          "finish_time": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Finish Time"
+          "timeslots": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityTimeslot"
+            },
+            "type": "array",
+            "title": "Timeslots"
           },
           "location": {
             "anyOf": [
@@ -422,23 +452,14 @@
                 "type": "null"
               }
             ]
-          },
-          "staff_assignments": {
-            "items": {
-              "$ref": "#/components/schemas/StaffAssignmentDisplay"
-            },
-            "type": "array",
-            "title": "Staff Assignments"
           }
         },
         "type": "object",
         "required": [
           "activity_id",
           "name",
-          "start_time",
-          "finish_time",
-          "location",
-          "staff_assignments"
+          "timeslots",
+          "location"
         ],
         "title": "ActivityDisplay"
       },
@@ -471,6 +492,34 @@
           "toasts"
         ],
         "title": "ActivityResponse"
+      },
+      "ActivityTimeslot": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start"
+          },
+          "finish": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Finish"
+          },
+          "staff_assignments": {
+            "items": {
+              "$ref": "#/components/schemas/StaffAssignmentDisplay"
+            },
+            "type": "array",
+            "title": "Staff Assignments",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "finish"
+        ],
+        "title": "ActivityTimeslot"
       },
       "DateRange": {
         "properties": {

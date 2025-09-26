@@ -27,7 +27,7 @@ async def main():
         tsk = group.create_task(run_server(server, killswitch))
 
 
-@app.get("/abort")
+@app.get("/api/abort")
 def abort():
     killswitch.set()
 

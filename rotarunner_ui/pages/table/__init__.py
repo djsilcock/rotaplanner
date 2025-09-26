@@ -69,7 +69,7 @@ def rota_grid(connection: Connection) -> RotaConfig:
 
         # get start and end dates from the database
         start_date, finish_date = connection.execute(
-            "SELECT DATE(MIN(activity_start)),DATE(MAX(activity_finish)) FROM activities"
+            "SELECT DATE(MIN(start)),DATE(MAX(finish)) FROM timeslots"
         ).fetchone()
 
     return RotaConfig(
@@ -92,13 +92,25 @@ class LocationDisplay:
     name: str
 
 
+class ActivityTimeslot(BaseModel):
+    start: datetime.datetime
+    finish: datetime.datetime
+    staff_assignments: list[StaffAssignmentDisplay] = []
+
+
 class ActivityDisplay(BaseModel):
     activity_id: str
     name: str
-    start_time: datetime.datetime
-    finish_time: datetime.datetime
+    timeslots: list[ActivityTimeslot]
     location: LabelledUUID | None
-    staff_assignments: list[StaffAssignmentDisplay]
+
+    @property
+    def start_time(self) -> datetime.datetime:
+        return min(timeslot.start for timeslot in self.timeslots)
+
+    @property
+    def finish_time(self) -> datetime.datetime:
+        return max(timeslot.finish for timeslot in self.timeslots)
 
 
 class Toast(BaseModel):
@@ -121,8 +133,8 @@ def get_activities(
         SELECT
             activities.id as activity_id, 
             activities.name as activity_name, 
-            activity_start, 
-            activity_finish, 
+            timeslots.start as activity_start, 
+            timeslots.finish as activity_finish, 
             locations.name as location_name,
             locations.id as location_id,
             staff_assignments.staff_id, 
@@ -132,9 +144,10 @@ def get_activities(
         LEFT JOIN locations ON activities.location_id = locations.id
         LEFT JOIN staff_assignments ON activities.id = staff_assignments.activity_id
         LEFT JOIN staff on staff_assignments.staff_id = staff.id
-        WHERE date(activity_start) >= date(:start_date)
-        AND date(activity_start) <= date(:finish_date)
-        ORDER BY activity_start
+        LEFT JOIN timeslots ON activities.id = timeslots.activity_id
+        WHERE date(timeslots.start) >= date(:start_date)
+        AND date(timeslots.finish) <= date(:finish_date)
+        ORDER BY timeslots.start
     """
     with connection:
         cursor = connection.execute(
@@ -146,6 +159,7 @@ def get_activities(
         )
         result = cursor.fetchall()
         activities = {}
+        timeslots = {}
         earliest_date = None
         latest_date = None
         for (
@@ -163,8 +177,6 @@ def get_activities(
                 activities[activity_id] = ActivityDisplay(
                     activity_id=str(activity_id),
                     name=name,
-                    start_time=start_time,
-                    finish_time=finish_time,
                     location=(
                         LabelledUUID(
                             id=location_id,
@@ -173,14 +185,23 @@ def get_activities(
                         if location_id
                         else None
                     ),
-                    staff_assignments=[],
+                    timeslots=[],
+                )
+            if (activity_id, start_time, finish_time) not in timeslots:
+                timeslots[(activity_id, start_time, finish_time)] = ActivityTimeslot(
+                    start=start_time, finish=finish_time, staff_assignments=[]
                 )
                 if earliest_date is None or start_time < earliest_date:
                     earliest_date = start_time
                 if latest_date is None or finish_time > latest_date:
                     latest_date = finish_time
+                activities[activity_id].timeslots.append(
+                    timeslots[(activity_id, start_time, finish_time)]
+                )
             if staff_id:
-                activities[activity_id].staff_assignments.append(
+                timeslots[
+                    (activity_id, start_time, finish_time)
+                ].staff_assignments.append(
                     StaffAssignmentDisplay(
                         staff=LabelledUUID(id=staff_id, name=staff_name)
                     )

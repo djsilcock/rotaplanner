@@ -11,10 +11,10 @@ from rotarunner_ui import router as ui_router
 from rotaplanner.activities.edit_activities import router as activities_router
 from rotaplanner.config.endpoints import router as config_router
 from rotarunner_ui.run_development_server import (
-    run_vite_dev_server2,
     generate_types,
     build_frontend,
 )
+from rotaplanner.graphql import graphql_app
 
 from rotaplanner.database import connection_dependency, sql_setup
 from test_data import (
@@ -55,10 +55,18 @@ def on_startup():
             "INSERT INTO activity_tags (id, name) VALUES (?, ?) ON CONFLICT(id) DO NOTHING",
             activity_tags,
         )
-        connection.executemany(
-            "INSERT INTO activities (id, name, activity_start, activity_finish) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO NOTHING",
-            activities,
-        )
+        for activity in activities:
+            activity_id = activity[0]
+            activity_name = activity[1]
+            activity_times = activity[2]
+            connection.execute(
+                "INSERT INTO activities (id, name) VALUES (?, ?) ON CONFLICT(id) DO NOTHING",
+                (activity_id, activity_name),
+            )
+            connection.executemany(
+                "INSERT INTO timeslots (activity_id, start, finish) VALUES (?, ?, ?) ON CONFLICT(activity_id, start) DO NOTHING",
+                [(activity_id, start, finish) for start, finish in activity_times],
+            )
         connection.commit()
 
 
@@ -71,3 +79,4 @@ api_app.include_router(activities_router)
 api_app.include_router(config_router)
 app.mount("/static", StaticFiles(directory="rotaplanner/static"), name="static")
 app.include_router(api_app, prefix="/api")
+app.include_router(graphql_app, prefix="/graphql")

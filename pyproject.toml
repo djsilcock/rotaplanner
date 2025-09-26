@@ -26,19 +26,11 @@ dependencies = [
     "ortools",
     "pytest",
     "pytest-asyncio",
-    "pyhumps",
     "fastapi[standard]",
     "pydantic",
     "typer",
-    "pywebview>=5.4",
-    "nicegui>=2.14.1",
-    "jinja2>=3.1.6",
-    "python-multipart>=0.0.20",
-    "wtforms>=3.2.1",
-    "starlette-wtf>=0.4.5",
     "fontawesomefree>=6.6.0",
-    "mako>=1.3.10",
-    "pywinpty>=2.0.15",
+    "strawberry-graphql[cli,fastapi]>=0.282.0",
 ]
 
 [project.urls]

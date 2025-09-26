@@ -27,6 +27,32 @@ import {
 import { createSignal, lazy, Match } from "solid-js";
 import { QueryClient, QueryClientProvider } from "@tanstack/solid-query";
 import { client } from "../generatedTypes/client.gen";
+import { Environment, Network, RecordSource, Store } from "relay-runtime";
+import { RelayEnvironmentProvider } from "solid-relay";
+
+// Define your fetch function
+const fetchFn = async (params, variables) => {
+  const response = await fetch("/graphql", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      query: params.text,
+      variables,
+    }),
+  });
+
+  return await response.json();
+};
+
+export function createRelayEnvironment() {
+  // Create Relay environment
+  return new Environment({
+    network: Network.create(fetchFn),
+    store: new Store(new RecordSource()),
+  });
+}
 
 /**
  * @typedef {Object} MenuItemProps
@@ -152,9 +178,11 @@ function Tables() {
 }
 
 const queryClient = new QueryClient();
+
 export default function App() {
+  const environment = createRelayEnvironment();
   return (
-    <QueryClientProvider client={queryClient}>
+    <RelayEnvironmentProvider environment={environment}>
       <Router root={Layout} base="/site">
         <Route path="/" component={IndexPage} />
         <Route
@@ -170,6 +198,6 @@ export default function App() {
         <Route path="/test-form" component={lazy(() => import("./select"))} />
         <Route path="*404" component={NotFound} />
       </Router>
-    </QueryClientProvider>
+    </RelayEnvironmentProvider>
   );
 }

@@ -17,6 +17,9 @@ export function DateField(props) {
   return <InputField type="date" {...props} />;
 }
 
+export function DateTimeField(props) {
+  return <InputField type="datetime-local" {...props} />;
+}
 export function NumberField(props) {
   return <InputField type="number" {...props} />;
 }
@@ -115,6 +118,7 @@ export const { useAppForm, useFormContext, withForm } = createFormHook({
     TextField,
     TimeField,
     DateField,
+    DateTimeField,
     NumberField,
     CheckboxField,
     RadioField,

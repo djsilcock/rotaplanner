@@ -15,7 +15,9 @@ import { createQuery, useQueryClient } from "@tanstack/solid-query";
 import styles from "./table.module.css";
 import { createStore } from "solid-js/store";
 import { dndzone, TRIGGERS } from "solid-dnd-directive";
-
+import { graphql } from "relay-runtime";
+import { createLazyLoadQuery } from "solid-relay";
+import type { tableConfigQuery as TableConfigQuery } from "./__generated__/tableConfigQuery.graphql";
 import {
   getActivitiesByDate,
   tableConfig as getTableConfig,
@@ -57,6 +59,23 @@ function retry(
 export function toOrdinal(date: Date): number {
   return differenceInCalendarDays(date, epoch);
 }
+const staffQuery = graphql`
+  query tableStaffQuery {
+    allStaff {
+      id
+      name
+    }
+  }
+`;
+
+const locationQuery = graphql`
+  query tableLocationsQuery {
+    allLocations {
+      id
+      name
+    }
+  }
+`;
 
 const DEFAULT_SEGMENT_WIDTH = 1;
 
@@ -65,12 +84,6 @@ function throwIfError<T>({ data, error }: { data: T; error: any }): T {
     throw error;
   }
   return data;
-}
-
-interface TableConfig {
-  staff: LabelledUuid[];
-  locations: LabelledUuid[];
-  dates: Date[];
 }
 
 interface TableProps {
@@ -84,16 +97,48 @@ interface TableProps {
  * @returns {JSX.Element}
  * Table component to render the main table.
  */
+
+const tableConfigQuery = graphql`
+  query tableConfigQuery {
+    allStaff {
+      id
+      name
+    }
+    allLocations {
+      id
+      name
+    }
+    daterange {
+      start
+      end
+    }
+  }
+`;
+
+const getActivitiesQuery = graphql`
+  query tableActivitiesQuery($end: String!, $start: String!) {
+    activities(endDate: $end, startDate: $start) {
+      id
+      name
+      timeslots {
+        start
+        finish
+      }
+    }
+  }
+`;
+
 function Table(props: TableProps): JSX.Element {
-  const [tableConfigResponse, { refetch: refetchTableConfig }] = createResource(
-    () => getTableConfig().then(throwIfError)
+  const tableConfigResponse = createLazyLoadQuery<TableConfigQuery>(
+    tableConfigQuery,
+    {}
   );
-  const tableConfig: TableConfig = (() => {
+  const tableConfig = (() => {
     const datesMemo = createMemo(() => {
-      if (!tableConfigResponse()?.date_range) return [];
+      if (!tableConfigResponse()?.daterange) return [];
       // Generate dates from start to finish date in the date range
-      const start = parseISO(tableConfigResponse()?.date_range.start || "");
-      const finish = parseISO(tableConfigResponse()?.date_range.finish || "");
+      const start = parseISO(tableConfigResponse()!.daterange.start);
+      const finish = parseISO(tableConfigResponse()!.daterange.end);
       return Array.from(
         { length: differenceInCalendarDays(finish, start) + 1 },
         (_, i) => addDays(start, i)
@@ -101,10 +146,10 @@ function Table(props: TableProps): JSX.Element {
     });
     return {
       get staff() {
-        return tableConfigResponse()?.staff ?? [];
+        return tableConfigResponse()?.allStaff ?? [];
       },
       get locations() {
-        return tableConfigResponse()?.locations ?? [];
+        return tableConfigResponse()?.allLocations ?? [];
       },
 
       get dates() {
@@ -114,7 +159,9 @@ function Table(props: TableProps): JSX.Element {
   })();
 
   const [activitiesData, updateActivitiesData] = createStore({});
-
+  const activitiesResult = createLazyLoadQuery(
+    getActivitiesQuery,
+    { end: tableConfig.dates.at(-1), start: tableConfig.dates.at(0) }
   const c = retry(
     (_) =>
       getActivitiesByDate({
@@ -130,7 +177,7 @@ function Table(props: TableProps): JSX.Element {
   });
 
   let parentRef;
-  const [editActivity, setEditActivity] = createSignal(null);
+  const [editActivity, setEditActivity] = createSignal<string | null>(null);
   const y_axis = createMemo(() => {
     if (props.y_axis_type === "staff") {
       return tableConfig.staff;
@@ -152,9 +199,13 @@ function Table(props: TableProps): JSX.Element {
         class={styles.rotaTable}
         on:dblclick={(e) => {
           console.log("Double click event:", e);
-          const activityId = (
-            e.target.closest("[data-activity-id]") as HTMLElement
-          )?.dataset.activityId;
+          const activityId =
+            (e.target.closest("[data-activity-id]") as HTMLElement)?.dataset
+              .activityId ??
+            (e.target.closest("[data-cell-id]") as HTMLElement)?.dataset
+              .cellId ??
+            null;
+          if (!activityId) return;
           setEditActivity(activityId);
         }}
       >
@@ -188,6 +239,22 @@ function Table(props: TableProps): JSX.Element {
               </tr>
             )}
           </For>
+          <tr>
+            <td class={styles.rowHeader}>Unallocated</td>
+            <For each={tableConfig.dates} fallback={<td></td>}>
+              {(date) => (
+                <ActivityCell
+                  activities={activitiesData}
+                  row_id={null}
+                  y_axis_type={props.y_axis_type}
+                  date={date}
+                  updateActivities={(newActivities: ActivityResponse) => {
+                    updateActivitiesData(newActivities.data);
+                  }}
+                />
+              )}
+            </For>
+          </tr>
         </tbody>
       </table>
     </Show>
@@ -361,8 +428,8 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
     return dndzone(...args);
   };
   return (
-    <Suspense>
-      <td>
+    <td data-cell-id={`${isoDate()}--${props.row_id}`}>
+      <Suspense>
         <div
           title={JSON.stringify(cellActivities())}
           classList={{
@@ -392,8 +459,8 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
             )}
           </For>
         </div>
-      </td>
-    </Suspense>
+      </Suspense>
+    </td>
   );
 };
 
@@ -414,33 +481,26 @@ export function Activity(props: {
       data-activity-id={props.activity_def.activity_id}
       id={`activity-${props.activity_def.activity_id}`}
     >
-      <div class={styles.activityTime}>
-        {props.activity_def.start_time.slice(11, 16)} -{" "}
-        {props.activity_def.finish_time.slice(11, 16)}
-      </div>
       <div class={styles.activityName}>{props.activity_def.name}</div>
-      <Show
-        when={
-          props.activity_def.location &&
-          //props.staff_or_location &&
-          props.staff_or_location !== props.activity_def.location.id
-        }
-      >
-        <div class={styles.activityLocation}>
-          {props.activity_def.location?.name}
-        </div>
-      </Show>
 
-      <For each={props.activity_def.staff_assignments}>
-        {(assignment) => (
-          <Show when={assignment.staff.id !== props.staff_or_location}>
-            <div class={styles.assignment}>
-              {assignment.staff.name}
-              <Show when={assignment.times}>{assignment.times}</Show>
+      <div>
+        <For each={props.activity_def.timeslots}>
+          {(timeslot) => (
+            <div>
+              <div class={styles.activityTime}>
+                {timeslot.start.slice(11, 16)} - {timeslot.finish.slice(11, 16)}
+              </div>
+              <For each={timeslot.staff_assignments}>
+                {(assignment) => (
+                  <Show when={assignment.staff.id !== props.staff_or_location}>
+                    <div class={styles.assignment}>{assignment.staff.name}</div>
+                  </Show>
+                )}
+              </For>
             </div>
-          </Show>
-        )}
-      </For>
+          )}
+        </For>
+      </div>
     </div>
   );
 }

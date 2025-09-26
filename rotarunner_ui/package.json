@@ -13,8 +13,12 @@
   "license": "MIT",
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.7",
+    "@types/relay-runtime": "^19.0.2",
+    "relay-compiler": "^20.1.1",
     "tailwindcss": "^4.0.7",
     "vite": "^6.0.0",
+    "vite-plugin-cjs-interop": "^2.3.0",
+    "vite-plugin-relay-lite": "^0.11.0",
     "vite-plugin-solid": "^2.11.6"
   },
   "dependencies": {
@@ -29,9 +33,12 @@
     "@tanstack/solid-query": "^5.83.0",
     "@thisbeyond/solid-select": "^0.15.0",
     "date-fns": "^4.1.0",
+    "relay-runtime": "^20.1.1",
     "solid-dnd-directive": "^0.2.0",
     "solid-js": "^1.9.5",
+    "solid-relay": "^1.0.0-beta.15",
     "solid-select": "^0.0.1",
-    "solidjs-select": "^0.8.6"
+    "solidjs-select": "^0.8.6",
+    "watchman": "^1.0.0"
   }
 }

@@ -49,7 +49,13 @@ export { useDialogContext } from "@kobalte/core/dialog";
 export function Dialog(props) {
   return (
     <>
-      <KDialog open={props.open} onOpenChange={props.setOpen ?? (() => {})}>
+      <KDialog
+        open={props.open}
+        onOpenChange={(isOpen) => {
+          props.setOpen?.(isOpen);
+          if (!isOpen) props.onClose?.();
+        }}
+      >
         <KDialog.Trigger>{props.trigger}</KDialog.Trigger>
         <KDialog.Portal>
           <KDialog.Overlay class={dlgstyles.overlay} />

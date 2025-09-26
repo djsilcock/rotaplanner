@@ -1,6 +1,13 @@
 import { Dynamic, Show } from "solid-js/web";
 import { useParams } from "@solidjs/router";
-import { For, Index, createMemo, createEffect, createSignal } from "solid-js";
+import {
+  For,
+  Index,
+  createMemo,
+  createEffect,
+  createSignal,
+  createResource,
+} from "solid-js";
 import { Button } from "@suid/material";
 import { Dialog, useDialogContext } from "../ui/textfield.jsx";
 import { createForm } from "@tanstack/solid-form";
@@ -688,12 +695,36 @@ function RequirementForm(props) {
   );
 }
 function EditActivity(props) {
+  const [activityForm] = createResource(props.activity, async (id) => {
+    console.log("Loading activity", id);
+    await new Promise((r) => setTimeout(r, 500));
+    console.log("Loaded activity", id);
+    return {
+      activity_def: {
+        activity_name: "Loaded activity",
+        activity_start: "2024-01-01T12:00:00",
+        activity_finish: "2024-01-01T14:00:00",
+        activity_tags: ["URO"],
+        location: "",
+        requirements: [],
+      },
+      activity_tags: [
+        { value: "URO", label: "Urology" },
+        { value: "ENT", label: "ENT" },
+      ],
+      locations: [
+        { value: "Theatre 1", label: "Theatre 1" },
+        { value: "Theatre 2", label: "Theatre 2" },
+        { value: "Theatre 3", label: "Theatre 3" },
+      ],
+    };
+  });
   const form = useAppForm(() => ({
-    defaultValues: {
-      activity_name: "Untitled",
-      activity_date: new Date(),
-      start_time: "09:00",
-      finish_time: "17:00",
+    defaultValues: activityForm()?.activity_def || {
+      activity_name: "",
+      activity_date: "",
+      activity_start: "",
+      activity_finish: "",
       activity_tags: [],
       location: "",
       requirements: [],
@@ -702,8 +733,14 @@ function EditActivity(props) {
       console.log("Form submitted:", values);
     },
   }));
+
   return (
-    <Dialog open={!!props.activity} title="Edit Activity">
+    <Dialog
+      open={!!props.activity}
+      title={props.activity?.includes("--") ? "New Activity" : "Edit Activity"}
+      onClose={props.onClose}
+    >
+      {<pre>*{JSON.stringify(activityForm())}*</pre>}
       <div id="template-editor-settings">
         <FormRow>
           <form.AppField name="activity_name">
@@ -711,19 +748,14 @@ function EditActivity(props) {
           </form.AppField>
         </FormRow>
         <FormRow>
-          <form.AppField name="activity_date">
-            {(field) => <field.DateField label="Activity Date" />}
-          </form.AppField>
-        </FormRow>
-        <FormRow>
-          <form.AppField name="start_time">
-            {(field) => <field.TimeField label="Start Time" />}
+          <form.AppField name="activity_start">
+            {(field) => <field.DateTimeField label="Activity Starts" />}
           </form.AppField>
         </FormRow>
 
         <FormRow>
-          <form.AppField name="finish_time">
-            {(field) => <field.TimeField label="Finish Time" />}
+          <form.AppField name="activity_finish">
+            {(field) => <field.DateTimeField label="Activity Finishes" />}
           </form.AppField>
         </FormRow>
         <FormRow label="Tags">
@@ -732,10 +764,7 @@ function EditActivity(props) {
               <field.SelectField
                 label="Activity Tags"
                 multiple
-                options={[
-                  { value: "URO", label: "Urology" },
-                  { value: "ENT", label: "ENT" },
-                ]}
+                options={activityForm()?.activity_tags ?? []}
               />
             )}
           </form.AppField>
@@ -745,11 +774,7 @@ function EditActivity(props) {
             {(field) => (
               <field.SelectField
                 label="Location"
-                options={[
-                  { value: "Theatre 1", label: "Theatre 1" },
-                  { value: "Theatre 2", label: "Theatre 2" },
-                  { value: "Theatre 3", label: "Theatre 3" },
-                ]}
+                options={activityForm()?.locations || []}
               />
             )}
           </form.AppField>
