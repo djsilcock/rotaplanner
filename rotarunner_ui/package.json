@@ -33,6 +33,7 @@
     "@tanstack/solid-query": "^5.83.0",
     "@thisbeyond/solid-select": "^0.15.0",
     "date-fns": "^4.1.0",
+    "lodash": "^4.17.21",
     "relay-runtime": "^20.1.1",
     "solid-dnd-directive": "^0.2.0",
     "solid-js": "^1.9.5",

@@ -3,6 +3,13 @@ directive @oneOf on INPUT_OBJECT
 type Activity {
   id: ID!
   name: String!
+  type: String!
+  templateId: String!
+  locationId: String!
+  recurrenceRules: String!
+  requirements: String!
+  activityStart: String!
+  activityFinish: String!
   timeslots: [TimeSlot!]!
 }
 
@@ -97,7 +104,7 @@ type StaffAssignment {
 
 type TimeSlot {
   start: String!
-  end: String!
+  finish: String!
   activity: Activity!
   staffAssigned: [StaffAssignment!]!
 }

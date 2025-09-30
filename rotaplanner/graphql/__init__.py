@@ -1,3 +1,5 @@
+import collections
+from dataclasses import fields
 import strawberry
 
 from fastapi import FastAPI
@@ -14,6 +16,21 @@ import sqlite3
 class Location:
     id: strawberry.ID
     name: str
+
+    @classmethod
+    def get_loader(cls, ctx: BaseContext) -> DataLoader[str, "Location"]:
+        async def batch_load_locations(ids):
+            print(f"Batch loading locations for IDs: {ids}")
+            cursor = ctx.connection.execute(
+                f"SELECT id, name FROM locations WHERE id IN ({','.join('?' for _ in ids)})",
+                ids,
+            )
+            locations = {}
+            for row in cursor.fetchall():
+                locations[row[0]] = Location(id=row[0], name=row[1])
+            return list(locations.get(id) for id in ids)
+
+        return DataLoader(batch_load_locations)
 
 
 @strawberry.type
@@ -52,6 +69,21 @@ class Staff:
         ]
         return assignments
 
+    @classmethod
+    def get_loader(cls, ctx: BaseContext) -> DataLoader[str, "Staff"]:
+        async def batch_load_staff(ids):
+            print(f"Batch loading staff for IDs: {ids}")
+            cursor = ctx.connection.execute(
+                f"SELECT id, name FROM staff WHERE id IN ({','.join('?' for _ in ids)})",
+                ids,
+            )
+            staff = {}
+            for row in cursor.fetchall():
+                staff[row[0]] = Staff(id=row[0], name=row[1])
+            return list(staff.get(id) for id in ids)
+
+        return DataLoader(batch_load_staff)
+
 
 @strawberry.type
 class AssignmentFlags:
@@ -66,11 +98,11 @@ class StaffAssignment:
 
     @strawberry.field
     def staff(self, info: strawberry.Info) -> Staff:
-        return info.context.staff_loader.load(self._staff_id)
+        return info.context.get_loader(Staff).load(self._staff_id)
 
     @strawberry.field
     def timeslot(self, info: strawberry.Info) -> "TimeSlot":
-        return info.context.timeslots_loader.load(self._timeslot)
+        return info.context.get_loader(TimeSlot).load(self._timeslot)
 
     @strawberry.field
     def flags(self, info: strawberry.Info) -> list[AssignmentFlags]:
@@ -82,12 +114,12 @@ class StaffAssignment:
 class TimeSlot:
     activity_id: strawberry.Private[str]
     start: str  # Using string for simplicity
-    end: str  # Using string for simplicity
+    finish: str  # Using string for simplicity
 
     @strawberry.field
     def activity(self, info: strawberry.Info) -> "Activity":
         context = info.context
-        return context.activities_loader.load(self.activity_id)
+        return context.get_loader(Activity).load(self.activity_id)
 
     @strawberry.field
     def staff_assigned(self, info: strawberry.Info) -> list[StaffAssignment]:
@@ -109,12 +141,92 @@ class TimeSlot:
             for row in cursor.fetchall()
         ]
 
+    @classmethod
+    def get_loader(cls, ctx: BaseContext) -> DataLoader[tuple[str, str], "TimeSlot"]:
+        async def batch_load_timeslots(keys):
+            print(f"Batch loading timeslots for keys: {keys}")
+            cursor = ctx.connection.execute(
+                f"""SELECT activity_id, start, finish FROM timeslots
+                WHERE (activity_id, start) IN ({','.join('(?, ?)' for _ in keys)})""",
+                [item for sublist in keys for item in sublist],
+            )
+            timeslots = {}
+            for row in cursor.fetchall():
+                timeslots[(row[0], row[1])] = TimeSlot(**row)
+            return [timeslots.get(key) for key in keys]
+
+        return DataLoader(batch_load_timeslots)
+
 
 @strawberry.type
 class Activity:
     id: strawberry.ID
     name: str
-    timeslots: list[TimeSlot]
+    type: str
+    template_id: str
+    location_id: str
+    recurrence_rules: str
+    requirements: str
+    activity_start: str
+    activity_finish: str
+
+    @strawberry.field
+    async def timeslots(self, info: strawberry.Info) -> list[TimeSlot]:
+        context = info.context
+        timeslot_ids = await context.get_loader(Activity, "timeslots").load(self.id)
+        return await context.get_loader(TimeSlot).load_many(
+            [(self.id, start) for start in timeslot_ids]
+        )
+
+    @classmethod
+    def from_row(cls, row: sqlite3.Row) -> "Activity":
+        columns = {col: row[col] for col in row.keys()}
+        return cls(**columns)
+
+    @classmethod
+    async def batch_load_activities(cls, ctx: BaseContext, ids):
+        print(f"Batch loading activities for IDs: {ids}")
+
+        cursor = ctx.connection.execute(
+            f"""SELECT * FROM activities
+            WHERE activities.id IN ({','.join('?' for _ in ids)})""",
+            ids,
+        )
+
+        activities = {}
+        for row in cursor.fetchall():
+            new_activity = Activity.from_row(row)
+            activities[new_activity.id] = new_activity
+        return list(activities.get(id) for id in ids)
+
+    @classmethod
+    async def batch_get_timeslots(cls, ctx: BaseContext, activity_ids):
+        print(f"Batch loading timeslots for activity IDs: {activity_ids}")
+
+        cursor = ctx.connection.execute(
+            f"""SELECT activity_id, start FROM timeslots
+            WHERE activity_id IN ({','.join('?' for _ in activity_ids)})""",
+            activity_ids,
+        )
+        timeslots_for_activity = {}
+        for row in cursor.fetchall():
+            timeslots_for_activity.setdefault(row["activity_id"], set()).add(
+                row["start"]
+            )
+        return [
+            timeslots_for_activity.get(activity_id, set())
+            for activity_id in activity_ids
+        ]
+
+    @classmethod
+    def get_loader(cls, ctx: BaseContext, *args) -> DataLoader[str, "Activity"]:
+        match args:
+            case ():
+                return DataLoader(lambda ids: cls.batch_load_activities(ctx, ids))
+            case ("timeslots",):
+                return DataLoader(lambda ids: cls.batch_get_timeslots(ctx, ids))
+            case _:
+                raise ValueError("Invalid arguments to Activity.get_loader")
 
 
 @strawberry.type
@@ -137,6 +249,7 @@ class Query:
 
         # You can access the database connection from the context
         connection = context.connection
+
         cursor = connection.execute(
             """
         SELECT
@@ -149,17 +262,18 @@ class Query:
         ORDER BY timeslots.start""",
             {"start_date": start_date, "finish_date": end_date},
         )
-        return await context.activities_loader.load_many(
+        return await context.get_loader(Activity).load_many(
             [row[0] for row in cursor.fetchall()]
         )
 
     @strawberry.field
     async def all_locations(self, info: strawberry.Info) -> list[Location]:
         context = info.context
+        print("locations info.selected_fields:", info.selected_fields)
         # You can access the database connection from the context
         connection = context.connection
         cursor = connection.execute("SELECT id FROM locations")
-        return await context.locations_loader.load_many(
+        return await context.get_loader(Location).load_many(
             [row[0] for row in cursor.fetchall()]
         )
 
@@ -169,7 +283,7 @@ class Query:
         # You can access the database connection from the context
         connection = context.connection
         cursor = connection.execute("SELECT id FROM staff")
-        return await context.staff_loader.load_many(
+        return await context.get_loader(Staff).load_many(
             [row[0] for row in cursor.fetchall()]
         )
 
@@ -178,19 +292,19 @@ class Query:
         self, info: strawberry.Info, id: strawberry.ID
     ) -> Location:
         context = info.context
-        return await context.locations_loader.load(id)  # type: ignore
+        return await context.get_loader(Location).load(id)  # type: ignore
 
     @strawberry.field
     async def staff_by_id(self, info: strawberry.Info, id: strawberry.ID) -> Staff:
         context = info.context
-        return await context.staff_loader.load(id)  # type: ignore
+        return await context.get_loader(Staff).load(id)  # type: ignore
 
     @strawberry.field
     async def activity_by_id(
         self, info: strawberry.Info, id: strawberry.ID
     ) -> Activity:
         context = info.context
-        return await context.activities_loader.load(id)  # type: ignore
+        return await context.get_loader(Activity).load(id)  # type: ignore
 
     @strawberry.field
     async def daterange(self, info: strawberry.Info) -> DateRange:
@@ -392,67 +506,15 @@ with open(os.path.join(os.getcwd(), "schema.graphql"), "w") as f:
 class CustomContext(BaseContext):
     def __init__(self, connection: sqlite3.Connection):
         self.connection = connection
-        self.locations_loader = DataLoader(self.batch_load_locations)
-        self.staff_loader = DataLoader(self.batch_load_staff)
-        self.activities_loader = DataLoader(self.batch_load_activities)
-        self.timeslots_loader = DataLoader(self.batch_load_timeslots)
         self.assignment_flags_loader = DataLoader(self.batch_load_assignment_flags)
+        self.data_loaders = {}
 
-    async def batch_load_locations(self, ids):
-        print(f"Batch loading locations for IDs: {ids}")
-        cursor = self.connection.execute(
-            f"SELECT id, name FROM locations WHERE id IN ({','.join('?' for _ in ids)})",
-            ids,
-        )
-        locations = {}
-        for row in cursor.fetchall():
-            locations[row[0]] = Location(id=row[0], name=row[1])
-        return list(locations.get(id) for id in ids)
-
-    async def batch_load_staff(self, ids):
-        print(f"Batch loading staff for IDs: {ids}")
-        cursor = self.connection.execute(
-            f"SELECT id, name FROM staff WHERE id IN ({','.join('?' for _ in ids)})",
-            ids,
-        )
-        staff = {}
-        for row in cursor.fetchall():
-            staff[row[0]] = Staff(id=row[0], name=row[1])
-        return list(staff.get(id) for id in ids)
-
-    async def batch_load_activities(self, ids):
-        print(f"Batch loading activities for IDs: {ids}")
-        cursor = self.connection.execute(
-            f"""SELECT activities.id, activities.name, timeslots.start, timeslots.finish FROM activities
-            join timeslots on activities.id = timeslots.activity_id
-            WHERE activities.id IN ({','.join('?' for _ in ids)})""",
-            ids,
-        )
-        activities = {}
-        for row in cursor.fetchall():
-            activity_id = row[0]
-            if activity_id not in activities:
-                activities[activity_id] = Activity(
-                    id=activity_id, name=row[1], timeslots=[]
-                )
-            new_timeslot = TimeSlot(activity_id=row[0], start=row[2], end=row[3])
-            activities[activity_id].timeslots.append(new_timeslot)
-            self.timeslots_loader.prime((row[0], row[2]), new_timeslot)
-        return list(activities.get(id) for id in ids)
-
-    async def batch_load_timeslots(self, keys):
-        print(f"Batch loading timeslots for keys: {keys}")
-        cursor = self.connection.execute(
-            f"""SELECT activity_id, start, finish FROM timeslots
-            WHERE (activity_id, start) IN ({','.join('(?, ?)' for _ in keys)})""",
-            [item for key in keys for item in key],
-        )
-        timeslots = {}
-        for row in cursor.fetchall():
-            timeslots[(row[0], row[1])] = TimeSlot(
-                activity_id=row[0], start=row[1], end=row[2]
+    def get_loader[T](self, entity_type: type[T], *args) -> DataLoader[str, T]:
+        if (entity_type, *args) not in self.data_loaders:
+            self.data_loaders[(entity_type, *args)] = entity_type.get_loader(
+                self, *args
             )
-        return list(timeslots.get(key) for key in keys)
+        return self.data_loaders[(entity_type, *args)]
 
     async def batch_load_assignment_flags(
         self, assignment_ids: list[tuple[str, str, str]]

@@ -18,6 +18,7 @@ import { dndzone, TRIGGERS } from "solid-dnd-directive";
 import { graphql } from "relay-runtime";
 import { createLazyLoadQuery } from "solid-relay";
 import type { tableConfigQuery as TableConfigQuery } from "./__generated__/tableConfigQuery.graphql";
+import type { tableActivitiesQuery } from "./__generated__/tableActivitiesQuery.graphql";
 import {
   getActivitiesByDate,
   tableConfig as getTableConfig,
@@ -29,6 +30,7 @@ import {
   ActivityDisplay,
   ActivityResponse,
 } from "../../generatedTypes/types.gen";
+import { groupBy } from "lodash";
 
 const EditActivityModal = lazy(() => import("../edit_activity"));
 const epoch = new Date(2021, 0, 1);
@@ -123,6 +125,12 @@ const getActivitiesQuery = graphql`
       timeslots {
         start
         finish
+        staffAssigned {
+          staff {
+            id
+            name
+          }
+        }
       }
     }
   }
@@ -135,7 +143,7 @@ function Table(props: TableProps): JSX.Element {
   );
   const tableConfig = (() => {
     const datesMemo = createMemo(() => {
-      if (!tableConfigResponse()?.daterange) return [];
+      if (!tableConfigResponse()?.daterange) return undefined;
       // Generate dates from start to finish date in the date range
       const start = parseISO(tableConfigResponse()!.daterange.start);
       const finish = parseISO(tableConfigResponse()!.daterange.end);
@@ -146,10 +154,10 @@ function Table(props: TableProps): JSX.Element {
     });
     return {
       get staff() {
-        return tableConfigResponse()?.allStaff ?? [];
+        return tableConfigResponse()?.allStaff;
       },
       get locations() {
-        return tableConfigResponse()?.allLocations ?? [];
+        return tableConfigResponse()?.allLocations;
       },
 
       get dates() {
@@ -159,30 +167,28 @@ function Table(props: TableProps): JSX.Element {
   })();
 
   const [activitiesData, updateActivitiesData] = createStore({});
-  const activitiesResult = createLazyLoadQuery(
+  const activitiesResult = createLazyLoadQuery<tableActivitiesQuery>(
     getActivitiesQuery,
-    { end: tableConfig.dates.at(-1), start: tableConfig.dates.at(0) }
-  const c = retry(
-    (_) =>
-      getActivitiesByDate({
-        responseStyle: "data",
-        query: {},
-      }),
-    { retries: 3 }
-  )();
-  c.then((data) => {
-    console.log("Fetched activities data:", data);
-
-    updateActivitiesData(data.data);
+    () =>
+      tableConfig.dates && {
+        end: tableConfig.dates.at(-1)!.toISOString().slice(0, 10),
+        start: tableConfig.dates.at(0)!.toISOString().slice(0, 10),
+      }
+  );
+  const activities = createMemo(() => {
+    const byDate = groupBy(activitiesResult()?.activities ?? [], (activity) =>
+      activity.timeslots?.[0]?.start.slice(0, 10)
+    );
+    return byDate;
   });
 
   let parentRef;
   const [editActivity, setEditActivity] = createSignal<string | null>(null);
   const y_axis = createMemo(() => {
     if (props.y_axis_type === "staff") {
-      return tableConfig.staff;
+      return tableConfig?.staff ?? [];
     } else if (props.y_axis_type === "location") {
-      return tableConfig.locations;
+      return tableConfig?.locations ?? [];
     }
     return [];
   });
@@ -212,7 +218,7 @@ function Table(props: TableProps): JSX.Element {
         <thead>
           <tr>
             <td></td>
-            <For each={tableConfig.dates} fallback={<td></td>}>
+            <For each={tableConfig?.dates} fallback={<td></td>}>
               {(date) => <td>{date.toISOString().slice(0, 10)}</td>}
             </For>
           </tr>
@@ -222,10 +228,10 @@ function Table(props: TableProps): JSX.Element {
             {(staff_or_location, index) => (
               <tr>
                 <td class={styles.rowHeader}>{staff_or_location.name}</td>
-                <For each={tableConfig.dates} fallback={<td></td>}>
+                <For each={tableConfig?.dates} fallback={<td></td>}>
                   {(date) => (
                     <ActivityCell
-                      activities={activitiesData}
+                      activities={activities()}
                       row_id={staff_or_location?.id}
                       y_axis_type={props.y_axis_type}
                       i={index()}
@@ -241,10 +247,10 @@ function Table(props: TableProps): JSX.Element {
           </For>
           <tr>
             <td class={styles.rowHeader}>Unallocated</td>
-            <For each={tableConfig.dates} fallback={<td></td>}>
+            <For each={tableConfig?.dates} fallback={<td></td>}>
               {(date) => (
                 <ActivityCell
-                  activities={activitiesData}
+                  activities={activities()}
                   row_id={null}
                   y_axis_type={props.y_axis_type}
                   date={date}
