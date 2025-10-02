@@ -15,10 +15,13 @@ import { createQuery, useQueryClient } from "@tanstack/solid-query";
 import styles from "./table.module.css";
 import { createStore } from "solid-js/store";
 import { dndzone, TRIGGERS } from "solid-dnd-directive";
-import { graphql } from "relay-runtime";
+import { getFragment, graphql } from "relay-runtime";
 import { createLazyLoadQuery } from "solid-relay";
 import type { tableConfigQuery as TableConfigQuery } from "./__generated__/tableConfigQuery.graphql";
-import type { tableActivitiesQuery } from "./__generated__/tableActivitiesQuery.graphql";
+import type {
+  tableActivitiesQuery,
+  tableActivitiesQuery$data,
+} from "./__generated__/tableActivitiesQuery.graphql";
 import {
   getActivitiesByDate,
   tableConfig as getTableConfig,
@@ -30,7 +33,7 @@ import {
   ActivityDisplay,
   ActivityResponse,
 } from "../../generatedTypes/types.gen";
-import { groupBy } from "lodash";
+import { create, groupBy } from "lodash";
 
 const EditActivityModal = lazy(() => import("../edit_activity"));
 const epoch = new Date(2021, 0, 1);
@@ -79,34 +82,13 @@ const locationQuery = graphql`
   }
 `;
 
-const DEFAULT_SEGMENT_WIDTH = 1;
-
-function throwIfError<T>({ data, error }: { data: T; error: any }): T {
-  if (error) {
-    throw error;
-  }
-  return data;
-}
-
-interface TableProps {
-  y_axis_type: "location" | "staff";
-  children?: JSX.Element;
-}
-/**
- *
- * @param {object} props
- * @param {string} props.y_axis_type - Type of y-axis data (staff or location).
- * @returns {JSX.Element}
- * Table component to render the main table.
- */
-
 const tableConfigQuery = graphql`
   query tableConfigQuery {
-    allStaff {
+    staff: allStaff {
       id
       name
     }
-    allLocations {
+    locations: allLocations {
       id
       name
     }
@@ -120,64 +102,66 @@ const tableConfigQuery = graphql`
 const getActivitiesQuery = graphql`
   query tableActivitiesQuery($end: String!, $start: String!) {
     activities(endDate: $end, startDate: $start) {
-      id
-      name
-      timeslots {
-        start
-        finish
-        staffAssigned {
-          staff {
-            id
-            name
-          }
-        }
+      ...tableActivityFragment
+    }
+  }
+`;
+
+const activityFragment = graphql`
+  fragment tableActivityFragment on Activity {
+    id
+    name
+    activityStart
+    activityFinish
+    assignments {
+      staff {
+        id
       }
     }
   }
 `;
 
+interface TableProps {
+  y_axis_type: "location" | "staff";
+  children?: JSX.Element;
+}
+/**
+ *
+ * @param {object} props
+ * @param {string} props.y_axis_type - Type of y-axis data (staff or location).
+ * @returns {JSX.Element}
+ * Table component to render the main table.
+ */
 function Table(props: TableProps): JSX.Element {
-  const tableConfigResponse = createLazyLoadQuery<TableConfigQuery>(
+  const tableConfig = createLazyLoadQuery<TableConfigQuery>(
     tableConfigQuery,
     {}
   );
-  const tableConfig = (() => {
-    const datesMemo = createMemo(() => {
-      if (!tableConfigResponse()?.daterange) return undefined;
-      // Generate dates from start to finish date in the date range
-      const start = parseISO(tableConfigResponse()!.daterange.start);
-      const finish = parseISO(tableConfigResponse()!.daterange.end);
-      return Array.from(
-        { length: differenceInCalendarDays(finish, start) + 1 },
-        (_, i) => addDays(start, i)
-      );
-    });
-    return {
-      get staff() {
-        return tableConfigResponse()?.allStaff;
-      },
-      get locations() {
-        return tableConfigResponse()?.allLocations;
-      },
-
-      get dates() {
-        return datesMemo();
-      },
-    };
-  })();
 
   const [activitiesData, updateActivitiesData] = createStore({});
   const activitiesResult = createLazyLoadQuery<tableActivitiesQuery>(
     getActivitiesQuery,
-    () =>
-      tableConfig.dates && {
-        end: tableConfig.dates.at(-1)!.toISOString().slice(0, 10),
-        start: tableConfig.dates.at(0)!.toISOString().slice(0, 10),
-      }
+    () => tableConfig()?.daterange
   );
+  createEffect(() => {
+    if (activitiesResult()?.activities) {
+      updateActivitiesData(() => {
+        const root: Record<string, ActivityResponse[]> = {};
+        for (let activity of activitiesResult()!.activities) {
+          const date = activity.activityStart.slice(0, 10);
+          if (!root[date]) {
+            root[date] = [];
+          }
+          root[date].push(activity);
+        }
+        return root;
+      });
+    }
+  });
+
   const activities = createMemo(() => {
     const byDate = groupBy(activitiesResult()?.activities ?? [], (activity) =>
-      activity.timeslots?.[0]?.start.slice(0, 10)
+      activity.activityStart.slice(0, 10)
     );
     return byDate;
   });

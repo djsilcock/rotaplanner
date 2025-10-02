@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2f5e8e2163d3b1e0ce319bdf764ceef0>>
+ * @generated SignedSource<<22b8ae9d0b544fc09ebce2059cfca545>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,18 +15,15 @@ export type tableActivitiesQuery$variables = {
 };
 export type tableActivitiesQuery$data = {
   readonly activities: ReadonlyArray<{
+    readonly activityFinish: string;
+    readonly activityStart: string;
+    readonly assignments: ReadonlyArray<{
+      readonly staff: {
+        readonly id: string;
+      };
+    }>;
     readonly id: string;
     readonly name: string;
-    readonly timeslots: ReadonlyArray<{
-      readonly finish: string;
-      readonly staffAssigned: ReadonlyArray<{
-        readonly staff: {
-          readonly id: string;
-          readonly name: string;
-        };
-      }>;
-      readonly start: string;
-    }>;
   }>;
 };
 export type tableActivitiesQuery = {
@@ -54,14 +51,7 @@ v1 = {
   "name": "id",
   "storageKey": null
 },
-v2 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
-  "storageKey": null
-},
-v3 = [
+v2 = [
   {
     "alias": null,
     "args": [
@@ -82,50 +72,44 @@ v3 = [
     "plural": true,
     "selections": [
       (v1/*: any*/),
-      (v2/*: any*/),
       {
         "alias": null,
         "args": null,
-        "concreteType": "TimeSlot",
+        "kind": "ScalarField",
+        "name": "name",
+        "storageKey": null
+      },
+      {
+        "alias": null,
+        "args": null,
+        "kind": "ScalarField",
+        "name": "activityStart",
+        "storageKey": null
+      },
+      {
+        "alias": null,
+        "args": null,
+        "kind": "ScalarField",
+        "name": "activityFinish",
+        "storageKey": null
+      },
+      {
+        "alias": null,
+        "args": null,
+        "concreteType": "StaffAssignment",
         "kind": "LinkedField",
-        "name": "timeslots",
+        "name": "assignments",
         "plural": true,
         "selections": [
           {
             "alias": null,
             "args": null,
-            "kind": "ScalarField",
-            "name": "start",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "finish",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "concreteType": "StaffAssignment",
+            "concreteType": "Staff",
             "kind": "LinkedField",
-            "name": "staffAssigned",
-            "plural": true,
+            "name": "staff",
+            "plural": false,
             "selections": [
-              {
-                "alias": null,
-                "args": null,
-                "concreteType": "Staff",
-                "kind": "LinkedField",
-                "name": "staff",
-                "plural": false,
-                "selections": [
-                  (v1/*: any*/),
-                  (v2/*: any*/)
-                ],
-                "storageKey": null
-              }
+              (v1/*: any*/)
             ],
             "storageKey": null
           }
@@ -142,7 +126,7 @@ return {
     "kind": "Fragment",
     "metadata": null,
     "name": "tableActivitiesQuery",
-    "selections": (v3/*: any*/),
+    "selections": (v2/*: any*/),
     "type": "Query",
     "abstractKey": null
   },
@@ -151,19 +135,19 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
     "name": "tableActivitiesQuery",
-    "selections": (v3/*: any*/)
+    "selections": (v2/*: any*/)
   },
   "params": {
-    "cacheID": "b393d8320e2786efd6ac6ab81d7d3637",
+    "cacheID": "cca04d425f46aee9c0793707b5a55dbd",
     "id": null,
     "metadata": {},
     "name": "tableActivitiesQuery",
     "operationKind": "query",
-    "text": "query tableActivitiesQuery(\n  $end: String!\n  $start: String!\n) {\n  activities(endDate: $end, startDate: $start) {\n    id\n    name\n    timeslots {\n      start\n      finish\n      staffAssigned {\n        staff {\n          id\n          name\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query tableActivitiesQuery(\n  $end: String!\n  $start: String!\n) {\n  activities(endDate: $end, startDate: $start) {\n    id\n    name\n    activityStart\n    activityFinish\n    assignments {\n      staff {\n        id\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "31cfcc5444eb95784e472491930375fb";
+(node as any).hash = "e6018c66f7fd50081dc9f06891fa6de5";
 
 export default node;

@@ -5,12 +5,13 @@ type Activity {
   name: String!
   type: String!
   templateId: String!
-  locationId: String!
   recurrenceRules: String!
   requirements: String!
   activityStart: String!
   activityFinish: String!
   timeslots: [TimeSlot!]!
+  location: Location!
+  assignments: [StaffAssignment!]!
 }
 
 input ActivityInput {

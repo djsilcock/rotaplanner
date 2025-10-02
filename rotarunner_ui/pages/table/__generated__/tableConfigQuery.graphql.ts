@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<48300d4a573ec224733c731bfd6d637d>>
+ * @generated SignedSource<<7a1e272b4c9544699b110bec29eba327>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,18 +11,18 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type tableConfigQuery$variables = Record<PropertyKey, never>;
 export type tableConfigQuery$data = {
-  readonly allLocations: ReadonlyArray<{
-    readonly id: string;
-    readonly name: string;
-  }>;
-  readonly allStaff: ReadonlyArray<{
-    readonly id: string;
-    readonly name: string;
-  }>;
   readonly daterange: {
     readonly end: string;
     readonly start: string;
   };
+  readonly locations: ReadonlyArray<{
+    readonly id: string;
+    readonly name: string;
+  }>;
+  readonly staff: ReadonlyArray<{
+    readonly id: string;
+    readonly name: string;
+  }>;
 };
 export type tableConfigQuery = {
   response: tableConfigQuery$data;
@@ -48,7 +48,7 @@ var v0 = [
 ],
 v1 = [
   {
-    "alias": null,
+    "alias": "staff",
     "args": null,
     "concreteType": "Staff",
     "kind": "LinkedField",
@@ -58,7 +58,7 @@ v1 = [
     "storageKey": null
   },
   {
-    "alias": null,
+    "alias": "locations",
     "args": null,
     "concreteType": "Location",
     "kind": "LinkedField",
@@ -111,16 +111,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "df115b2a44417976d1a98f7cb62e42b6",
+    "cacheID": "f0f4df8b3de86f383d081682f592e6c4",
     "id": null,
     "metadata": {},
     "name": "tableConfigQuery",
     "operationKind": "query",
-    "text": "query tableConfigQuery {\n  allStaff {\n    id\n    name\n  }\n  allLocations {\n    id\n    name\n  }\n  daterange {\n    start\n    end\n  }\n}\n"
+    "text": "query tableConfigQuery {\n  staff: allStaff {\n    id\n    name\n  }\n  locations: allLocations {\n    id\n    name\n  }\n  daterange {\n    start\n    end\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7db50767e574539ca56cefa31fc70137";
+(node as any).hash = "7504b9137fa9fe4a1ceaef5b2e2b9def";
 
 export default node;

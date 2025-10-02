@@ -53,9 +53,7 @@ CREATE TABLE IF NOT EXISTS activities (
     name TEXT,
     location_id UUID REFERENCES locations(id),
     recurrence_rules TEXTJSON,
-    requirements TEXTJSON,
-    activity_start TIMESTAMP,
-    activity_finish TIMESTAMP
+    requirements TEXTJSON
 );
 
 
