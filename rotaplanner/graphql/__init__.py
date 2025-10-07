@@ -9,6 +9,7 @@ from rotaplanner.database import Connection
 from strawberry.printer import print_schema
 from strawberry.relay import Node
 from enum import Enum
+from typing import Literal
 
 import sqlite3
 
@@ -17,6 +18,33 @@ import sqlite3
 class Location:
     id: strawberry.ID
     name: str
+
+    @strawberry.field
+    async def activities(
+        self, info: strawberry.Info, start: str = "1970-01-01", end: str = "2100-01-01"
+    ) -> list["Activity"]:
+        context = info.context
+        # You can access the database connection from the context
+        connection = context.connection
+        cursor = connection.execute(
+            """
+        SELECT 
+            activities.id as activity_id,
+            location_id,
+            min(timeslots.start) as activity_start,
+			max(timeslots.finish) as activity_finish
+        FROM activities
+        LEFT JOIN timeslots on timeslots.activity_id = activities.id
+        WHERE activities.location_id = ?
+        AND date(timeslots.start) >= date(?)
+        AND date(timeslots.start) <= date(?)
+		GROUP BY activities.id
+        ORDER BY timeslots.start
+        """,
+            (self.id, start, end),
+        )
+        activities = [row["activity_id"] for row in cursor.fetchall()]
+        return await context.data_loaders.activity_loader.load_many(activities)
 
     @classmethod
     def get_loader(cls, ctx: BaseContext) -> DataLoader[str, "Location"]:
@@ -98,16 +126,18 @@ class StaffAssignment:
 
     @strawberry.field
     def staff(self, info: strawberry.Info) -> Staff:
-        return info.context.get_loader(Staff).load(self._staff_id)
+        return info.context.data_loaders.staff_loader.load(self._staff_id)
 
     @strawberry.field
     def timeslot(self, info: strawberry.Info) -> "TimeSlot":
-        return info.context.get_loader(TimeSlot).load(self._timeslot)
+        return info.context.data_loaders.timeslots_loader.load(self._timeslot)
 
     @strawberry.field
     def flags(self, info: strawberry.Info) -> list[AssignmentFlags]:
         context = info.context
-        return context.assignment_flags_loader.load((self._staff_id, *self._timeslot))
+        return context.data_loaders.assignment_flags_loader.load(
+            (self._staff_id, *self._timeslot)
+        )
 
 
 @strawberry.type
@@ -119,7 +149,7 @@ class TimeSlot:
     @strawberry.field
     def activity(self, info: strawberry.Info) -> "Activity":
         context = info.context
-        return context.get_loader(Activity).load(self.activity_id)
+        return context.data_loaders.activity_loader.load(self.activity_id)
 
     @strawberry.field
     def staff_assigned(self, info: strawberry.Info) -> list[StaffAssignment]:
@@ -195,7 +225,7 @@ class Activity:
         )
 
     @strawberry.field
-    async def location(self, info: strawberry.Info) -> Location:
+    async def location(self, info: strawberry.Info) -> Location | None:
         context = info.context
         return await context.data_loaders.location_loader.load(self.location_id)
 
@@ -218,6 +248,9 @@ class DateRange:
 
 @strawberry.type
 class Query:
+    @strawberry.field
+    def hello(self, value: strawberry.Maybe[str | None] = None) -> str:
+        return f"Hello, {value.value if value else 'world'}!"
 
     @strawberry.field
     async def activities(
@@ -225,22 +258,51 @@ class Query:
         info: strawberry.Info,
         start_date: str = "1970-01-01",
         end_date: str = "2199-12-31",
+        location_id: strawberry.Maybe[strawberry.ID | None] = None,
+        staff_id: strawberry.Maybe[strawberry.ID | None] = None,
     ) -> list[Activity]:
         context = info.context
 
         # You can access the database connection from the context
         connection = context.connection
+        params = {"start_date": start_date, "finish_date": end_date}
+        if location_id is not None:
+            location_id = location_id.value
+            if location_id is None:
+                location_clause = "AND activities.location_id IS NULL"
 
+            else:
+                location_clause = "AND activities.location_id = :location_id"
+                params["location_id"] = location_id
+        else:
+            location_clause = ""
+        if staff_id is not None:
+            staff_id = staff_id.value
+            if staff_id is None:
+                staff_clause = """
+                AND NOT EXISTS (
+                    SELECT 1 FROM staff_assignments WHERE staff_id IS NULL
+                )"""
+            else:
+                staff_clause = """
+                AND EXISTS (
+                    SELECT 1 FROM staff_assignments WHERE staff_id = :staff_id
+                )"""
+                params["staff_id"] = staff_id
+        else:
+            staff_clause = ""
         cursor = connection.execute(
-            """
+            f"""
         SELECT distinct activities.id
 
         FROM activities
         LEFT JOIN timeslots ON activities.id = timeslots.activity_id
         WHERE date(timeslots.start) >= date(:start_date)
         AND date(timeslots.finish) <= date(:finish_date)
+        {location_clause}
+        {staff_clause}
         ORDER BY timeslots.start""",
-            {"start_date": start_date, "finish_date": end_date},
+            params,
         )
         return await context.data_loaders.activity_loader.load_many(
             [row[0] for row in cursor.fetchall()]
@@ -465,6 +527,61 @@ async def change_staff_assignment(
     return messages
 
 
+class RowType(Enum):
+    staff = "staff"
+    location = "location"
+
+
+async def move_activity(
+    activity_id: str,
+    from_row: str,
+    to_row: str,
+    row_type: RowType,
+    info: strawberry.Info,
+) -> Activity | None:
+    # Placeholder implementation
+    print(f"Moving activity {activity_id} from {from_row} to {to_row} by {row_type}")
+    if row_type == RowType.location:
+        with info.context.connection as connection:
+            if (await info.context.data_loaders.location_loader.load(to_row)) is None:
+                to_row = None
+
+            connection.execute(
+                "UPDATE activities SET location_id = ? WHERE id = ?",
+                (to_row, activity_id),
+            )
+            connection.commit()
+            return await info.context.data_loaders.activity_loader.load(activity_id)
+    elif row_type == RowType.staff:
+        with info.context.connection as connection:
+            if (await info.context.data_loaders.staff_loader.load(to_row)) is None:
+                to_row = None
+            if (await info.context.data_loaders.staff_loader.load(from_row)) is None:
+                from_row = None
+            print(f"from_row: {from_row}, to_row: {to_row}")
+            if to_row is not None:
+                if from_row is not None:
+                    connection.execute(
+                        "UPDATE staff_assignments SET staff_id = ? WHERE staff_id = ? AND activity_id = ?",
+                        (to_row, from_row, activity_id),
+                    )
+                else:
+                    connection.execute(
+                        "INSERT INTO staff_assignments (staff_id, activity_id, start_time) SELECT ?, activity_id, start FROM timeslots WHERE activity_id = ?",
+                        (to_row, activity_id),
+                    )
+            else:
+                if from_row is not None:
+                    connection.execute(
+                        "DELETE FROM staff_assignments WHERE staff_id = ? AND activity_id = ?",
+                        (from_row, activity_id),
+                    )
+            connection.commit()
+            return await info.context.data_loaders.activity_loader.load(activity_id)
+
+    return None
+
+
 @strawberry.type
 class Mutation:
     change_staff_assignment = strawberry.mutation(resolver=change_staff_assignment)
@@ -472,6 +589,8 @@ class Mutation:
     @strawberry.mutation
     def edit_activity(self, info: strawberry.Info, activity: ActivityInput) -> None:
         return None
+
+    move_activity = strawberry.mutation(resolver=move_activity)
 
 
 schema = strawberry.Schema(Query, Mutation)

@@ -10,7 +10,7 @@ type Activity {
   activityStart: String!
   activityFinish: String!
   timeslots: [TimeSlot!]!
-  location: Location!
+  location: Location
   assignments: [StaffAssignment!]!
 }
 
@@ -41,6 +41,7 @@ type DateRange {
 type Location {
   id: ID!
   name: String!
+  activities(start: String! = "1970-01-01", end: String! = "2100-01-01"): [Activity!]!
 }
 
 input MonthlyRecurrenceInput {
@@ -51,6 +52,7 @@ input MonthlyRecurrenceInput {
 type Mutation {
   changeStaffAssignment(staffId: ID, timeslot: TimeSlotInput!, change: NewStaffAssignmentInput!): [String!]!
   editActivity(activity: ActivityInput!): Void
+  moveActivity(activityId: String!, fromRow: String!, toRow: String!, rowType: RowType!): Activity
 }
 
 input NewStaffAssignmentInput {
@@ -61,7 +63,8 @@ input NewStaffAssignmentInput {
 }
 
 type Query {
-  activities(startDate: String! = "1970-01-01", endDate: String! = "2199-12-31"): [Activity!]!
+  hello(value: String): String!
+  activities(startDate: String! = "1970-01-01", endDate: String! = "2199-12-31", locationId: ID, staffId: ID): [Activity!]!
   allLocations: [Location!]!
   allStaff: [Staff!]!
   locationById(id: ID!): Location!
@@ -89,6 +92,11 @@ input RequirementInput {
   attendance: Int!
   minimum: Int!
   maximum: Int!
+}
+
+enum RowType {
+  staff
+  location
 }
 
 type Staff {

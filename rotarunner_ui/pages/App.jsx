@@ -25,13 +25,12 @@ import {
   useParams,
 } from "@solidjs/router";
 import { createSignal, lazy, Match } from "solid-js";
-import { QueryClient, QueryClientProvider } from "@tanstack/solid-query";
-import { client } from "../generatedTypes/client.gen";
 import { Environment, Network, RecordSource, Store } from "relay-runtime";
 import { RelayEnvironmentProvider } from "solid-relay";
 
 // Define your fetch function
 const fetchFn = async (params, variables) => {
+  console.log("Fetching GraphQL:", params, variables);
   const response = await fetch("/graphql", {
     method: "POST",
     headers: {
@@ -176,8 +175,6 @@ function Tables() {
   const params = useParams();
   return <Table y_axis_type={params.tableType} />;
 }
-
-const queryClient = new QueryClient();
 
 export default function App() {
   const environment = createRelayEnvironment();

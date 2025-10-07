@@ -28,6 +28,8 @@ import type { tableActivitiesQuery } from "./__generated__/tableActivitiesQuery.
 
 import { groupBy } from "lodash";
 import { tableActivityFragment$key } from "./__generated__/tableActivityFragment.graphql";
+import { LocationTableQuery } from "./__generated__/LocationTableQuery.graphql";
+import { E } from "../../dist/assets/index-C7tjXJkK";
 
 const EditActivityModal = lazy(() => import("../edit_activity"));
 const epoch = new Date(2021, 0, 1);
@@ -40,64 +42,50 @@ const epoch = new Date(2021, 0, 1);
 export function toOrdinal(date: Date): number {
   return differenceInCalendarDays(date, epoch);
 }
-const staffQuery = graphql`
-  query tableStaffQuery {
-    allStaff {
-      id
-      name
-    }
-  }
-`;
 
-const locationQuery = graphql`
-  query tableLocationsQuery {
-    allLocations {
-      id
-      name
-    }
-  }
-`;
-
-const tableConfigQuery = graphql`
-  query tableConfigQuery {
-    staff: allStaff {
-      id
-      name
-    }
-    locations: allLocations {
-      id
-      name
-    }
+const activitiesByLocationQuery = graphql`
+  query LocationTableQuery($start: String!, $end: String!) {
     daterange {
       start
       end
     }
-  }
-`;
-
-const getActivitiesQuery = graphql`
-  query tableActivitiesQuery($end: String!, $start: String!) {
-    activities(endDate: $end, startDate: $start) {
-      ...tableRowSortingFragment
-    }
-  }
-`;
-
-const rowSortingFragment = graphql`
-  fragment tableRowSortingFragment on Activity {
-    id
-    activityStart
-    location {
+    rows: allLocations {
       id
-    }
-    assignments {
-      staff {
-        id
+      name
+      activities(start: $start, end: $end) {
+        ...LocationTableActivityFragment
+        activityStart
       }
     }
-    ...tableActivityFragment
+    unallocated: activities(
+      startDate: $start
+      endDate: $end
+      locationId: null
+    ) {
+      ...LocationTableActivityFragment
+      activityStart
+    }
   }
 `;
+
+const activityFragment = graphql`
+  fragment LocationTableActivityFragment on Activity {
+    id
+    activityStart
+    activityFinish
+    timeslots {
+      start
+      finish
+      staffAssigned {
+        staff {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
+
 /**
  *
  * @param props
@@ -154,144 +142,84 @@ interface TableProps {
   y_axis_type: "location" | "staff";
   children?: JSX.Element;
 }
-/**
- *
- * @param {object} props
- * @param {string} props.y_axis_type - Type of y-axis data (staff or location).
- * @returns {JSX.Element}
- * Table component to render the main table.
- */
-function Table(props: TableProps): JSX.Element {
-  const tableConfig = createLazyLoadQuery<TableConfigQuery>(
-    tableConfigQuery,
-    {}
-  );
 
-  const activitiesQueryResult = createLazyLoadQuery<tableActivitiesQuery>(
-    getActivitiesQuery,
-    { start: "2021-01-01", end: "2100-01-01" }
-  );
-  const activitiesResult = createFragment(
-    rowSortingFragment,
-    activitiesQueryResult
-  );
-  const dates = createMemo(() => {
-    if (!tableConfig()?.daterange)
-      return eachDayOfInterval({
-        start: new Date("2021-01-01"),
-        end: new Date("2021-12-31"),
-      });
-    const start = parseISO(tableConfig()!.daterange.start);
-    const end = parseISO(tableConfig()!.daterange.end);
-    return eachDayOfInterval({ start, end });
-  });
-
-  const groupByLocation = () => {
-    return groupBy(
-      activitiesResult()?.activities ?? [],
-      (activity) => activity.location?.id ?? "unallocated"
-    );
-  };
-  const groupByStaff = () => {
-    const byStaff: Record<
-      string,
-      ({ id: string; activityStart: string } & tableActivityFragment$key)[]
-    > = {
-      unallocated: [],
-    };
-    for (let activity of activitiesResult()!.activities) {
-      if (activity.assignments.length == 0) {
-        byStaff["unallocated"].push(activity);
-      } else {
-        activity.assignments.forEach((assignment) => {
-          const staffId = assignment.staff.id;
-          if (!byStaff[staffId]) {
-            byStaff[staffId] = [];
-          }
-
-          byStaff[staffId].push(activity);
-        });
-      }
-    }
-    return byStaff;
-  };
-  const getRows = createMemo(() => {
-    if (!activitiesResult()) return {};
-    if (props.y_axis_type === "location") {
-      return groupByLocation();
-    } else if (props.y_axis_type === "staff") {
-      return groupByStaff();
-    }
-  });
-
-  createEffect(() => {
-    console.log("Rows updated:", getRows());
-  });
-  let parentRef;
+function EditActivityWrapper(props: { children?: JSX.Element }) {
   const [editActivity, setEditActivity] = createSignal<string | null>(null);
-  const y_axis = createMemo(() => {
-    if (props.y_axis_type === "staff") {
-      return tableConfig()?.staff ?? [];
-    } else if (props.y_axis_type === "location") {
-      return tableConfig()?.locations ?? [];
-    }
-    return [];
-  });
-
   return (
-    <Show when={true} fallback={<div>Loading...</div>}>
-      <Show when={editActivity()}>
+    <div on:editactivity={(e) => setEditActivity(e.detail.activityId)}>
+      <Show when={editActivity()} fallback={<div>{props.children}</div>}>
         <EditActivityModal
           activity={editActivity()}
           onClose={() => setEditActivity(null)}
         />
       </Show>
-      <table
-        class={styles.rotaTable}
-        on:dblclick={(e) => {
-          console.log("Double click event:", e);
-          const activityId =
-            (e.target.closest("[data-activity-id]") as HTMLElement)?.dataset
-              .activityId ??
-            (e.target.closest("[data-cell-id]") as HTMLElement)?.dataset
-              .cellId ??
-            null;
-          if (!activityId) return;
-          setEditActivity(activityId);
-        }}
-      >
-        <thead>
-          <tr>
-            <td></td>
-            <For each={dates()} fallback={<td></td>}>
-              {(date) => <td>{date.toISOString().slice(0, 10)}</td>}
+      {props.children}
+    </div>
+  );
+}
+
+/**
+ *
+ * @param {object} props
+ * @param props.rowComponent
+ * @param props.query
+ * @returns {JSX.Element}
+ * Table component to render the main table.
+ */
+function Table(props: TableProps): JSX.Element {
+  const activitiesQueryResult = createLazyLoadQuery<LocationTableQuery>(
+    activitiesByLocationQuery,
+    { start: "2021-01-01", end: "2100-01-01" }
+  );
+
+  const dates = createMemo(() => {
+    if (!activitiesQueryResult()?.daterange)
+      return eachDayOfInterval({
+        start: new Date("2021-01-01"),
+        end: new Date("2021-12-31"),
+      });
+    const start = parseISO(activitiesQueryResult()!.daterange.start);
+    const end = parseISO(activitiesQueryResult()!.daterange.end);
+    return eachDayOfInterval({ start, end });
+  });
+
+  let parentRef;
+
+  return (
+    <Show when={activitiesQueryResult()} fallback={<div>Loading...</div>}>
+      <EditActivityWrapper>
+        <table class={styles.rotaTable}>
+          <thead>
+            <tr>
+              <td></td>
+              <For each={dates()} fallback={<td></td>}>
+                {(date) => <td>{date.toISOString().slice(0, 10)}</td>}
+              </For>
+            </tr>
+          </thead>
+          <tbody>
+            <For each={activitiesQueryResult()?.rows} fallback={<tr></tr>}>
+              {(location, index) => (
+                <TableRow
+                  activities={location.activities}
+                  row_id={location.id}
+                  row_name={location.name}
+                  i={index()}
+                  dates={dates()}
+                  updateActivities={() => {}}
+                />
+              )}
             </For>
-          </tr>
-        </thead>
-        <tbody>
-          <For each={y_axis()}>
-            {(staff_or_location, index) => (
-              <TableRow
-                activities={getRows()?.[staff_or_location.id] ?? []}
-                row_id={staff_or_location.id}
-                row_name={staff_or_location.name}
-                y_axis_type={props.y_axis_type}
-                i={index()}
-                dates={dates()}
-                updateActivities={() => {}}
-              />
-            )}
-          </For>
-          <TableRow
-            activities={getRows()?.unallocated ?? []}
-            row_id={"unallocated"}
-            row_name={"Unallocated"}
-            y_axis_type={props.y_axis_type}
-            i={y_axis().length}
-            dates={dates()}
-          />
-        </tbody>
-      </table>
+            <TableRow
+              activities={activitiesQueryResult()?.unallocated ?? []}
+              row_id={"unallocated"}
+              row_name={"Unallocated"}
+              i={activitiesQueryResult()?.rows.length}
+              dates={dates()}
+            />
+          </tbody>
+        </table>
+      </EditActivityWrapper>
     </Show>
   );
 }
@@ -333,7 +261,7 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
     setItems(detail.items);
   };
   const [moveActivity] = createMutation(graphql`
-    mutation tableMoveActivityMutation(
+    mutation LocationTableMoveActivityMutation(
       $activityId: String!
       $fromRow: String!
       $toRow: String!
@@ -421,7 +349,7 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
   );
 };
 const tableActivityFragment = graphql`
-  fragment tableActivityFragment on Activity {
+  fragment LocationTableActivityFragment2 on Activity {
     id
     name
     activityStart

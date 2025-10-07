@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<22b8ae9d0b544fc09ebce2059cfca545>>
+ * @generated SignedSource<<24c2f9df8def4e10221177eadf152ac3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,21 +9,14 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
+import { FragmentRefs } from "relay-runtime";
 export type tableActivitiesQuery$variables = {
   end: string;
   start: string;
 };
 export type tableActivitiesQuery$data = {
   readonly activities: ReadonlyArray<{
-    readonly activityFinish: string;
-    readonly activityStart: string;
-    readonly assignments: ReadonlyArray<{
-      readonly staff: {
-        readonly id: string;
-      };
-    }>;
-    readonly id: string;
-    readonly name: string;
+    readonly " $fragmentSpreads": FragmentRefs<"tableRowSortingFragment">;
   }>;
 };
 export type tableActivitiesQuery = {
@@ -44,89 +37,56 @@ var v0 = [
     "name": "start"
   }
 ],
-v1 = {
+v1 = [
+  {
+    "kind": "Variable",
+    "name": "endDate",
+    "variableName": "end"
+  },
+  {
+    "kind": "Variable",
+    "name": "startDate",
+    "variableName": "start"
+  }
+],
+v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v2 = [
-  {
-    "alias": null,
-    "args": [
-      {
-        "kind": "Variable",
-        "name": "endDate",
-        "variableName": "end"
-      },
-      {
-        "kind": "Variable",
-        "name": "startDate",
-        "variableName": "start"
-      }
-    ],
-    "concreteType": "Activity",
-    "kind": "LinkedField",
-    "name": "activities",
-    "plural": true,
-    "selections": [
-      (v1/*: any*/),
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "name",
-        "storageKey": null
-      },
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "activityStart",
-        "storageKey": null
-      },
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "activityFinish",
-        "storageKey": null
-      },
-      {
-        "alias": null,
-        "args": null,
-        "concreteType": "StaffAssignment",
-        "kind": "LinkedField",
-        "name": "assignments",
-        "plural": true,
-        "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "concreteType": "Staff",
-            "kind": "LinkedField",
-            "name": "staff",
-            "plural": false,
-            "selections": [
-              (v1/*: any*/)
-            ],
-            "storageKey": null
-          }
-        ],
-        "storageKey": null
-      }
-    ],
-    "storageKey": null
-  }
-];
+v3 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "name",
+  "storageKey": null
+};
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
     "name": "tableActivitiesQuery",
-    "selections": (v2/*: any*/),
+    "selections": [
+      {
+        "alias": null,
+        "args": (v1/*: any*/),
+        "concreteType": "Activity",
+        "kind": "LinkedField",
+        "name": "activities",
+        "plural": true,
+        "selections": [
+          {
+            "args": null,
+            "kind": "FragmentSpread",
+            "name": "tableRowSortingFragment"
+          }
+        ],
+        "storageKey": null
+      }
+    ],
     "type": "Query",
     "abstractKey": null
   },
@@ -135,19 +95,108 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
     "name": "tableActivitiesQuery",
-    "selections": (v2/*: any*/)
+    "selections": [
+      {
+        "alias": null,
+        "args": (v1/*: any*/),
+        "concreteType": "Activity",
+        "kind": "LinkedField",
+        "name": "activities",
+        "plural": true,
+        "selections": [
+          (v2/*: any*/),
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "activityStart",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "Location",
+            "kind": "LinkedField",
+            "name": "location",
+            "plural": false,
+            "selections": [
+              (v2/*: any*/)
+            ],
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "StaffAssignment",
+            "kind": "LinkedField",
+            "name": "assignments",
+            "plural": true,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "Staff",
+                "kind": "LinkedField",
+                "name": "staff",
+                "plural": false,
+                "selections": [
+                  (v2/*: any*/),
+                  (v3/*: any*/)
+                ],
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "TimeSlot",
+                "kind": "LinkedField",
+                "name": "timeslot",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "start",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "finish",
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": null
+              }
+            ],
+            "storageKey": null
+          },
+          (v3/*: any*/),
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "activityFinish",
+            "storageKey": null
+          }
+        ],
+        "storageKey": null
+      }
+    ]
   },
   "params": {
-    "cacheID": "cca04d425f46aee9c0793707b5a55dbd",
+    "cacheID": "19256362ab707409606441baa38b79be",
     "id": null,
     "metadata": {},
     "name": "tableActivitiesQuery",
     "operationKind": "query",
-    "text": "query tableActivitiesQuery(\n  $end: String!\n  $start: String!\n) {\n  activities(endDate: $end, startDate: $start) {\n    id\n    name\n    activityStart\n    activityFinish\n    assignments {\n      staff {\n        id\n      }\n    }\n  }\n}\n"
+    "text": "query tableActivitiesQuery(\n  $end: String!\n  $start: String!\n) {\n  activities(endDate: $end, startDate: $start) {\n    ...tableRowSortingFragment\n    id\n  }\n}\n\nfragment tableActivityFragment on Activity {\n  id\n  name\n  activityStart\n  activityFinish\n  location {\n    id\n  }\n  assignments {\n    timeslot {\n      start\n      finish\n    }\n    staff {\n      id\n      name\n    }\n  }\n}\n\nfragment tableRowSortingFragment on Activity {\n  id\n  activityStart\n  location {\n    id\n  }\n  assignments {\n    staff {\n      id\n    }\n  }\n  ...tableActivityFragment\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e6018c66f7fd50081dc9f06891fa6de5";
+(node as any).hash = "62f455ca7b313aab488d227a4364a523";
 
 export default node;
