@@ -1,6 +1,7 @@
 directive @oneOf on INPUT_OBJECT
 
-type Activity {
+type Activity implements Node {
+  """The Globally Unique ID of this object"""
   id: ID!
   name: String!
   type: String!
@@ -38,7 +39,8 @@ type DateRange {
   end: String!
 }
 
-type Location {
+type Location implements Node {
+  """The Globally Unique ID of this object"""
   id: ID!
   name: String!
   activities(start: String! = "1970-01-01", end: String! = "2100-01-01"): [Activity!]!
@@ -62,14 +64,21 @@ input NewStaffAssignmentInput {
   attendance: Int
 }
 
+"""An object with a Globally Unique ID"""
+interface Node {
+  """The Globally Unique ID of this object"""
+  id: ID!
+}
+
 type Query {
+  node(
+    """The ID of the object."""
+    id: ID!
+  ): Node!
   hello(value: String): String!
   activities(startDate: String! = "1970-01-01", endDate: String! = "2199-12-31", locationId: ID, staffId: ID): [Activity!]!
-  allLocations: [Location!]!
-  allStaff: [Staff!]!
-  locationById(id: ID!): Location!
-  staffById(id: ID!): Staff!
-  activityById(id: ID!): Activity!
+  locations: [Location!]!
+  staff: [Staff!]!
   daterange: DateRange!
 }
 
@@ -99,7 +108,8 @@ enum RowType {
   location
 }
 
-type Staff {
+type Staff implements Node {
+  """The Globally Unique ID of this object"""
   id: ID!
   name: String!
   assignments(start: String! = "1970-01-01", end: String! = "2100-01-01"): [StaffAssignment!]!
@@ -115,7 +125,7 @@ type TimeSlot {
   start: String!
   finish: String!
   activity: Activity!
-  staffAssigned: [StaffAssignment!]!
+  assignments: [StaffAssignment!]!
 }
 
 input TimeSlotInput {

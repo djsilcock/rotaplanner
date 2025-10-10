@@ -43,6 +43,7 @@ def connection_dependency():
         detect_types=sqlite3.PARSE_COLNAMES | sqlite3.PARSE_DECLTYPES,
     )
     connection.row_factory = sqlite3.Row
+    connection.set_trace_callback(print)
     try:
         yield connection
     finally:

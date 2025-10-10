@@ -15,9 +15,19 @@ import sqlite3
 
 
 @strawberry.type
-class Location:
-    id: strawberry.ID
+class Location(Node):
+    id: strawberry.relay.NodeID[str]
     name: str
+
+    @classmethod
+    async def resolve_nodes(
+        cls, info: strawberry.Info, node_ids: list[str], required: bool
+    ) -> list["Location"]:
+        context = info.context
+        nodes = await context.data_loaders.location_loader.load_many(node_ids)
+        if required and any(node is None for node in nodes):
+            raise ValueError("One or more nodes not found")
+        return nodes
 
     @strawberry.field
     async def activities(
@@ -63,9 +73,19 @@ class Location:
 
 
 @strawberry.type
-class Staff:
-    id: strawberry.ID
+class Staff(Node):
+    id: strawberry.relay.NodeID[str]
     name: str
+
+    @classmethod
+    async def resolve_nodes(
+        cls, info: strawberry.Info, node_ids: list[str], required: bool
+    ) -> list["Staff"]:
+        context = info.context
+        nodes = await context.data_loaders.staff_loader.load_many(node_ids)
+        if required and any(node is None for node in nodes):
+            raise ValueError("One or more nodes not found")
+        return nodes
 
     @strawberry.field
     def assignments(
@@ -152,23 +172,16 @@ class TimeSlot:
         return context.data_loaders.activity_loader.load(self.activity_id)
 
     @strawberry.field
-    def staff_assigned(self, info: strawberry.Info) -> list[StaffAssignment]:
+    async def assignments(self, info: strawberry.Info) -> list[StaffAssignment]:
         context = info.context
-        # You can access the database connection from the context
-        connection = context.connection
-        cursor = connection.execute(
-            """
-        SELECT staff_id
-        FROM staff_assignments
-        WHERE staff_assignments.activity_id = ?
-        AND staff_assignments.start_time = ?
-        
-        """,
-            (self.activity_id, self.start),
+        staff_ids = await context.data_loaders.staff_for_timeslot_loader.load(
+            (self.activity_id, self.start)
         )
         return [
-            StaffAssignment(_staff_id=row[0], _timeslot=(self.activity_id, self.start))
-            for row in cursor.fetchall()
+            StaffAssignment(
+                _staff_id=staff_id, _timeslot=(self.activity_id, self.start)
+            )
+            for staff_id in staff_ids
         ]
 
     @classmethod
@@ -189,14 +202,24 @@ class TimeSlot:
 
 
 @strawberry.type
-class Activity:
-    id: strawberry.ID
+class Activity(Node):
+    id: strawberry.relay.NodeID[str]
     name: str
     type: str
     template_id: str
     location_id: strawberry.Private[str]
     recurrence_rules: str
     requirements: str
+
+    @classmethod
+    async def resolve_nodes(
+        cls, info: strawberry.Info, node_ids: list[str], required: bool
+    ) -> list["Activity"]:
+        context = info.context
+        nodes = await context.data_loaders.activity_loader.load_many(node_ids)
+        if required and any(node is None for node in nodes):
+            raise ValueError("One or more nodes not found")
+        return nodes
 
     @strawberry.field
     async def activity_start(self, info: strawberry.Info) -> str:
@@ -251,6 +274,8 @@ class Query:
     @strawberry.field
     def hello(self, value: strawberry.Maybe[str | None] = None) -> str:
         return f"Hello, {value.value if value else 'world'}!"
+
+    node: strawberry.relay.Node = strawberry.relay.node()
 
     @strawberry.field
     async def activities(
@@ -309,7 +334,7 @@ class Query:
         )
 
     @strawberry.field
-    async def all_locations(self, info: strawberry.Info) -> list[Location]:
+    async def locations(self, info: strawberry.Info) -> list[Location]:
         context = info.context
         # You can access the database connection from the context
         connection = context.connection
@@ -319,7 +344,7 @@ class Query:
         )
 
     @strawberry.field
-    async def all_staff(self, info: strawberry.Info) -> list[Staff]:
+    async def staff(self, info: strawberry.Info) -> list[Staff]:
         context = info.context
         # You can access the database connection from the context
         connection = context.connection
@@ -327,25 +352,6 @@ class Query:
         return await context.data_loaders.staff_loader.load_many(
             [row[0] for row in cursor.fetchall()]
         )
-
-    @strawberry.field
-    async def location_by_id(
-        self, info: strawberry.Info, id: strawberry.ID
-    ) -> Location:
-        context = info.context
-        return await context.data_loaders.location_loader.load(id)  # type: ignore
-
-    @strawberry.field
-    async def staff_by_id(self, info: strawberry.Info, id: strawberry.ID) -> Staff:
-        context = info.context
-        return await context.data_loaders.staff_loader.load(id)  # type: ignore
-
-    @strawberry.field
-    async def activity_by_id(
-        self, info: strawberry.Info, id: strawberry.ID
-    ) -> Activity:
-        context = info.context
-        return await context.data_loaders.activity_loader.load(id)  # type: ignore
 
     @strawberry.field
     async def daterange(self, info: strawberry.Info) -> DateRange:
@@ -618,6 +624,7 @@ class DataLoaders:
         self.assignments_for_activity_loader = DataLoader(
             self.batch_load_assignments_for_activity
         )
+        self.staff_for_timeslot_loader = DataLoader(self.batch_get_staff_for_timeslot)
 
     async def batch_load_assignments_for_activity(self, activity_ids: list[str]):
         print(f"Batch loading assignments for {len(activity_ids)} activity IDs")
@@ -755,6 +762,25 @@ class DataLoaders:
         return [
             timeslots_for_activity.get(activity_id, set())
             for activity_id in activity_ids
+        ]
+
+    async def batch_get_staff_for_timeslot(self, timeslot_keys):
+        print(f"Batch loading staff for {len(timeslot_keys)} timeslot keys")
+
+        cursor = self._context.connection.execute(
+            f"""SELECT staff_id, activity_id, start_time FROM staff_assignments
+            WHERE (activity_id, start_time) IN ({','.join('(?, ?)' for _ in timeslot_keys)})""",
+            [item for sublist in timeslot_keys for item in sublist],
+        )
+        staff_for_timeslot = {}
+        for row in cursor.fetchall():
+            staff_for_timeslot.setdefault(
+                (row["activity_id"], row["start_time"]), set()
+            ).add(row["staff_id"])
+
+        return [
+            staff_for_timeslot.get(timeslot_key, set())
+            for timeslot_key in timeslot_keys
         ]
 
 

@@ -42,8 +42,18 @@ const epoch = new Date(2021, 0, 1);
 export function toOrdinal(date: Date): number {
   return differenceInCalendarDays(date, epoch);
 }
-
 const activitiesByLocationQuery = graphql`
+  query LocationTableQuery($start: String!, $end: String!) {
+    daterange {
+      start
+      end
+    }
+    rows: allLocations {
+      id
+      name
+    }
+    activities(start: $start, end: $end) {`;
+const activitiesByLocationQuery2 = graphql`
   query LocationTableQuery($start: String!, $end: String!) {
     daterange {
       start
