@@ -17,7 +17,7 @@ import {
 
 import styles from "./table.module.css";
 import { dndzone, TRIGGERS } from "solid-dnd-directive";
-import { graphql } from "relay-runtime";
+import { graphql, GraphQLTaggedNode } from "relay-runtime";
 import {
   createFragment,
   createLazyLoadQuery,
@@ -28,8 +28,21 @@ import type { tableActivitiesQuery } from "./__generated__/tableActivitiesQuery.
 
 import { groupBy } from "lodash";
 import { tableActivityFragment$key } from "./__generated__/tableActivityFragment.graphql";
-import { LocationTableQuery } from "./__generated__/LocationTableQuery.graphql";
-import { E } from "../../dist/assets/index-C7tjXJkK";
+import {
+  LocationTableQuery,
+  LocationTableQuery$data,
+} from "./__generated__/LocationTableQuery.graphql";
+import {
+  LocationTableStaffTableQuery,
+  LocationTableStaffTableQuery$data,
+} from "./__generated__/LocationTableStaffTableQuery.graphql";
+import { Dynamic } from "solid-js/web";
+import BaseTable from "./BaseTable";
+import { B } from "../../dist/assets/index-C7tjXJkK";
+import {
+  LocationTableActivityFragment$data,
+  LocationTableActivityFragment$key,
+} from "./__generated__/LocationTableActivityFragment.graphql";
 
 const EditActivityModal = lazy(() => import("../edit_activity"));
 const epoch = new Date(2021, 0, 1);
@@ -48,32 +61,38 @@ const activitiesByLocationQuery = graphql`
       start
       end
     }
-    rows: allLocations {
+    rows: locations {
       id
       name
     }
-    activities(start: $start, end: $end) {`;
-const activitiesByLocationQuery2 = graphql`
-  query LocationTableQuery($start: String!, $end: String!) {
+    content: activities(startDate: $start, endDate: $end) {
+      ...LocationTableActivityFragment
+      activityStart
+      id
+      location {
+        id
+      }
+    }
+  }
+`;
+const assignmentsByStaffQuery = graphql`
+  query LocationTableStaffTableQuery($start: String!, $end: String!) {
     daterange {
       start
       end
     }
-    rows: allLocations {
+    rows: staff {
       id
       name
-      activities(start: $start, end: $end) {
-        ...LocationTableActivityFragment
-        activityStart
-      }
     }
-    unallocated: activities(
-      startDate: $start
-      endDate: $end
-      locationId: null
-    ) {
-      ...LocationTableActivityFragment
-      activityStart
+    content: assignments(start: $start, end: $end) {
+      ...LocationTableAssignmentFragment
+      timeslot {
+        start
+      }
+      staff {
+        id
+      }
     }
   }
 `;
@@ -83,10 +102,15 @@ const activityFragment = graphql`
     id
     activityStart
     activityFinish
+    name
+    location {
+      id
+      name
+    }
     timeslots {
       start
       finish
-      staffAssigned {
+      assignments {
         staff {
           id
           name
@@ -96,147 +120,63 @@ const activityFragment = graphql`
   }
 `;
 
-/**
- *
- * @param props
- * @param props.activities  - Activities data.
- * @param props.row_id - Row identifier.
- * @param props.row_name - Row name.
- * @param props.y_axis_type - Type of y-axis data (staff or location).
- * @param props.i - Index of the row.
- * @param props.dates - Dates for the row.
- * @param props.updateActivities - Function to update activities data.
- * @returns JSX.Element
- * TableRow component to render a single row in the table.
- */
-interface TableRowProps {
-  activities: ({
-    activityStart: string;
-    id: string;
-  } & tableActivityFragment$key)[]; // Adjusted type
-  row_id: string;
-  row_name: string;
-  y_axis_type: "staff" | "location";
-  i?: number;
-  dates: Date[];
-}
-
-function TableRow(props: TableRowProps): JSX.Element {
-  const activities = createMemo<Record<string, TableRowProps["activities"]>>(
-    () => {
-      return groupBy(props.activities, (activity) =>
-        activity.activityStart.slice(0, 10)
-      ) as Record<string, TableRowProps["activities"]>;
+const assignmentFragment = graphql`
+  fragment LocationTableAssignmentFragment on StaffAssignment {
+    timeslot {
+      start
+      finish
+      activity {
+        id
+        name
+      }
+      assignments {
+        staff {
+          id
+          name
+        }
+      }
     }
-  );
+  }
+`;
+
+function LocationTable() {
+  const getCells = (
+    data:
+      | LocationTableQuery$data["content"]
+      | LocationTableStaffTableQuery$data["content"]
+  ) => {
+    const datastore: Record<
+      string,
+      Record<
+        string,
+        | LocationTableQuery$data["content"]
+        | LocationTableStaffTableQuery$data["content"]
+      >
+    > = {};
+    for (let activity of data as LocationTableQuery$data["content"]) {
+      const locId = activity.location?.id ?? "unallocated";
+      if (!datastore[locId]) {
+        datastore[locId] = {};
+      }
+      if (!datastore[locId][activity.activityStart.slice(0, 10)]) {
+        datastore[locId][activity.activityStart.slice(0, 10)] = [];
+      }
+      datastore[locId][activity.activityStart.slice(0, 10)].push(activity);
+    }
+    return datastore;
+  };
 
   return (
-    <tr>
-      <td class={styles.rowHeader}>{props.row_name}</td>
-      <For each={props.dates} fallback={<td></td>}>
-        {(date) => (
-          <td>
-            <ActivityCell
-              activities={activities()[date.toISOString().slice(0, 10)] ?? []}
-              date={date}
-              row_id={props.row_id}
-              y_axis_type={props.y_axis_type}
-            />
-          </td>
-        )}
-      </For>
-    </tr>
-  );
-}
-interface TableProps {
-  y_axis_type: "location" | "staff";
-  children?: JSX.Element;
-}
-
-function EditActivityWrapper(props: { children?: JSX.Element }) {
-  const [editActivity, setEditActivity] = createSignal<string | null>(null);
-  return (
-    <div on:editactivity={(e) => setEditActivity(e.detail.activityId)}>
-      <Show when={editActivity()} fallback={<div>{props.children}</div>}>
-        <EditActivityModal
-          activity={editActivity()}
-          onClose={() => setEditActivity(null)}
-        />
-      </Show>
-      {props.children}
-    </div>
-  );
-}
-
-/**
- *
- * @param {object} props
- * @param props.rowComponent
- * @param props.query
- * @returns {JSX.Element}
- * Table component to render the main table.
- */
-function Table(props: TableProps): JSX.Element {
-  const activitiesQueryResult = createLazyLoadQuery<LocationTableQuery>(
-    activitiesByLocationQuery,
-    { start: "2021-01-01", end: "2100-01-01" }
-  );
-
-  const dates = createMemo(() => {
-    if (!activitiesQueryResult()?.daterange)
-      return eachDayOfInterval({
-        start: new Date("2021-01-01"),
-        end: new Date("2021-12-31"),
-      });
-    const start = parseISO(activitiesQueryResult()!.daterange.start);
-    const end = parseISO(activitiesQueryResult()!.daterange.end);
-    return eachDayOfInterval({ start, end });
-  });
-
-  let parentRef;
-
-  return (
-    <Show when={activitiesQueryResult()} fallback={<div>Loading...</div>}>
-      <EditActivityWrapper>
-        <table class={styles.rotaTable}>
-          <thead>
-            <tr>
-              <td></td>
-              <For each={dates()} fallback={<td></td>}>
-                {(date) => <td>{date.toISOString().slice(0, 10)}</td>}
-              </For>
-            </tr>
-          </thead>
-          <tbody>
-            <For each={activitiesQueryResult()?.rows} fallback={<tr></tr>}>
-              {(location, index) => (
-                <TableRow
-                  activities={location.activities}
-                  row_id={location.id}
-                  row_name={location.name}
-                  i={index()}
-                  dates={dates()}
-                  updateActivities={() => {}}
-                />
-              )}
-            </For>
-            <TableRow
-              activities={activitiesQueryResult()?.unallocated ?? []}
-              row_id={"unallocated"}
-              row_name={"Unallocated"}
-              i={activitiesQueryResult()?.rows.length}
-              dates={dates()}
-            />
-          </tbody>
-        </table>
-      </EditActivityWrapper>
-    </Show>
+    <BaseTable
+      query={activitiesByLocationQuery as unknown as GraphQLTaggedNode}
+      getCells={getCells}
+    />
   );
 }
 
 interface DraggableActivity {
   id: string;
-  activity: tableActivityFragment$key;
+  activity: LocationTableQuery$data["content"][0];
 }
 
 interface ActivityCellProps {
@@ -244,10 +184,7 @@ interface ActivityCellProps {
   y_axis_type: "staff" | "location";
   row_id?: string;
   i?: number;
-  activities: ({
-    activityStart: string;
-    id: string;
-  } & tableActivityFragment$key)[];
+  activities: LocationTableQuery$data["content"];
 }
 export const ActivityCell: Component<ActivityCellProps> = (props) => {
   const isoDate = () => props.date.toISOString().slice(0, 10);
@@ -270,19 +207,10 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
   const handleMove = ({ detail }) => {
     setItems(detail.items);
   };
-  const [moveActivity] = createMutation(graphql`
-    mutation LocationTableMoveActivityMutation(
-      $activityId: String!
-      $fromRow: String!
-      $toRow: String!
-      $rowType: RowType!
-    ) {
-      moveActivity(
-        activityId: $activityId
-        fromRow: $fromRow
-        toRow: $toRow
-        rowType: $rowType
-      ) {
+  const [editActivity] = createMutation(graphql`
+    mutation LocationTableMoveMutation($activity: ActivityInput!) {
+      editActivity(activity: $activity) {
+        id
         ...tableActivityFragment
       }
     }
@@ -303,15 +231,31 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
         reset();
         return;
       }
-
-      const variables = {
-        activityId: movedItem.id,
-        fromRow: (movedItem as any).rowId,
-        toRow: props.row_id ?? "unallocated",
-        rowType: props.y_axis_type,
-      };
+      const variables = {};
+      if (
+        movedItem.originalDate === isoDate() &&
+        movedItem.rowId === props.row_id
+      ) {
+        console.log("Item dropped back to original position, no action taken");
+        reset();
+        return;
+      }
+      if (movedItem.originalDate !== isoDate()) {
+        console.log(
+          `Item date changed from ${movedItem.originalDate} to ${isoDate()}`
+        );
+        Object.assign(variables, { activityStart: isoDate() });
+      }
+      if (movedItem.rowId !== props.row_id) {
+        console.log(
+          `Item row changed from ${movedItem.rowId} to ${
+            props.row_id ?? "unallocated"
+          }`
+        );
+        Object.assign(variables, { locationId: props.row_id });
+      }
       console.log("Moving activity with variables:", variables);
-      moveActivity({ variables });
+      editActivity({ variables });
     }
   };
 
@@ -359,7 +303,7 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
   );
 };
 const tableActivityFragment = graphql`
-  fragment LocationTableActivityFragment2 on Activity {
+  fragment LocationTableActivityFragment3 on Activity {
     id
     name
     activityStart
@@ -386,11 +330,11 @@ const tableActivityFragment = graphql`
  * @param {string|undefined} [props.staff_or_location=null] - The staff or location data.
  * @returns {JSX.Element} - The rendered Activity component.
  */
-export function Activity(props: {
-  activity_def: tableActivityFragment$key;
-  staff_or_location?: string;
-}): JSX.Element {
-  const data = createFragment(tableActivityFragment, () => props.activity_def);
+export function Activity(props): JSX.Element {
+  const data = createFragment<LocationTableActivityFragment$key>(
+    tableActivityFragment,
+    () => props.activity_def
+  );
   return (
     <div
       class={styles.activity}
@@ -422,4 +366,4 @@ export function Activity(props: {
   );
 }
 
-export default Table;
+export default LocationTable;

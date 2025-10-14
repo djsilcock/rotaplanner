@@ -42,7 +42,7 @@ export function toOrdinal(date: Date): number {
 }
 const staffQuery = graphql`
   query tableStaffQuery {
-    allStaff {
+    staff {
       id
       name
     }
@@ -51,7 +51,7 @@ const staffQuery = graphql`
 
 const locationQuery = graphql`
   query tableLocationsQuery {
-    allLocations {
+    locations {
       id
       name
     }
@@ -60,11 +60,11 @@ const locationQuery = graphql`
 
 const tableConfigQuery = graphql`
   query tableConfigQuery {
-    staff: allStaff {
+    staff: staff {
       id
       name
     }
-    locations: allLocations {
+    locations: locations {
       id
       name
     }

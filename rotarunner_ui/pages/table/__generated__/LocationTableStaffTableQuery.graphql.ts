@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c0ca7a5eb579e47bf343e1c0b3008e07>>
+ * @generated SignedSource<<de838d07400e4d1187763c4cf4f86260>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,18 +10,19 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type LocationTableQuery$variables = {
+export type LocationTableStaffTableQuery$variables = {
   end: string;
   start: string;
 };
-export type LocationTableQuery$data = {
+export type LocationTableStaffTableQuery$data = {
   readonly content: ReadonlyArray<{
-    readonly activityStart: string;
-    readonly id: string;
-    readonly location: {
+    readonly staff: {
       readonly id: string;
-    } | null | undefined;
-    readonly " $fragmentSpreads": FragmentRefs<"LocationTableActivityFragment">;
+    };
+    readonly timeslot: {
+      readonly start: string;
+    };
+    readonly " $fragmentSpreads": FragmentRefs<"LocationTableAssignmentFragment">;
   }>;
   readonly daterange: {
     readonly end: string;
@@ -32,9 +33,9 @@ export type LocationTableQuery$data = {
     readonly name: string;
   }>;
 };
-export type LocationTableQuery = {
-  response: LocationTableQuery$data;
-  variables: LocationTableQuery$variables;
+export type LocationTableStaffTableQuery = {
+  response: LocationTableStaffTableQuery$data;
+  variables: LocationTableStaffTableQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -81,44 +82,48 @@ v4 = {
   "name": "id",
   "storageKey": null
 },
-v5 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
-  "storageKey": null
-},
-v6 = [
+v5 = [
   (v4/*: any*/),
-  (v5/*: any*/)
+  {
+    "alias": null,
+    "args": null,
+    "kind": "ScalarField",
+    "name": "name",
+    "storageKey": null
+  }
 ],
-v7 = {
+v6 = {
   "alias": "rows",
   "args": null,
-  "concreteType": "Location",
+  "concreteType": "Staff",
   "kind": "LinkedField",
-  "name": "locations",
+  "name": "staff",
   "plural": true,
-  "selections": (v6/*: any*/),
+  "selections": (v5/*: any*/),
   "storageKey": null
 },
-v8 = [
+v7 = [
   {
     "kind": "Variable",
-    "name": "endDate",
+    "name": "end",
     "variableName": "end"
   },
   {
     "kind": "Variable",
-    "name": "startDate",
+    "name": "start",
     "variableName": "start"
   }
 ],
-v9 = {
+v8 = {
   "alias": null,
   "args": null,
-  "kind": "ScalarField",
-  "name": "activityStart",
+  "concreteType": "Staff",
+  "kind": "LinkedField",
+  "name": "staff",
+  "plural": false,
+  "selections": [
+    (v4/*: any*/)
+  ],
   "storageKey": null
 };
 return {
@@ -129,37 +134,36 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "LocationTableQuery",
+    "name": "LocationTableStaffTableQuery",
     "selections": [
       (v3/*: any*/),
-      (v7/*: any*/),
+      (v6/*: any*/),
       {
         "alias": "content",
-        "args": (v8/*: any*/),
-        "concreteType": "Activity",
+        "args": (v7/*: any*/),
+        "concreteType": "StaffAssignment",
         "kind": "LinkedField",
-        "name": "activities",
+        "name": "assignments",
         "plural": true,
         "selections": [
           {
             "args": null,
             "kind": "FragmentSpread",
-            "name": "LocationTableActivityFragment"
+            "name": "LocationTableAssignmentFragment"
           },
-          (v9/*: any*/),
-          (v4/*: any*/),
           {
             "alias": null,
             "args": null,
-            "concreteType": "Location",
+            "concreteType": "TimeSlot",
             "kind": "LinkedField",
-            "name": "location",
+            "name": "timeslot",
             "plural": false,
             "selections": [
-              (v4/*: any*/)
+              (v2/*: any*/)
             ],
             "storageKey": null
-          }
+          },
+          (v8/*: any*/)
         ],
         "storageKey": null
       }
@@ -174,45 +178,25 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "LocationTableQuery",
+    "name": "LocationTableStaffTableQuery",
     "selections": [
       (v3/*: any*/),
-      (v7/*: any*/),
+      (v6/*: any*/),
       {
         "alias": "content",
-        "args": (v8/*: any*/),
-        "concreteType": "Activity",
+        "args": (v7/*: any*/),
+        "concreteType": "StaffAssignment",
         "kind": "LinkedField",
-        "name": "activities",
+        "name": "assignments",
         "plural": true,
         "selections": [
-          (v4/*: any*/),
-          (v9/*: any*/),
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "activityFinish",
-            "storageKey": null
-          },
-          (v5/*: any*/),
-          {
-            "alias": null,
-            "args": null,
-            "concreteType": "Location",
-            "kind": "LinkedField",
-            "name": "location",
-            "plural": false,
-            "selections": (v6/*: any*/),
-            "storageKey": null
-          },
           {
             "alias": null,
             "args": null,
             "concreteType": "TimeSlot",
             "kind": "LinkedField",
-            "name": "timeslots",
-            "plural": true,
+            "name": "timeslot",
+            "plural": false,
             "selections": [
               (v2/*: any*/),
               {
@@ -220,6 +204,16 @@ return {
                 "args": null,
                 "kind": "ScalarField",
                 "name": "finish",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "Activity",
+                "kind": "LinkedField",
+                "name": "activity",
+                "plural": false,
+                "selections": (v5/*: any*/),
                 "storageKey": null
               },
               {
@@ -237,7 +231,7 @@ return {
                     "kind": "LinkedField",
                     "name": "staff",
                     "plural": false,
-                    "selections": (v6/*: any*/),
+                    "selections": (v5/*: any*/),
                     "storageKey": null
                   }
                 ],
@@ -246,23 +240,24 @@ return {
               (v4/*: any*/)
             ],
             "storageKey": null
-          }
+          },
+          (v8/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "92d539851f3974704b9508592800043d",
+    "cacheID": "9b5ef2b3f492190faffde365aad9bab4",
     "id": null,
     "metadata": {},
-    "name": "LocationTableQuery",
+    "name": "LocationTableStaffTableQuery",
     "operationKind": "query",
-    "text": "query LocationTableQuery(\n  $start: String!\n  $end: String!\n) {\n  daterange {\n    start\n    end\n  }\n  rows: locations {\n    id\n    name\n  }\n  content: activities(startDate: $start, endDate: $end) {\n    ...LocationTableActivityFragment\n    activityStart\n    id\n    location {\n      id\n    }\n  }\n}\n\nfragment LocationTableActivityFragment on Activity {\n  id\n  activityStart\n  activityFinish\n  name\n  location {\n    id\n    name\n  }\n  timeslots {\n    start\n    finish\n    assignments {\n      staff {\n        id\n        name\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query LocationTableStaffTableQuery(\n  $start: String!\n  $end: String!\n) {\n  daterange {\n    start\n    end\n  }\n  rows: staff {\n    id\n    name\n  }\n  content: assignments(start: $start, end: $end) {\n    ...LocationTableAssignmentFragment\n    timeslot {\n      start\n      id\n    }\n    staff {\n      id\n    }\n  }\n}\n\nfragment LocationTableAssignmentFragment on StaffAssignment {\n  timeslot {\n    start\n    finish\n    activity {\n      id\n      name\n    }\n    assignments {\n      staff {\n        id\n        name\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "251043b10a8534721271e7ac0c9e9356";
+(node as any).hash = "7548d88f2666e0d4d0ed775afd4d5b81";
 
 export default node;

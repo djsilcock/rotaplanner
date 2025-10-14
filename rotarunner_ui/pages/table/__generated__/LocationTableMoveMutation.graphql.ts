@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<83f3a356a8b86d2163573ff61122014e>>
+ * @generated SignedSource<<f081d91ffc5ec9a9df308d1ffa5a96fb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,74 +10,90 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type RowType = "location" | "staff" | "%future added value";
-export type LocationTableMoveActivityMutation$variables = {
-  activityId: string;
-  fromRow: string;
-  rowType: RowType;
-  toRow: string;
+export type ActivityInput = {
+  id?: string | null | undefined;
+  locationId?: string | null | undefined;
+  name?: string | null | undefined;
+  recurrenceRules?: RecurrenceGroup | null | undefined;
+  requirements?: ReadonlyArray<RequirementInput> | null | undefined;
+  templateId?: string | null | undefined;
+  timeslots?: ReadonlyArray<TimeSlotInput> | null | undefined;
 };
-export type LocationTableMoveActivityMutation$data = {
-  readonly moveActivity: {
+export type RecurrenceGroup = {
+  allOf: ReadonlyArray<RecurrenceRule>;
+  anyOf: ReadonlyArray<RecurrenceRule>;
+  noneOf: ReadonlyArray<RecurrenceRule>;
+};
+export type RecurrenceRule = {
+  daily?: DailyRecurrenceInput | null | undefined;
+  group?: RecurrenceGroup | null | undefined;
+  monthly?: MonthlyRecurrenceInput | null | undefined;
+  weekInMonth?: WeekInMonthRecurrenceInput | null | undefined;
+  weekly?: WeeklyRecurrenceInput | null | undefined;
+};
+export type DailyRecurrenceInput = {
+  interval: number;
+};
+export type WeeklyRecurrenceInput = {
+  interval: number;
+  weekday: number;
+};
+export type MonthlyRecurrenceInput = {
+  dayInMonth: number;
+  interval: number;
+};
+export type WeekInMonthRecurrenceInput = {
+  interval: number;
+  weekNo: number;
+  weekday: number;
+};
+export type RequirementInput = {
+  attendance: number;
+  maximum: number;
+  minimum: number;
+  requirementId: string;
+};
+export type TimeSlotInput = {
+  activityId: string;
+  startTime: string;
+};
+export type LocationTableMoveMutation$variables = {
+  activity: ActivityInput;
+};
+export type LocationTableMoveMutation$data = {
+  readonly editActivity: {
+    readonly id: string;
     readonly " $fragmentSpreads": FragmentRefs<"tableActivityFragment">;
   } | null | undefined;
 };
-export type LocationTableMoveActivityMutation = {
-  response: LocationTableMoveActivityMutation$data;
-  variables: LocationTableMoveActivityMutation$variables;
+export type LocationTableMoveMutation = {
+  response: LocationTableMoveMutation$data;
+  variables: LocationTableMoveMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "activityId"
-},
-v1 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "fromRow"
-},
-v2 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "rowType"
-},
-v3 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "toRow"
-},
-v4 = [
+var v0 = [
   {
-    "kind": "Variable",
-    "name": "activityId",
-    "variableName": "activityId"
-  },
-  {
-    "kind": "Variable",
-    "name": "fromRow",
-    "variableName": "fromRow"
-  },
-  {
-    "kind": "Variable",
-    "name": "rowType",
-    "variableName": "rowType"
-  },
-  {
-    "kind": "Variable",
-    "name": "toRow",
-    "variableName": "toRow"
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "activity"
   }
 ],
-v5 = {
+v1 = [
+  {
+    "kind": "Variable",
+    "name": "activity",
+    "variableName": "activity"
+  }
+],
+v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v6 = {
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -86,24 +102,20 @@ v6 = {
 };
 return {
   "fragment": {
-    "argumentDefinitions": [
-      (v0/*: any*/),
-      (v1/*: any*/),
-      (v2/*: any*/),
-      (v3/*: any*/)
-    ],
+    "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "LocationTableMoveActivityMutation",
+    "name": "LocationTableMoveMutation",
     "selections": [
       {
         "alias": null,
-        "args": (v4/*: any*/),
+        "args": (v1/*: any*/),
         "concreteType": "Activity",
         "kind": "LinkedField",
-        "name": "moveActivity",
+        "name": "editActivity",
         "plural": false,
         "selections": [
+          (v2/*: any*/),
           {
             "args": null,
             "kind": "FragmentSpread",
@@ -118,25 +130,20 @@ return {
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": [
-      (v0/*: any*/),
-      (v1/*: any*/),
-      (v3/*: any*/),
-      (v2/*: any*/)
-    ],
+    "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "LocationTableMoveActivityMutation",
+    "name": "LocationTableMoveMutation",
     "selections": [
       {
         "alias": null,
-        "args": (v4/*: any*/),
+        "args": (v1/*: any*/),
         "concreteType": "Activity",
         "kind": "LinkedField",
-        "name": "moveActivity",
+        "name": "editActivity",
         "plural": false,
         "selections": [
-          (v5/*: any*/),
-          (v6/*: any*/),
+          (v2/*: any*/),
+          (v3/*: any*/),
           {
             "alias": null,
             "args": null,
@@ -159,7 +166,7 @@ return {
             "name": "location",
             "plural": false,
             "selections": [
-              (v5/*: any*/)
+              (v2/*: any*/)
             ],
             "storageKey": null
           },
@@ -192,7 +199,8 @@ return {
                     "kind": "ScalarField",
                     "name": "finish",
                     "storageKey": null
-                  }
+                  },
+                  (v2/*: any*/)
                 ],
                 "storageKey": null
               },
@@ -204,8 +212,8 @@ return {
                 "name": "staff",
                 "plural": false,
                 "selections": [
-                  (v5/*: any*/),
-                  (v6/*: any*/)
+                  (v2/*: any*/),
+                  (v3/*: any*/)
                 ],
                 "storageKey": null
               }
@@ -218,16 +226,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "596c73d4fd5e73aa318c04a37f71db8d",
+    "cacheID": "f5721fa8f0cd99f0835a3a7bb713f871",
     "id": null,
     "metadata": {},
-    "name": "LocationTableMoveActivityMutation",
+    "name": "LocationTableMoveMutation",
     "operationKind": "mutation",
-    "text": "mutation LocationTableMoveActivityMutation(\n  $activityId: String!\n  $fromRow: String!\n  $toRow: String!\n  $rowType: RowType!\n) {\n  moveActivity(activityId: $activityId, fromRow: $fromRow, toRow: $toRow, rowType: $rowType) {\n    ...tableActivityFragment\n    id\n  }\n}\n\nfragment tableActivityFragment on Activity {\n  id\n  name\n  activityStart\n  activityFinish\n  location {\n    id\n  }\n  assignments {\n    timeslot {\n      start\n      finish\n    }\n    staff {\n      id\n      name\n    }\n  }\n}\n"
+    "text": "mutation LocationTableMoveMutation(\n  $activity: ActivityInput!\n) {\n  editActivity(activity: $activity) {\n    id\n    ...tableActivityFragment\n  }\n}\n\nfragment tableActivityFragment on Activity {\n  id\n  name\n  activityStart\n  activityFinish\n  location {\n    id\n  }\n  assignments {\n    timeslot {\n      start\n      finish\n      id\n    }\n    staff {\n      id\n      name\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "6934a844b869401e1e812021f94157f2";
+(node as any).hash = "a34c7d972161d7f807921cc0e3f8b742";
 
 export default node;

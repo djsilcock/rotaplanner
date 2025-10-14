@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<24c2f9df8def4e10221177eadf152ac3>>
+ * @generated SignedSource<<e8fa9b4c3a47d4406d656338d506ee60>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -166,7 +166,8 @@ return {
                     "kind": "ScalarField",
                     "name": "finish",
                     "storageKey": null
-                  }
+                  },
+                  (v2/*: any*/)
                 ],
                 "storageKey": null
               }
@@ -187,12 +188,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "19256362ab707409606441baa38b79be",
+    "cacheID": "6c74fc3a9924b1c22fea310a258c64d9",
     "id": null,
     "metadata": {},
     "name": "tableActivitiesQuery",
     "operationKind": "query",
-    "text": "query tableActivitiesQuery(\n  $end: String!\n  $start: String!\n) {\n  activities(endDate: $end, startDate: $start) {\n    ...tableRowSortingFragment\n    id\n  }\n}\n\nfragment tableActivityFragment on Activity {\n  id\n  name\n  activityStart\n  activityFinish\n  location {\n    id\n  }\n  assignments {\n    timeslot {\n      start\n      finish\n    }\n    staff {\n      id\n      name\n    }\n  }\n}\n\nfragment tableRowSortingFragment on Activity {\n  id\n  activityStart\n  location {\n    id\n  }\n  assignments {\n    staff {\n      id\n    }\n  }\n  ...tableActivityFragment\n}\n"
+    "text": "query tableActivitiesQuery(\n  $end: String!\n  $start: String!\n) {\n  activities(endDate: $end, startDate: $start) {\n    ...tableRowSortingFragment\n    id\n  }\n}\n\nfragment tableActivityFragment on Activity {\n  id\n  name\n  activityStart\n  activityFinish\n  location {\n    id\n  }\n  assignments {\n    timeslot {\n      start\n      finish\n      id\n    }\n    staff {\n      id\n      name\n    }\n  }\n}\n\nfragment tableRowSortingFragment on Activity {\n  id\n  activityStart\n  location {\n    id\n  }\n  assignments {\n    staff {\n      id\n    }\n  }\n  ...tableActivityFragment\n}\n"
   }
 };
 })();

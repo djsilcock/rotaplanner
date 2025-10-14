@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7a1e272b4c9544699b110bec29eba327>>
+ * @generated SignedSource<<304c0442e95838d421e8da9c051b3fbe>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -48,21 +48,21 @@ var v0 = [
 ],
 v1 = [
   {
-    "alias": "staff",
+    "alias": null,
     "args": null,
     "concreteType": "Staff",
     "kind": "LinkedField",
-    "name": "allStaff",
+    "name": "staff",
     "plural": true,
     "selections": (v0/*: any*/),
     "storageKey": null
   },
   {
-    "alias": "locations",
+    "alias": null,
     "args": null,
     "concreteType": "Location",
     "kind": "LinkedField",
-    "name": "allLocations",
+    "name": "locations",
     "plural": true,
     "selections": (v0/*: any*/),
     "storageKey": null
@@ -111,16 +111,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "f0f4df8b3de86f383d081682f592e6c4",
+    "cacheID": "967c91d86fc5f7edf463e200dd58236f",
     "id": null,
     "metadata": {},
     "name": "tableConfigQuery",
     "operationKind": "query",
-    "text": "query tableConfigQuery {\n  staff: allStaff {\n    id\n    name\n  }\n  locations: allLocations {\n    id\n    name\n  }\n  daterange {\n    start\n    end\n  }\n}\n"
+    "text": "query tableConfigQuery {\n  staff {\n    id\n    name\n  }\n  locations {\n    id\n    name\n  }\n  daterange {\n    start\n    end\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7504b9137fa9fe4a1ceaef5b2e2b9def";
+(node as any).hash = "5539abccba4ce93069c2bf53162b1e35";
 
 export default node;

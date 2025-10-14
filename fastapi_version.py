@@ -55,7 +55,7 @@ def on_startup():
         connection.commit()
 
 
-app = FastAPI()
+app = FastAPI(on_startup=[on_startup])
 
 api_app = APIRouter()
 

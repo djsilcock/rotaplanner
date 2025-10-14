@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4692ca6a205813fbf523a96eef790e27>>
+ * @generated SignedSource<<2d1e0e709936ea222c16829147f484eb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -192,7 +192,8 @@ return {
                     "kind": "ScalarField",
                     "name": "finish",
                     "storageKey": null
-                  }
+                  },
+                  (v5/*: any*/)
                 ],
                 "storageKey": null
               },
@@ -218,12 +219,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a90b1e66d58db9c8ad73f9017f40f56b",
+    "cacheID": "a74d420cbd4a602b10dfe391b08774f6",
     "id": null,
     "metadata": {},
     "name": "tableMoveActivityMutation",
     "operationKind": "mutation",
-    "text": "mutation tableMoveActivityMutation(\n  $activityId: String!\n  $fromRow: String!\n  $toRow: String!\n  $rowType: RowType!\n) {\n  moveActivity(activityId: $activityId, fromRow: $fromRow, toRow: $toRow, rowType: $rowType) {\n    ...tableActivityFragment\n    id\n  }\n}\n\nfragment tableActivityFragment on Activity {\n  id\n  name\n  activityStart\n  activityFinish\n  location {\n    id\n  }\n  assignments {\n    timeslot {\n      start\n      finish\n    }\n    staff {\n      id\n      name\n    }\n  }\n}\n"
+    "text": "mutation tableMoveActivityMutation(\n  $activityId: String!\n  $fromRow: String!\n  $toRow: String!\n  $rowType: RowType!\n) {\n  moveActivity(activityId: $activityId, fromRow: $fromRow, toRow: $toRow, rowType: $rowType) {\n    ...tableActivityFragment\n    id\n  }\n}\n\nfragment tableActivityFragment on Activity {\n  id\n  name\n  activityStart\n  activityFinish\n  location {\n    id\n  }\n  assignments {\n    timeslot {\n      start\n      finish\n      id\n    }\n    staff {\n      id\n      name\n    }\n  }\n}\n"
   }
 };
 })();

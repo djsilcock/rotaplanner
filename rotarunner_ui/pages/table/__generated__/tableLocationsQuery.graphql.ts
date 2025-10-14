@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e0286038d061a0b902c4babb1f69055a>>
+ * @generated SignedSource<<a56360562ff685cc64b6e84db869ca9e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type tableLocationsQuery$variables = Record<PropertyKey, never>;
 export type tableLocationsQuery$data = {
-  readonly allLocations: ReadonlyArray<{
+  readonly locations: ReadonlyArray<{
     readonly id: string;
     readonly name: string;
   }>;
@@ -28,7 +28,7 @@ var v0 = [
     "args": null,
     "concreteType": "Location",
     "kind": "LinkedField",
-    "name": "allLocations",
+    "name": "locations",
     "plural": true,
     "selections": [
       {
@@ -67,16 +67,16 @@ return {
     "selections": (v0/*: any*/)
   },
   "params": {
-    "cacheID": "9b9e5bff5b52d32b2bb6e007acb4d027",
+    "cacheID": "01002bc6aa86411fcfa7d6dabdcf983c",
     "id": null,
     "metadata": {},
     "name": "tableLocationsQuery",
     "operationKind": "query",
-    "text": "query tableLocationsQuery {\n  allLocations {\n    id\n    name\n  }\n}\n"
+    "text": "query tableLocationsQuery {\n  locations {\n    id\n    name\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "061c6a256ceda60fed531b8d35373180";
+(node as any).hash = "1fc5f983e2982929cf508e68562d5f28";
 
 export default node;

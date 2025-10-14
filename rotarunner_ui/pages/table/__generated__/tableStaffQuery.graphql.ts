@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<18faf774a573cc02361c298432f2b740>>
+ * @generated SignedSource<<5ecc776c6a1cd3c8425b393cefe6719e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type tableStaffQuery$variables = Record<PropertyKey, never>;
 export type tableStaffQuery$data = {
-  readonly allStaff: ReadonlyArray<{
+  readonly staff: ReadonlyArray<{
     readonly id: string;
     readonly name: string;
   }>;
@@ -28,7 +28,7 @@ var v0 = [
     "args": null,
     "concreteType": "Staff",
     "kind": "LinkedField",
-    "name": "allStaff",
+    "name": "staff",
     "plural": true,
     "selections": [
       {
@@ -67,16 +67,16 @@ return {
     "selections": (v0/*: any*/)
   },
   "params": {
-    "cacheID": "c6cdb5e9e2c45e6771261e5016fd9e90",
+    "cacheID": "30f48efce3ee647397cd2302b48a26ad",
     "id": null,
     "metadata": {},
     "name": "tableStaffQuery",
     "operationKind": "query",
-    "text": "query tableStaffQuery {\n  allStaff {\n    id\n    name\n  }\n}\n"
+    "text": "query tableStaffQuery {\n  staff {\n    id\n    name\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e67b1352bf6b6ac2bed8515c833f6e2f";
+(node as any).hash = "81eaf58293aace2e73f6bc287e3ff7ac";
 
 export default node;

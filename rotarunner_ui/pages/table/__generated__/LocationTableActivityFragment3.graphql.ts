@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b2e00d70073e3bd0a61e9bac9fcb8cc4>>
+ * @generated SignedSource<<6fffa3d1e3a417f3981df82fb30a37d4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type LocationTableActivityFragment2$data = {
+export type LocationTableActivityFragment3$data = {
   readonly activityFinish: string;
   readonly activityStart: string;
   readonly assignments: ReadonlyArray<{
@@ -28,11 +28,11 @@ export type LocationTableActivityFragment2$data = {
     readonly id: string;
   } | null | undefined;
   readonly name: string;
-  readonly " $fragmentType": "LocationTableActivityFragment2";
+  readonly " $fragmentType": "LocationTableActivityFragment3";
 };
-export type LocationTableActivityFragment2$key = {
-  readonly " $data"?: LocationTableActivityFragment2$data;
-  readonly " $fragmentSpreads": FragmentRefs<"LocationTableActivityFragment2">;
+export type LocationTableActivityFragment3$key = {
+  readonly " $data"?: LocationTableActivityFragment3$data;
+  readonly " $fragmentSpreads": FragmentRefs<"LocationTableActivityFragment3">;
 };
 
 const node: ReaderFragment = (function(){
@@ -54,7 +54,7 @@ return {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "LocationTableActivityFragment2",
+  "name": "LocationTableActivityFragment3",
   "selections": [
     (v0/*: any*/),
     (v1/*: any*/),
@@ -139,6 +139,6 @@ return {
 };
 })();
 
-(node as any).hash = "0190b803ccbe431b5b68ece54c43e1f8";
+(node as any).hash = "3af9c95984270796bddcb92966900f88";
 
 export default node;

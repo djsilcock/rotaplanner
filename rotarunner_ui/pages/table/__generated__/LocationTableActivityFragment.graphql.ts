@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<afe1e52bd00c59546f3900f7a4834731>>
+ * @generated SignedSource<<6565addb4b62a17e3d8a2c616b1f1b58>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,14 +14,19 @@ export type LocationTableActivityFragment$data = {
   readonly activityFinish: string;
   readonly activityStart: string;
   readonly id: string;
+  readonly location: {
+    readonly id: string;
+    readonly name: string;
+  } | null | undefined;
+  readonly name: string;
   readonly timeslots: ReadonlyArray<{
-    readonly finish: string;
-    readonly staffAssigned: ReadonlyArray<{
+    readonly assignments: ReadonlyArray<{
       readonly staff: {
         readonly id: string;
         readonly name: string;
       };
     }>;
+    readonly finish: string;
     readonly start: string;
   }>;
   readonly " $fragmentType": "LocationTableActivityFragment";
@@ -38,7 +43,18 @@ var v0 = {
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
-};
+},
+v1 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "name",
+  "storageKey": null
+},
+v2 = [
+  (v0/*: any*/),
+  (v1/*: any*/)
+];
 return {
   "argumentDefinitions": [],
   "kind": "Fragment",
@@ -58,6 +74,17 @@ return {
       "args": null,
       "kind": "ScalarField",
       "name": "activityFinish",
+      "storageKey": null
+    },
+    (v1/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "concreteType": "Location",
+      "kind": "LinkedField",
+      "name": "location",
+      "plural": false,
+      "selections": (v2/*: any*/),
       "storageKey": null
     },
     {
@@ -87,7 +114,7 @@ return {
           "args": null,
           "concreteType": "StaffAssignment",
           "kind": "LinkedField",
-          "name": "staffAssigned",
+          "name": "assignments",
           "plural": true,
           "selections": [
             {
@@ -97,16 +124,7 @@ return {
               "kind": "LinkedField",
               "name": "staff",
               "plural": false,
-              "selections": [
-                (v0/*: any*/),
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "name",
-                  "storageKey": null
-                }
-              ],
+              "selections": (v2/*: any*/),
               "storageKey": null
             }
           ],
@@ -121,6 +139,6 @@ return {
 };
 })();
 
-(node as any).hash = "252e0ace6406c5cf5e0460ca4e7e06ba";
+(node as any).hash = "5a447ad77af141cdc5886813a764cecd";
 
 export default node;
