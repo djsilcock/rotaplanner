@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c0ca7a5eb579e47bf343e1c0b3008e07>>
+ * @generated SignedSource<<8e97ebfb8b545b88e42d7fccc54e81c6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -239,7 +239,8 @@ return {
                     "plural": false,
                     "selections": (v6/*: any*/),
                     "storageKey": null
-                  }
+                  },
+                  (v4/*: any*/)
                 ],
                 "storageKey": null
               },
@@ -253,12 +254,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "92d539851f3974704b9508592800043d",
+    "cacheID": "ee5b0495b7c3ea13381e051bbe1925f6",
     "id": null,
     "metadata": {},
     "name": "LocationTableQuery",
     "operationKind": "query",
-    "text": "query LocationTableQuery(\n  $start: String!\n  $end: String!\n) {\n  daterange {\n    start\n    end\n  }\n  rows: locations {\n    id\n    name\n  }\n  content: activities(startDate: $start, endDate: $end) {\n    ...LocationTableActivityFragment\n    activityStart\n    id\n    location {\n      id\n    }\n  }\n}\n\nfragment LocationTableActivityFragment on Activity {\n  id\n  activityStart\n  activityFinish\n  name\n  location {\n    id\n    name\n  }\n  timeslots {\n    start\n    finish\n    assignments {\n      staff {\n        id\n        name\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query LocationTableQuery(\n  $start: String!\n  $end: String!\n) {\n  daterange {\n    start\n    end\n  }\n  rows: locations {\n    id\n    name\n  }\n  content: activities(startDate: $start, endDate: $end) {\n    ...LocationTableActivityFragment\n    activityStart\n    id\n    location {\n      id\n    }\n  }\n}\n\nfragment LocationTableActivityFragment on Activity {\n  id\n  activityStart\n  activityFinish\n  name\n  location {\n    id\n    name\n  }\n  timeslots {\n    start\n    finish\n    assignments {\n      staff {\n        id\n        name\n      }\n      id\n    }\n    id\n  }\n}\n"
   }
 };
 })();

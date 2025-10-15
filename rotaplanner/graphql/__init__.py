@@ -313,7 +313,9 @@ class Mutation:
     change_staff_assignment = strawberry.mutation(resolver=change_staff_assignment)
 
     @strawberry.mutation
-    def edit_activity(self, info: strawberry.Info, activity: ActivityInput) -> None:
+    def edit_activity(
+        self, info: strawberry.Info, activity: ActivityInput
+    ) -> Activity | None:
         return None
 
     move_activity = strawberry.mutation(resolver=move_activity)

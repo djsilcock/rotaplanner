@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f081d91ffc5ec9a9df308d1ffa5a96fb>>
+ * @generated SignedSource<<157bd4cc2cf8cbc43b58f65a89e5502f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -216,7 +216,8 @@ return {
                   (v3/*: any*/)
                 ],
                 "storageKey": null
-              }
+              },
+              (v2/*: any*/)
             ],
             "storageKey": null
           }
@@ -226,12 +227,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "f5721fa8f0cd99f0835a3a7bb713f871",
+    "cacheID": "3ab3d0af080d72a9349157efec97df30",
     "id": null,
     "metadata": {},
     "name": "LocationTableMoveMutation",
     "operationKind": "mutation",
-    "text": "mutation LocationTableMoveMutation(\n  $activity: ActivityInput!\n) {\n  editActivity(activity: $activity) {\n    id\n    ...tableActivityFragment\n  }\n}\n\nfragment tableActivityFragment on Activity {\n  id\n  name\n  activityStart\n  activityFinish\n  location {\n    id\n  }\n  assignments {\n    timeslot {\n      start\n      finish\n      id\n    }\n    staff {\n      id\n      name\n    }\n  }\n}\n"
+    "text": "mutation LocationTableMoveMutation(\n  $activity: ActivityInput!\n) {\n  editActivity(activity: $activity) {\n    id\n    ...tableActivityFragment\n  }\n}\n\nfragment tableActivityFragment on Activity {\n  id\n  name\n  activityStart\n  activityFinish\n  location {\n    id\n  }\n  assignments {\n    timeslot {\n      start\n      finish\n      id\n    }\n    staff {\n      id\n      name\n    }\n    id\n  }\n}\n"
   }
 };
 })();

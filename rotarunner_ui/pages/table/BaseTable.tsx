@@ -84,7 +84,7 @@ function TableRow(props: TableRowProps): JSX.Element {
         {(date) => (
           <td>
             <Dynamic
-              component={props.cellComponent ?? ActivityCell}
+              component={props.cellComponent}
               activities={props.columns[date.toISOString().slice(0, 10)] ?? []}
               date={date}
               row_id={props.row_id}
@@ -101,7 +101,7 @@ function EditActivityWrapper(props: { children?: JSX.Element }) {
   const [editActivity, setEditActivity] = createSignal<string | null>(null);
   return (
     <div on:editactivity={(e) => setEditActivity(e.detail.activityId)}>
-      <Show when={editActivity()} fallback={<div>{props.children}</div>}>
+      <Show when={editActivity()} fallback={<div></div>}>
         <EditActivityModal
           activity={editActivity()}
           onClose={() => setEditActivity(null)}
@@ -149,14 +149,19 @@ function BaseTable(props: TableProps): JSX.Element {
   let parentRef;
 
   const rows = createMemo(() => {
-    return props.getCells(tableQueryResult()!.content) as ReturnType<
+    return props.getCells(tableQueryResult()?.content ?? []) as ReturnType<
       typeof props.getCells
     >;
   });
 
+  createEffect(() => {
+    console.log("Rows updated:", rows());
+  });
   return (
     <Show when={tableQueryResult()} fallback={<div>Loading...</div>}>
+      top
       <EditActivityWrapper>
+        bla
         <table class={styles.rotaTable}>
           <thead>
             <tr>

@@ -196,21 +196,17 @@ class Activity(Node):
         return nodes
 
     @strawberry.field
-    async def activity_start(self, info: strawberry.Info) -> str:
-        context = info.context
-        timeslots = await context.data_loaders.timeslots_for_activity_loader.load(
-            self.id
-        )
-        return min(timeslots) if timeslots else ""
+    async def activity_start(self, info: strawberry.Info[CustomContext]) -> str:
+        timeslots = await self.timeslots(info)
+        return min(t.start for t in timeslots) if timeslots else ""
 
     @strawberry.field
-    async def activity_finish(self, info: strawberry.Info) -> str:
-        context = info.context
+    async def activity_finish(self, info: strawberry.Info[CustomContext]) -> str:
         timeslots = await self.timeslots(info)
         return max(t.finish for t in timeslots) if timeslots else ""
 
     @strawberry.field
-    async def timeslots(self, info: strawberry.Info) -> list[TimeSlot]:
+    async def timeslots(self, info: strawberry.Info[CustomContext]) -> list[TimeSlot]:
         context = info.context
         return await context.data_loaders.timeslots_loader.load_many(
             await context.data_loaders.timeslots_for_activity_loader.load(self.id)

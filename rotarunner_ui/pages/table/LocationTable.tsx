@@ -8,6 +8,7 @@ import {
   JSX,
   Component,
   lazy,
+  untrack,
 } from "solid-js";
 import {
   differenceInCalendarDays,
@@ -167,10 +168,15 @@ function LocationTable() {
   };
 
   return (
-    <BaseTable
-      query={activitiesByLocationQuery as unknown as GraphQLTaggedNode}
-      getCells={getCells}
-    />
+    <>
+      &amp;nbsp;
+      <BaseTable
+        query={activitiesByLocationQuery as unknown as GraphQLTaggedNode}
+        getCells={getCells}
+        cellComponent={ActivityCell}
+      />
+      *
+    </>
   );
 }
 
@@ -203,6 +209,15 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
   };
   createEffect(() => {
     reset();
+    untrack(() =>
+      console.log(
+        "Activities changed, resetting items",
+        isoDate(),
+        props.row_id,
+        props.activities,
+        items()
+      )
+    );
   });
   const handleMove = ({ detail }) => {
     setItems(detail.items);
@@ -266,63 +281,44 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
   };
   return (
     <td data-cell-id={`${isoDate()}--${props.row_id}`}>
-      <Suspense>
-        <div
-          classList={{
-            [styles.activityCell]: !!props.row_id,
-            [styles.unallocatedActivities]: !props.row_id,
-            [styles.weekend]:
-              props.date.getDay() === 0 || props.date.getDay() === 6,
-          }}
-          data-date={isoDate()}
-          data-yaxis={props.i}
-          data-row={props.row_id}
-          id={`td-${toOrdinal(props.date)}-${props.i}`}
-          use:dndzone={{
-            items,
-            flipDurationMs: 0,
-            type:
-              props.y_axis_type === "staff" ? isoDate() : "location-activities",
-          }}
-          on:consider={handleMove}
-          on:finalize={handleFinalMove}
-          ref={cellRef}
-        >
-          <For each={items()} fallback={<div>&nbsp;</div>}>
-            {(act) => (
+      <div
+        classList={{
+          [styles.activityCell]: !!props.row_id,
+          [styles.unallocatedActivities]: !props.row_id,
+          [styles.weekend]:
+            props.date.getDay() === 0 || props.date.getDay() === 6,
+        }}
+        data-date={isoDate()}
+        data-yaxis={props.i}
+        data-row={props.row_id}
+        id={`td-${toOrdinal(props.date)}-${props.i}`}
+        use:dndzone={{
+          items,
+          flipDurationMs: 0,
+          type:
+            props.y_axis_type === "staff" ? isoDate() : "location-activities",
+        }}
+        on:consider={handleMove}
+        on:finalize={handleFinalMove}
+        ref={cellRef}
+      >
+        <For each={items()} fallback={<div>&nbsp;</div>}>
+          {(act) => (
+            <>
+              ---
               <Activity
                 activity_def={act.activity}
                 staff_or_location={props.row_id}
                 show_staff={true}
               />
-            )}
-          </For>
-        </div>
-      </Suspense>
+            </>
+          )}
+        </For>
+      </div>
     </td>
   );
 };
-const tableActivityFragment = graphql`
-  fragment LocationTableActivityFragment3 on Activity {
-    id
-    name
-    activityStart
-    activityFinish
-    location {
-      id
-    }
-    assignments {
-      timeslot {
-        start
-        finish
-      }
-      staff {
-        id
-        name
-      }
-    }
-  }
-`;
+
 /**
  * Activity component to render an activity.
  * @param {Object} props - The properties passed to the component.
@@ -332,7 +328,7 @@ const tableActivityFragment = graphql`
  */
 export function Activity(props): JSX.Element {
   const data = createFragment<LocationTableActivityFragment$key>(
-    tableActivityFragment,
+    activityFragment,
     () => props.activity_def
   );
   return (

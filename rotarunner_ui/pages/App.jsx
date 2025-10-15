@@ -169,12 +169,9 @@ function NotFound() {
   return <div>Not here!</div>;
 }
 
-const Table = lazy(() => import("./table"));
+const LocationTable = lazy(() => import("./table/LocationTable"));
 
-function Tables() {
-  const params = useParams();
-  return <Table y_axis_type={params.tableType} />;
-}
+const StaffTable = lazy(() => import("./table/LocationTable"));
 
 export default function App() {
   const environment = createRelayEnvironment();
@@ -182,11 +179,8 @@ export default function App() {
     <RelayEnvironmentProvider environment={environment}>
       <Router root={Layout} base="/site">
         <Route path="/" component={IndexPage} />
-        <Route
-          path="/rota-grid/:tableType"
-          matchFilters={{ tableType: ["staff", "location"] }}
-          component={Tables}
-        />
+        <Route path="/rota-grid/staff" component={StaffTable} />
+        <Route path="/rota-grid/location" component={LocationTable} />
 
         <Route
           path="/manage-activity-templates"

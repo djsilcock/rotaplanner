@@ -53,7 +53,7 @@ input MonthlyRecurrenceInput {
 
 type Mutation {
   changeStaffAssignment(staffId: ID, timeslot: TimeSlotInput!, change: NewStaffAssignmentInput!): [String!]!
-  editActivity(activity: ActivityInput!): Void
+  editActivity(activity: ActivityInput!): Activity
   moveActivity(activityId: String!, fromRow: String!, toRow: String!, rowType: RowType!): Activity
 }
 
@@ -137,9 +137,6 @@ input TimeSlotInput {
   activityId: String!
   startTime: String!
 }
-
-"""Represents NULL values"""
-scalar Void
 
 input WeekInMonthRecurrenceInput {
   interval: Int!
