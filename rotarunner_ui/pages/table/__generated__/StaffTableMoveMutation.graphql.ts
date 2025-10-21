@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<91c530dfd46059a176feacfca45d7994>>
+ * @generated SignedSource<<8e61e23d8c1b22c30ffe2d7b7e0fbf4d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -59,18 +59,18 @@ export type TimeSlotInput = {
   activityId: string;
   startTime: string;
 };
-export type LocationTableMoveMutation$variables = {
+export type StaffTableMoveMutation$variables = {
   activity: ActivityInput;
 };
-export type LocationTableMoveMutation$data = {
+export type StaffTableMoveMutation$data = {
   readonly editActivity: {
     readonly id: string;
     readonly " $fragmentSpreads": FragmentRefs<"LocationTableActivityFragment">;
   } | null | undefined;
 };
-export type LocationTableMoveMutation = {
-  response: LocationTableMoveMutation$data;
-  variables: LocationTableMoveMutation$variables;
+export type StaffTableMoveMutation = {
+  response: StaffTableMoveMutation$data;
+  variables: StaffTableMoveMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -111,7 +111,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "LocationTableMoveMutation",
+    "name": "StaffTableMoveMutation",
     "selections": [
       {
         "alias": null,
@@ -138,7 +138,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "LocationTableMoveMutation",
+    "name": "StaffTableMoveMutation",
     "selections": [
       {
         "alias": null,
@@ -228,16 +228,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "2937c6bd8cd3f361e6fdd34ed6e5d1fc",
+    "cacheID": "23468a9a71a5078e6ad05781151ec507",
     "id": null,
     "metadata": {},
-    "name": "LocationTableMoveMutation",
+    "name": "StaffTableMoveMutation",
     "operationKind": "mutation",
-    "text": "mutation LocationTableMoveMutation(\n  $activity: ActivityInput!\n) {\n  editActivity(activity: $activity) {\n    id\n    ...LocationTableActivityFragment\n  }\n}\n\nfragment LocationTableActivityFragment on Activity {\n  id\n  activityStart\n  activityFinish\n  name\n  location {\n    id\n    name\n  }\n  assignments {\n    staff {\n      id\n      name\n    }\n    timeslot {\n      start\n      finish\n      id\n    }\n    id\n  }\n}\n"
+    "text": "mutation StaffTableMoveMutation(\n  $activity: ActivityInput!\n) {\n  editActivity(activity: $activity) {\n    id\n    ...LocationTableActivityFragment\n  }\n}\n\nfragment LocationTableActivityFragment on Activity {\n  id\n  activityStart\n  activityFinish\n  name\n  location {\n    id\n    name\n  }\n  assignments {\n    staff {\n      id\n      name\n    }\n    timeslot {\n      start\n      finish\n      id\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "53f2a4b3faae5709d782cbdd57bc5968";
+(node as any).hash = "1496065cab48758cf158c21a5784d2a6";
 
 export default node;

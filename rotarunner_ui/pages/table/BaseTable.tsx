@@ -68,12 +68,10 @@ interface TableRowProps {
   row_name: string;
   i?: number;
   dates: Date[];
-  columns: Record<
-    string,
+  data:
     | LocationTableQuery$data["content"]
-    | LocationTableStaffTableQuery$data["content"]
-  >;
-  cellComponent?: (props: ActivityCellProps) => JSX.Element;
+    | LocationTableStaffTableQuery$data["content"];
+  cellComponent?: (props: any) => JSX.Element;
 }
 
 function TableRow(props: TableRowProps): JSX.Element {
@@ -85,10 +83,9 @@ function TableRow(props: TableRowProps): JSX.Element {
           <td>
             <Dynamic
               component={props.cellComponent}
-              activities={props.columns[date.toISOString().slice(0, 10)] ?? []}
+              data={props.data}
               date={date}
               row_id={props.row_id}
-              y_axis_type={props.y_axis_type}
             />
           </td>
         )}
@@ -116,18 +113,6 @@ interface TableProps {
   children?: JSX.Element;
   cellComponent?: (props: ActivityCellProps) => JSX.Element;
   query?: GraphQLTaggedNode;
-  getCells: (
-    data:
-      | LocationTableQuery$data["content"]
-      | LocationTableStaffTableQuery$data["content"]
-  ) => Record<
-    string,
-    Record<
-      string,
-      | LocationTableQuery$data["content"]
-      | LocationTableStaffTableQuery$data["content"]
-    >
-  >;
 }
 
 function BaseTable(props: TableProps): JSX.Element {
@@ -148,20 +133,9 @@ function BaseTable(props: TableProps): JSX.Element {
 
   let parentRef;
 
-  const rows = createMemo(() => {
-    return props.getCells(tableQueryResult()?.content ?? []) as ReturnType<
-      typeof props.getCells
-    >;
-  });
-
-  createEffect(() => {
-    console.log("Rows updated:", rows());
-  });
   return (
     <Show when={tableQueryResult()} fallback={<div>Loading...</div>}>
-      top
       <EditActivityWrapper>
-        bla
         <table class={styles.rotaTable}>
           <thead>
             <tr>
@@ -176,7 +150,7 @@ function BaseTable(props: TableProps): JSX.Element {
               {(row, index) => (
                 <TableRow
                   cellComponent={props.cellComponent}
-                  columns={rows()[row.id] ?? []}
+                  data={tableQueryResult()?.content.edges ?? []}
                   row_id={row.id}
                   row_name={row.name}
                   i={index()}
@@ -186,7 +160,7 @@ function BaseTable(props: TableProps): JSX.Element {
             </For>
             <TableRow
               cellComponent={props.cellComponent}
-              columns={rows()?.unallocated ?? []}
+              data={tableQueryResult()?.content.edges ?? []}
               row_id={"unallocated"}
               row_name={"Unallocated"}
               i={tableQueryResult()?.rows.length}

@@ -171,7 +171,7 @@ function NotFound() {
 
 const LocationTable = lazy(() => import("./table/LocationTable"));
 
-const StaffTable = lazy(() => import("./table/LocationTable"));
+const StaffTable = lazy(() => import("./table/StaffTable"));
 
 export default function App() {
   const environment = createRelayEnvironment();

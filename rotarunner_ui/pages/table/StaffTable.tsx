@@ -28,12 +28,20 @@ import {
 import type { tableConfigQuery as TableConfigQuery } from "./__generated__/tableConfigQuery.graphql";
 import type { tableActivitiesQuery } from "./__generated__/tableActivitiesQuery.graphql";
 
-import { groupBy } from "lodash";
+import { create, groupBy } from "lodash";
 import { tableActivityFragment$key } from "./__generated__/tableActivityFragment.graphql";
 import {
   LocationTableQuery,
   LocationTableQuery$data,
 } from "./__generated__/LocationTableQuery.graphql";
+import {
+  StaffTableQuery,
+  StaffTableQuery$data,
+} from "./__generated__/StaffTableQuery.graphql";
+import {
+  StaffTableAssignmentFragment$data,
+  StaffTableAssignmentFragment$key,
+} from "./__generated__/StaffTableAssignmentFragment.graphql";
 import {
   LocationTableStaffTableQuery,
   LocationTableStaffTableQuery$data,
@@ -45,6 +53,7 @@ import {
   LocationTableActivityFragment$data,
   LocationTableActivityFragment$key,
 } from "./__generated__/LocationTableActivityFragment.graphql";
+import { StaffTableTimeslotFragment$key } from "./__generated__/StaffTableTimeslotFragment.graphql";
 
 const EditActivityModal = lazy(() => import("../edit_activity"));
 const epoch = new Date(2021, 0, 1);
@@ -57,24 +66,34 @@ const epoch = new Date(2021, 0, 1);
 export function toOrdinal(date: Date): number {
   return differenceInCalendarDays(date, epoch);
 }
-const activitiesByLocationQuery = graphql`
-  query LocationTableQuery($start: String!, $end: String!) {
+
+const assignmentsByStaffQuery = graphql`
+  query StaffTableQuery($start: String!, $end: String!) {
     daterange {
       start
       end
     }
-    rows: locations {
+    rows: staff {
       id
       name
     }
     content: activities(startDate: $start, endDate: $end) {
+      __id
       edges {
         node {
-          ...LocationTableActivityFragment
-          activityStart
+          ...StaffTableActivityFragment
           id
-          location {
+          activityStart
+          timeslots {
+            ...StaffTableTimeslotFragment
+            start
             id
+            assignments {
+              id
+              staff {
+                id
+              }
+            }
           }
         }
       }
@@ -82,11 +101,11 @@ const activitiesByLocationQuery = graphql`
   }
 `;
 
-function LocationTable() {
+function StaffTable() {
   return (
     <>
       <BaseTable
-        query={activitiesByLocationQuery as unknown as GraphQLTaggedNode}
+        query={assignmentsByStaffQuery as GraphQLTaggedNode}
         cellComponent={ActivityCell}
       />
     </>
@@ -103,18 +122,18 @@ interface ActivityCellProps {
   y_axis_type: "staff" | "location";
   row_id?: string;
   i?: number;
-  data: LocationTableQuery$data["content"];
+  data: StaffTableQuery$data["content"]["edges"];
 }
 export const ActivityCell: Component<ActivityCellProps> = (props) => {
   const isoDate = () => props.date.toISOString().slice(0, 10);
 
   const [_items, setItems] = createSignal<DraggableActivity[] | null>(null);
 
-  const mapActivityToDraggable = ({
-    node: activity,
-  }: LocationTableQuery$data["content"]["edges"][number]) => ({
-    id: activity.id,
-    activity,
+  const mapAssignmentToDraggable = ({
+    node: assignment,
+  }: StaffTableQuery$data["content"]["edges"][number]) => ({
+    id: assignment.id,
+    activity: assignment,
     rowId: props.row_id ?? null,
     resetSource: () => {
       setItems(null);
@@ -123,23 +142,48 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
   const items = createMemo(
     () =>
       _items() ??
-      props.data
-        ?.filter(({ node: activity }) => {
-          const activityDate = activity.activityStart.slice(0, 10);
-          const locId = activity.location?.id ?? "unallocated";
-          return (
-            activityDate == isoDate() &&
-            (locId ?? "unallocated") == props.row_id
-          );
-        })
-        .map(mapActivityToDraggable) ??
-      []
+      Array.from(
+        (function* () {
+          for (const { node: activity } of props.data) {
+            if (activity.activityStart.slice(0, 10) !== isoDate()) {
+              continue;
+            }
+            for (const timeslot of activity.timeslots) {
+              if (props.row_id === "unallocated") {
+                //should actually be all timeslots as they could still be allocated to someone else
+                yield {
+                  id: timeslot.id,
+                  activity,
+                  timeslot,
+                  rowId: null,
+                  resetSource: () => {
+                    setItems(null);
+                  },
+                };
+                continue;
+              }
+
+              for (const assignment of timeslot.assignments) {
+                if (assignment.staff.id === props.row_id) {
+                  yield {
+                    id: assignment.id,
+                    activity,
+                    rowId: props.row_id,
+                    timeslot,
+                    staff: assignment.staff,
+                  };
+                }
+              }
+            }
+          }
+        })()
+      )
   );
   const handleMove = ({ detail }) => {
     setItems(detail.items);
   };
   const [editActivity] = createMutation(graphql`
-    mutation LocationTableMoveMutation($activity: ActivityInput!) {
+    mutation StaffTableMoveMutation($activity: ActivityInput!) {
       editActivity(activity: $activity) {
         id
         ...LocationTableActivityFragment
@@ -178,7 +222,7 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
       Object.assign(activityInput, { activityDate: isoDate() });
 
       Object.assign(activityInput, {
-        locationId: props.row_id === "unallocated" ? null : props.row_id,
+        staffId: props.row_id === "unallocated" ? null : props.row_id,
       });
 
       console.log("Moving activity with variables:", activityInput);
@@ -223,8 +267,9 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
         <For each={items()} fallback={<div>&nbsp;</div>}>
           {(act) => (
             <>
-              <Activity
+              <Timeslot
                 activity_def={act.activity}
+                timeslot={act.timeslot}
                 staff_or_location={props.row_id}
                 show_staff={true}
               />
@@ -237,23 +282,37 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
 };
 
 const activityFragment = graphql`
-  fragment LocationTableActivityFragment on Activity {
+  fragment StaffTableActivityFragment on Activity {
     id
-    activityStart
-    activityFinish
     name
     location {
       id
       name
     }
+
+    timeslots {
+      ...StaffTableTimeslotFragment
+      start
+      finish
+      assignments {
+        staff {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
+const timeslotFragment = graphql`
+  fragment StaffTableTimeslotFragment on TimeSlot {
+    id
+    start
+    finish
     assignments {
+      id
       staff {
         id
         name
-      }
-      timeslot {
-        start
-        finish
       }
     }
   }
@@ -263,35 +322,40 @@ const activityFragment = graphql`
  * Activity component to render an activity.
  * @param {Object} props - The properties passed to the component.
  * @param {Object} props.activity_def - The activity definition.
+ * @param {Object} props.timeslot - The timeslot information.
  * @param {string|undefined} [props.staff_or_location=null] - The staff or location data.
- * @returns {JSX.Element} - The rendered Activity component.
+ * @returns {JSX.Element} - The rendered Timeslot component.
  */
-export function Activity(props): JSX.Element {
-  const data = createFragment<LocationTableActivityFragment$key>(
+export function Timeslot(props): JSX.Element {
+  const activityData = createFragment<LocationTableActivityFragment$key>(
     activityFragment,
     () => props.activity_def
   );
+  const timeslotData = createFragment<StaffTableTimeslotFragment$key>(
+    timeslotFragment,
+    () => props.timeslot
+  );
+  createEffect(() => {
+    console.log("Rendering Timeslot for activity:", activityData());
+    console.log("Timeslot data:", timeslotData());
+  });
   return (
     <div
       class={styles.activity}
-      data-activity-id={data()!.id}
-      id={`activity-${data()!.id}`}
+      data-activity-id={activityData()!.id}
+      id={`activity-${activityData()!.id}`}
     >
-      <div class={styles.activityName}>{data()!.name}</div>
+      <div class={styles.activityName}>{activityData()?.name}</div>
       <div class={styles.activityTime}>
-        {data()!.activityStart.slice(11, 16)} -{" "}
-        {data()!.activityFinish.slice(11, 16)}
+        {timeslotData()?.start.slice(11, 16)} -{" "}
+        {timeslotData()?.finish.slice(11, 16)}
       </div>
       <hr />
       <div>
-        <For each={data()!.assignments}>
+        <For each={timeslotData()?.assignments}>
           {(assignment) => (
             <div>
               <Show when={assignment.staff.id !== props.staff_or_location}>
-                <div class={styles.activityTime}>
-                  {assignment.timeslot.start.slice(11, 16)} -{" "}
-                  {assignment.timeslot.finish.slice(11, 16)}
-                </div>
                 <div class={styles.assignedStaff}>{assignment.staff.name}</div>
               </Show>
             </div>
@@ -302,4 +366,4 @@ export function Activity(props): JSX.Element {
   );
 }
 
-export default LocationTable;
+export default StaffTable;

@@ -15,9 +15,29 @@ type Activity implements Node {
   assignments: [StaffAssignment!]!
 }
 
+"""A connection to a list of items."""
+type ActivityConnection {
+  """Pagination data for this connection"""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection""" 
+  edges: [ActivityEdge!]!
+}
+
+"""An edge in a connection."""
+type ActivityEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: Activity!
+}
+
 input ActivityInput {
   id: ID
   templateId: ID
+  activityStart: String
+  activityDate: String
   name: String
   locationId: ID
   recurrenceRules: RecurrenceGroup
@@ -70,17 +90,64 @@ interface Node {
   id: ID!
 }
 
+"""Information to aid in pagination."""
+type PageInfo {
+  """When paginating forwards, are there more items?"""
+  hasNextPage: Boolean!
+
+  """When paginating backwards, are there more items?"""
+  hasPreviousPage: Boolean!
+
+  """When paginating backwards, the cursor to continue."""
+  startCursor: String
+
+  """When paginating forwards, the cursor to continue."""
+  endCursor: String
+}
+
 type Query {
   node(
     """The ID of the object."""
     id: ID!
   ): Node!
   hello(value: String): String!
-  activities(startDate: String! = "1970-01-01", endDate: String! = "2199-12-31", locationId: ID, staffId: ID): [Activity!]!
+  activities(
+    startDate: String! = "1970-01-01"
+    endDate: String! = "2199-12-31"
+    locationId: ID
+    staffId: ID
+
+    """Returns the items in the list that come before the specified cursor."""
+    before: String = null
+
+    """Returns the items in the list that come after the specified cursor."""
+    after: String = null
+
+    """Returns the first n items from the list."""
+    first: Int = null
+
+    """Returns the items in the list that come after the specified cursor."""
+    last: Int = null
+  ): ActivityConnection!
   locations: [Location!]!
   staff: [Staff!]!
   daterange: DateRange!
-  assignments(start: String!, end: String!): [StaffAssignment!]!
+  assignments(
+    start: String!
+    end: String!
+
+    """Returns the items in the list that come before the specified cursor."""
+    before: String = null
+
+    """Returns the items in the list that come after the specified cursor."""
+    after: String = null
+
+    """Returns the first n items from the list."""
+    first: Int = null
+
+    """Returns the items in the list that come after the specified cursor."""
+    last: Int = null
+  ): StaffAssignmentConnection!
 }
 
 input RecurrenceGroup @oneOf {
@@ -122,6 +189,24 @@ type StaffAssignment implements Node {
   staff: Staff!
   timeslot: TimeSlot!
   flags: [AssignmentFlags!]!
+}
+
+"""A connection to a list of items."""
+type StaffAssignmentConnection {
+  """Pagination data for this connection"""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection"""
+  edges: [StaffAssignmentEdge!]!
+}
+
+"""An edge in a connection."""
+type StaffAssignmentEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: StaffAssignment!
 }
 
 type TimeSlot implements Node {

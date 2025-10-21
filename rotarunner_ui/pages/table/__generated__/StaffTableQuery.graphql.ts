@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6d9c5db4d92f8c772ef1516d9e6ebd1b>>
+ * @generated SignedSource<<2ede6cc75c3c31cadbb48ae966180c3a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,20 +10,29 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type LocationTableQuery$variables = {
+export type StaffTableQuery$variables = {
   end: string;
   start: string;
 };
-export type LocationTableQuery$data = {
+export type StaffTableQuery$data = {
   readonly content: {
+    readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly activityStart: string;
         readonly id: string;
-        readonly location: {
+        readonly timeslots: ReadonlyArray<{
+          readonly assignments: ReadonlyArray<{
+            readonly id: string;
+            readonly staff: {
+              readonly id: string;
+            };
+          }>;
           readonly id: string;
-        } | null | undefined;
-        readonly " $fragmentSpreads": FragmentRefs<"LocationTableActivityFragment">;
+          readonly start: string;
+          readonly " $fragmentSpreads": FragmentRefs<"StaffTableTimeslotFragment">;
+        }>;
+        readonly " $fragmentSpreads": FragmentRefs<"StaffTableActivityFragment">;
       };
     }>;
   };
@@ -36,9 +45,9 @@ export type LocationTableQuery$data = {
     readonly name: string;
   }>;
 };
-export type LocationTableQuery = {
-  response: LocationTableQuery$data;
-  variables: LocationTableQuery$variables;
+export type StaffTableQuery = {
+  response: StaffTableQuery$data;
+  variables: StaffTableQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -99,9 +108,9 @@ v6 = [
 v7 = {
   "alias": "rows",
   "args": null,
-  "concreteType": "Location",
+  "concreteType": "Staff",
   "kind": "LinkedField",
-  "name": "locations",
+  "name": "staff",
   "plural": true,
   "selections": (v6/*: any*/),
   "storageKey": null
@@ -124,6 +133,18 @@ v9 = {
   "kind": "ScalarField",
   "name": "activityStart",
   "storageKey": null
+},
+v10 = {
+  "kind": "ClientExtension",
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "__id",
+      "storageKey": null
+    }
+  ]
 };
 return {
   "fragment": {
@@ -133,7 +154,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "LocationTableQuery",
+    "name": "StaffTableQuery",
     "selections": [
       (v3/*: any*/),
       (v7/*: any*/),
@@ -164,19 +185,49 @@ return {
                   {
                     "args": null,
                     "kind": "FragmentSpread",
-                    "name": "LocationTableActivityFragment"
+                    "name": "StaffTableActivityFragment"
                   },
-                  (v9/*: any*/),
                   (v4/*: any*/),
+                  (v9/*: any*/),
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "Location",
+                    "concreteType": "TimeSlot",
                     "kind": "LinkedField",
-                    "name": "location",
-                    "plural": false,
+                    "name": "timeslots",
+                    "plural": true,
                     "selections": [
-                      (v4/*: any*/)
+                      {
+                        "args": null,
+                        "kind": "FragmentSpread",
+                        "name": "StaffTableTimeslotFragment"
+                      },
+                      (v2/*: any*/),
+                      (v4/*: any*/),
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "StaffAssignment",
+                        "kind": "LinkedField",
+                        "name": "assignments",
+                        "plural": true,
+                        "selections": [
+                          (v4/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "Staff",
+                            "kind": "LinkedField",
+                            "name": "staff",
+                            "plural": false,
+                            "selections": [
+                              (v4/*: any*/)
+                            ],
+                            "storageKey": null
+                          }
+                        ],
+                        "storageKey": null
+                      }
                     ],
                     "storageKey": null
                   }
@@ -185,7 +236,8 @@ return {
               }
             ],
             "storageKey": null
-          }
+          },
+          (v10/*: any*/)
         ],
         "storageKey": null
       }
@@ -200,7 +252,7 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "LocationTableQuery",
+    "name": "StaffTableQuery",
     "selections": [
       (v3/*: any*/),
       (v7/*: any*/),
@@ -229,14 +281,6 @@ return {
                 "plural": false,
                 "selections": [
                   (v4/*: any*/),
-                  (v9/*: any*/),
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "activityFinish",
-                    "storageKey": null
-                  },
                   (v5/*: any*/),
                   {
                     "alias": null,
@@ -251,67 +295,69 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "StaffAssignment",
+                    "concreteType": "TimeSlot",
                     "kind": "LinkedField",
-                    "name": "assignments",
+                    "name": "timeslots",
                     "plural": true,
                     "selections": [
+                      (v4/*: any*/),
+                      (v2/*: any*/),
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "Staff",
-                        "kind": "LinkedField",
-                        "name": "staff",
-                        "plural": false,
-                        "selections": (v6/*: any*/),
+                        "kind": "ScalarField",
+                        "name": "finish",
                         "storageKey": null
                       },
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "TimeSlot",
+                        "concreteType": "StaffAssignment",
                         "kind": "LinkedField",
-                        "name": "timeslot",
-                        "plural": false,
+                        "name": "assignments",
+                        "plural": true,
                         "selections": [
-                          (v2/*: any*/),
+                          (v4/*: any*/),
                           {
                             "alias": null,
                             "args": null,
-                            "kind": "ScalarField",
-                            "name": "finish",
+                            "concreteType": "Staff",
+                            "kind": "LinkedField",
+                            "name": "staff",
+                            "plural": false,
+                            "selections": (v6/*: any*/),
                             "storageKey": null
-                          },
-                          (v4/*: any*/)
+                          }
                         ],
                         "storageKey": null
-                      },
-                      (v4/*: any*/)
+                      }
                     ],
                     "storageKey": null
-                  }
+                  },
+                  (v9/*: any*/)
                 ],
                 "storageKey": null
               }
             ],
             "storageKey": null
-          }
+          },
+          (v10/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "585dfb880d9854341214c97bdd2ea29e",
+    "cacheID": "75093fc6414b979cc663984b10bc2307",
     "id": null,
     "metadata": {},
-    "name": "LocationTableQuery",
+    "name": "StaffTableQuery",
     "operationKind": "query",
-    "text": "query LocationTableQuery(\n  $start: String!\n  $end: String!\n) {\n  daterange {\n    start\n    end\n  }\n  rows: locations {\n    id\n    name\n  }\n  content: activities(startDate: $start, endDate: $end) {\n    edges {\n      node {\n        ...LocationTableActivityFragment\n        activityStart\n        id\n        location {\n          id\n        }\n      }\n    }\n  }\n}\n\nfragment LocationTableActivityFragment on Activity {\n  id\n  activityStart\n  activityFinish\n  name\n  location {\n    id\n    name\n  }\n  assignments {\n    staff {\n      id\n      name\n    }\n    timeslot {\n      start\n      finish\n      id\n    }\n    id\n  }\n}\n"
+    "text": "query StaffTableQuery(\n  $start: String!\n  $end: String!\n) {\n  daterange {\n    start\n    end\n  }\n  rows: staff {\n    id\n    name\n  }\n  content: activities(startDate: $start, endDate: $end) {\n    edges {\n      node {\n        ...StaffTableActivityFragment\n        id\n        activityStart\n        timeslots {\n          ...StaffTableTimeslotFragment\n          start\n          id\n          assignments {\n            id\n            staff {\n              id\n            }\n          }\n        }\n      }\n    }\n  }\n}\n\nfragment StaffTableActivityFragment on Activity {\n  id\n  name\n  location {\n    id\n    name\n  }\n  timeslots {\n    ...StaffTableTimeslotFragment\n    start\n    finish\n    assignments {\n      staff {\n        id\n        name\n      }\n      id\n    }\n    id\n  }\n}\n\nfragment StaffTableTimeslotFragment on TimeSlot {\n  id\n  start\n  finish\n  assignments {\n    id\n    staff {\n      id\n      name\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "8717221d6dedb504dc2e12da1365d868";
+(node as any).hash = "e188f3a3f28cf63cf74151a7abdd429a";
 
 export default node;

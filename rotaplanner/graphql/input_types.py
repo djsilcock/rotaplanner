@@ -67,6 +67,8 @@ class NewStaffAssignmentInput:
 class ActivityInput:
     id: strawberry.Maybe[strawberry.ID]
     template_id: strawberry.Maybe[strawberry.ID | None]
+    activity_start: strawberry.Maybe[str]
+    activity_date: strawberry.Maybe[str]
     name: strawberry.Maybe[str]
     location_id: strawberry.Maybe[strawberry.ID]
     recurrence_rules: strawberry.Maybe[RecurrenceGroup]

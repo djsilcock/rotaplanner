@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<47f8d0cacde4efecbcfb6de34ee59871>>
+ * @generated SignedSource<<e134a14cec0876682bd7d3f6a7efe117>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,23 +10,22 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type tableRowSortingFragment$data = {
-  readonly activityStart: string;
+export type StaffTableTimeslotFragment$data = {
   readonly assignments: ReadonlyArray<{
+    readonly id: string;
     readonly staff: {
       readonly id: string;
+      readonly name: string;
     };
   }>;
+  readonly finish: string;
   readonly id: string;
-  readonly location: {
-    readonly id: string;
-  } | null | undefined;
-  readonly " $fragmentSpreads": FragmentRefs<"tableActivityFragment">;
-  readonly " $fragmentType": "tableRowSortingFragment";
+  readonly start: string;
+  readonly " $fragmentType": "StaffTableTimeslotFragment";
 };
-export type tableRowSortingFragment$key = {
-  readonly " $data"?: tableRowSortingFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"tableRowSortingFragment">;
+export type StaffTableTimeslotFragment$key = {
+  readonly " $data"?: StaffTableTimeslotFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"StaffTableTimeslotFragment">;
 };
 
 const node: ReaderFragment = (function(){
@@ -36,32 +35,26 @@ var v0 = {
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
-},
-v1 = [
-  (v0/*: any*/)
-];
+};
 return {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "tableRowSortingFragment",
+  "name": "StaffTableTimeslotFragment",
   "selections": [
     (v0/*: any*/),
     {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "activityStart",
+      "name": "start",
       "storageKey": null
     },
     {
       "alias": null,
       "args": null,
-      "concreteType": "Location",
-      "kind": "LinkedField",
-      "name": "location",
-      "plural": false,
-      "selections": (v1/*: any*/),
+      "kind": "ScalarField",
+      "name": "finish",
       "storageKey": null
     },
     {
@@ -72,6 +65,7 @@ return {
       "name": "assignments",
       "plural": true,
       "selections": [
+        (v0/*: any*/),
         {
           "alias": null,
           "args": null,
@@ -79,23 +73,27 @@ return {
           "kind": "LinkedField",
           "name": "staff",
           "plural": false,
-          "selections": (v1/*: any*/),
+          "selections": [
+            (v0/*: any*/),
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "name",
+              "storageKey": null
+            }
+          ],
           "storageKey": null
         }
       ],
       "storageKey": null
-    },
-    {
-      "args": null,
-      "kind": "FragmentSpread",
-      "name": "tableActivityFragment"
     }
   ],
-  "type": "Activity",
+  "type": "TimeSlot",
   "abstractKey": null
 };
 })();
 
-(node as any).hash = "fb7b5b742d8845e36cbd873cc32032d2";
+(node as any).hash = "b8c1fb347b40a38f4a6c2dc0c13f3fed";
 
 export default node;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6565addb4b62a17e3d8a2c616b1f1b58>>
+ * @generated SignedSource<<ca23026aa8f79343c7491b63a3008f77>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,22 +13,22 @@ import { FragmentRefs } from "relay-runtime";
 export type LocationTableActivityFragment$data = {
   readonly activityFinish: string;
   readonly activityStart: string;
+  readonly assignments: ReadonlyArray<{
+    readonly staff: {
+      readonly id: string;
+      readonly name: string;
+    };
+    readonly timeslot: {
+      readonly finish: string;
+      readonly start: string;
+    };
+  }>;
   readonly id: string;
   readonly location: {
     readonly id: string;
     readonly name: string;
   } | null | undefined;
   readonly name: string;
-  readonly timeslots: ReadonlyArray<{
-    readonly assignments: ReadonlyArray<{
-      readonly staff: {
-        readonly id: string;
-        readonly name: string;
-      };
-    }>;
-    readonly finish: string;
-    readonly start: string;
-  }>;
   readonly " $fragmentType": "LocationTableActivityFragment";
 };
 export type LocationTableActivityFragment$key = {
@@ -90,41 +90,41 @@ return {
     {
       "alias": null,
       "args": null,
-      "concreteType": "TimeSlot",
+      "concreteType": "StaffAssignment",
       "kind": "LinkedField",
-      "name": "timeslots",
+      "name": "assignments",
       "plural": true,
       "selections": [
         {
           "alias": null,
           "args": null,
-          "kind": "ScalarField",
-          "name": "start",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "finish",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "concreteType": "StaffAssignment",
+          "concreteType": "Staff",
           "kind": "LinkedField",
-          "name": "assignments",
-          "plural": true,
+          "name": "staff",
+          "plural": false,
+          "selections": (v2/*: any*/),
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "concreteType": "TimeSlot",
+          "kind": "LinkedField",
+          "name": "timeslot",
+          "plural": false,
           "selections": [
             {
               "alias": null,
               "args": null,
-              "concreteType": "Staff",
-              "kind": "LinkedField",
-              "name": "staff",
-              "plural": false,
-              "selections": (v2/*: any*/),
+              "kind": "ScalarField",
+              "name": "start",
+              "storageKey": null
+            },
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "finish",
               "storageKey": null
             }
           ],
@@ -139,6 +139,6 @@ return {
 };
 })();
 
-(node as any).hash = "5a447ad77af141cdc5886813a764cecd";
+(node as any).hash = "6b83e460b56cf33c15fddbfffcc3cebe";
 
 export default node;

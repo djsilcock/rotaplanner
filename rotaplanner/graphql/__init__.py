@@ -4,9 +4,12 @@ import strawberry
 from strawberry.fastapi import GraphQLRouter, BaseContext
 from rotaplanner.database import Connection
 from strawberry.printer import print_schema
-from strawberry.relay import Node
+from strawberry.relay import Node, connection, ListConnection
 from enum import Enum
 from typing import Literal
+import random
+import string
+from collections import defaultdict
 
 
 import sqlite3
@@ -43,7 +46,7 @@ class Query:
 
     node: strawberry.relay.Node = strawberry.relay.node()
 
-    @strawberry.field
+    @connection(ListConnection[Activity])
     async def activities(
         self,
         info: strawberry.Info,
@@ -136,7 +139,7 @@ class Query:
             return DateRange(start="1970-01-01", end="1970-01-01")
         return DateRange(start=row[0], end=row[1])
 
-    @strawberry.field
+    @connection(ListConnection[StaffAssignment])
     async def assignments(
         self, info: strawberry.Info[CustomContext], start: str, end: str
     ) -> list[StaffAssignment]:
@@ -313,10 +316,73 @@ class Mutation:
     change_staff_assignment = strawberry.mutation(resolver=change_staff_assignment)
 
     @strawberry.mutation
-    def edit_activity(
-        self, info: strawberry.Info, activity: ActivityInput
+    async def edit_activity(
+        self, info: strawberry.Info[CustomContext], activity: ActivityInput
     ) -> Activity | None:
-        return None
+        print(f"Editing activity {activity}")
+        if activity.id is None:
+            raise ValueError("Activity ID is required for editing an activity")
+
+        activity_id = strawberry.relay.GlobalID.from_id(activity.id.value).node_id
+        print(f"Resolved activity ID: {activity_id}")
+
+        params = {}
+        date_diff = 0
+        if activity.location_id is not None:
+            location_id = (
+                strawberry.relay.GlobalID.from_id(activity.location_id.value).node_id
+                if activity.location_id.value is not None
+                else None
+            )
+            print(f"Resolved location ID: {location_id}")
+
+            params["location_id"] = location_id
+        if activity.activity_date is not None:
+            # get existing activity start time
+            original_activity = await info.context.data_loaders.activity_loader.load(
+                activity_id
+            )
+            from datetime import datetime, time
+
+            original_start_date = (await original_activity.activity_start(info)).date()
+            new_start_date = datetime.fromisoformat(activity.activity_date.value).date()
+            date_diff = (new_start_date - original_start_date).days
+            print(f"Date difference: {date_diff} days")
+
+        if activity.id is not None and (len(params) > 0 or date_diff != 0):
+            with info.context.connection as connection:
+                sql = f"UPDATE activities SET {', '.join(f'{k} = :{k}' for k in params.keys())} WHERE id = :activity_id"
+                params["activity_id"] = activity_id
+                print(f"Executing SQL: {sql} with params {params}")
+                connection.execute(sql, params)
+                if date_diff != 0:
+                    print(f"Adjusting timeslots by {date_diff} days")
+
+                    connection.execute(
+                        """
+                    UPDATE timeslots
+                    SET start = datetime(start, :date_diff || ' days'),
+                        finish = datetime(finish, :date_diff || ' days')
+                    WHERE activity_id = :activity_id
+                    
+                    """,
+                        {"date_diff": date_diff, "activity_id": activity_id},
+                    )
+                connection.commit()
+
+        elif activity.id is None:
+            print("Creating new activity")
+            with info.context.connection as connection:
+                sql = f"INSERT INTO activities ({', '.join(f'{k}' for k in params.keys())}) VALUES ({', '.join(f':{k}' for k in params.keys())}) RETURNING id"
+                print(f"Executing SQL: {sql} with params {params}")
+                result = connection.execute(sql, params)
+                activity_id = result.fetchone()[0]
+
+                connection.commit()
+        info.context.data_loaders.timeslots_loader.clear_all()
+        info.context.data_loaders.activity_loader.clear_all()
+
+        return await info.context.data_loaders.activity_loader.load(activity_id)
 
     move_activity = strawberry.mutation(resolver=move_activity)
 
