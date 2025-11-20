@@ -20,7 +20,7 @@ type ActivityConnection {
   """Pagination data for this connection"""
   pageInfo: PageInfo!
 
-  """Contains the nodes in this connection""" 
+  """Contains the nodes in this connection"""
   edges: [ActivityEdge!]!
 }
 

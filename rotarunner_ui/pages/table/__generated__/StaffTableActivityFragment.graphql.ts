@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<91df5902dbc49b1f4cc02cf4a30baed8>>
+ * @generated SignedSource<<eca1a1c6f3e42505e24aa2b1ae8db2ef>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,6 +11,7 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type StaffTableActivityFragment$data = {
+  readonly activityStart: string;
   readonly id: string;
   readonly location: {
     readonly id: string;
@@ -19,14 +20,15 @@ export type StaffTableActivityFragment$data = {
   readonly name: string;
   readonly timeslots: ReadonlyArray<{
     readonly assignments: ReadonlyArray<{
+      readonly id: string;
       readonly staff: {
         readonly id: string;
         readonly name: string;
       };
     }>;
     readonly finish: string;
+    readonly id: string;
     readonly start: string;
-    readonly " $fragmentSpreads": FragmentRefs<"StaffTableTimeslotFragment">;
   }>;
   readonly " $fragmentType": "StaffTableActivityFragment";
 };
@@ -65,6 +67,13 @@ return {
     {
       "alias": null,
       "args": null,
+      "kind": "ScalarField",
+      "name": "activityStart",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
       "concreteType": "Location",
       "kind": "LinkedField",
       "name": "location",
@@ -80,11 +89,7 @@ return {
       "name": "timeslots",
       "plural": true,
       "selections": [
-        {
-          "args": null,
-          "kind": "FragmentSpread",
-          "name": "StaffTableTimeslotFragment"
-        },
+        (v0/*: any*/),
         {
           "alias": null,
           "args": null,
@@ -107,6 +112,7 @@ return {
           "name": "assignments",
           "plural": true,
           "selections": [
+            (v0/*: any*/),
             {
               "alias": null,
               "args": null,
@@ -129,6 +135,6 @@ return {
 };
 })();
 
-(node as any).hash = "f19abb7417538f3481bcfea1fe847a8c";
+(node as any).hash = "5bec40985b71696e1298505e1dae6dc8";
 
 export default node;

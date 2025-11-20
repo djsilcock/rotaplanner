@@ -28,7 +28,7 @@ import {
 import type { tableConfigQuery as TableConfigQuery } from "./__generated__/tableConfigQuery.graphql";
 import type { tableActivitiesQuery } from "./__generated__/tableActivitiesQuery.graphql";
 
-import { create, groupBy } from "lodash";
+import { assign, create, groupBy } from "lodash";
 import { tableActivityFragment$key } from "./__generated__/tableActivityFragment.graphql";
 import {
   LocationTableQuery,
@@ -54,6 +54,7 @@ import {
   LocationTableActivityFragment$key,
 } from "./__generated__/LocationTableActivityFragment.graphql";
 import { StaffTableTimeslotFragment$key } from "./__generated__/StaffTableTimeslotFragment.graphql";
+import { StaffTableActivityFragment$key } from "./__generated__/StaffTableActivityFragment.graphql";
 
 const EditActivityModal = lazy(() => import("../edit_activity"));
 const epoch = new Date(2021, 0, 1);
@@ -84,9 +85,11 @@ const assignmentsByStaffQuery = graphql`
           ...StaffTableActivityFragment
           id
           activityStart
+          name
           timeslots {
             ...StaffTableTimeslotFragment
             start
+            finish
             id
             assignments {
               id
@@ -117,6 +120,52 @@ interface DraggableActivity {
   activity: LocationTableQuery$data["content"][0];
 }
 
+function* splitActivitiesIntoTimeslots(
+  activities: StaffTableQuery$data["content"]["edges"]
+) {
+  for (const activity of activities) {
+    const timeslots = activity.node.timeslots.map((timeslot) => ({
+      id: timeslot.id,
+      start: parseISO(timeslot.start),
+      end: parseISO(timeslot.finish),
+      assignments: timeslot.assignments,
+      activity: activity.node,
+    }));
+    yield* timeslots;
+  }
+}
+
+function* groupTimeslotsByActivity({ timeslots, prefix = "" }) {
+  let currentActivityId: string | null = null;
+  let currentActivityTimeslots: any[] = [];
+  let currentActivityTimeslotIDs: string[] = [prefix];
+
+  for (const timeslot of timeslots) {
+    if (timeslot.activity.id !== currentActivityId) {
+      if (currentActivityId) {
+        yield {
+          id: currentActivityTimeslotIDs.join("|"), //string id just to identify for dndzone
+          activityId: currentActivityId,
+          timeslots: currentActivityTimeslots,
+        };
+      }
+      currentActivityId = timeslot.activity.id;
+      currentActivityTimeslots = [];
+      currentActivityTimeslotIDs = [prefix];
+    }
+    currentActivityTimeslots.push(timeslot);
+    currentActivityTimeslotIDs.push(timeslot.id);
+  }
+  if (currentActivityId) {
+    yield {
+      id: currentActivityTimeslotIDs.join("|"), //string id just to identify for dndzone
+      activityId: currentActivityId,
+      timeslots: currentActivityTimeslots,
+    };
+  }
+}
+type TimeSlots =
+  StaffTableQuery$data["content"]["edges"][number]["node"]["timeslots"];
 interface ActivityCellProps {
   date: Date;
   y_axis_type: "staff" | "location";
@@ -135,53 +184,64 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
     id: assignment.id,
     activity: assignment,
     rowId: props.row_id ?? null,
-    resetSource: () => {
-      setItems(null);
-    },
   });
+  const makeTimeslotFilterByRowId = (rowId: string) => {
+    if (rowId == "unallocated") {
+      return (timeslots: TimeSlots) => timeslots;
+    }
+    return (timeslots: TimeSlots) => {
+      return timeslots.filter((ts) =>
+        ts.assignments.some((assignment) => assignment.staff.id == props.row_id)
+      );
+    };
+  };
   const items = createMemo(
     () =>
       _items() ??
-      Array.from(
-        (function* () {
-          for (const { node: activity } of props.data) {
-            if (activity.activityStart.slice(0, 10) !== isoDate()) {
-              continue;
-            }
-            for (const timeslot of activity.timeslots) {
-              if (props.row_id === "unallocated") {
-                //should actually be all timeslots as they could still be allocated to someone else
-                yield {
-                  id: timeslot.id,
-                  activity,
-                  timeslot,
-                  rowId: null,
-                  resetSource: () => {
-                    setItems(null);
-                  },
-                };
-                continue;
-              }
-
-              for (const assignment of timeslot.assignments) {
-                if (assignment.staff.id === props.row_id) {
-                  yield {
-                    id: assignment.id,
-                    activity,
-                    rowId: props.row_id,
-                    timeslot,
-                    staff: assignment.staff,
-                  };
-                }
-              }
-            }
+      props.data
+        .filter((edge) => edge.node.activityStart.startsWith(isoDate()))
+        .map(({ node }) => {
+          const { timeslots, ...rest } = node;
+          return {
+            node: {
+              timeslots: makeTimeslotFilterByRowId(props.row_id!)(timeslots),
+              ...rest,
+            },
+          };
+        })
+        .filter(
+          ({ node }) =>
+            props.row_id == "unallocated" ||
+            node.timeslots.some((ts) =>
+              ts.assignments.some((ass) => ass.staff.id == props.row_id)
+            )
+        )
+        .toSorted((a, b) => {
+          if (a.node.activityStart == b.node.activityStart) {
+            return a.node.name < b.node.name ? -1 : 1;
           }
-        })()
-      )
+          return a.node.activityStart < b.node.activityStart ? -1 : 1;
+        })
+
+        .map(mapAssignmentToDraggable)
   );
+
   const handleMove = ({ detail }) => {
-    setItems(detail.items);
+    setItems(
+      detail.items
+        .filter((act) => act.activity)
+        .toSorted((a, b) => {
+          if (a.activity.id === b.activity.id) {
+            return a.timeslot.start < b.timeslot.start ? -1 : 1;
+          }
+          if (a.activity.activityStart == b.activity.activityStart) {
+            return a.activity.name < b.activity.name ? -1 : 1;
+          }
+          return a.activity.activityStart < b.activity.activityStart ? -1 : 1;
+        })
+    );
   };
+
   const [editActivity] = createMutation(graphql`
     mutation StaffTableMoveMutation($activity: ActivityInput!) {
       editActivity(activity: $activity) {
@@ -255,21 +315,14 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
         data-yaxis={props.i}
         data-row={props.row_id}
         id={`td-${isoDate()}-${props.row_id}`}
-        use:dndzone={{
-          items,
-          flipDurationMs: 0,
-          type:
-            props.y_axis_type === "staff" ? isoDate() : "location-activities",
-        }}
-        on:consider={handleMove}
-        on:finalize={handleFinalMove}
       >
         <For each={items()} fallback={<div>&nbsp;</div>}>
           {(act) => (
             <>
-              <Timeslot
+              <Activity
                 activity_def={act.activity}
                 timeslot={act.timeslot}
+                seenBefore={act.seenBefore}
                 staff_or_location={props.row_id}
                 show_staff={true}
               />
@@ -285,16 +338,18 @@ const activityFragment = graphql`
   fragment StaffTableActivityFragment on Activity {
     id
     name
+    activityStart
     location {
       id
       name
     }
 
     timeslots {
-      ...StaffTableTimeslotFragment
+      id
       start
       finish
       assignments {
+        id
         staff {
           id
           name
@@ -317,7 +372,7 @@ const timeslotFragment = graphql`
     }
   }
 `;
-
+let draggedAssignments: string[] = [];
 /**
  * Activity component to render an activity.
  * @param {Object} props - The properties passed to the component.
@@ -326,38 +381,65 @@ const timeslotFragment = graphql`
  * @param {string|undefined} [props.staff_or_location=null] - The staff or location data.
  * @returns {JSX.Element} - The rendered Timeslot component.
  */
-export function Timeslot(props): JSX.Element {
-  const activityData = createFragment<LocationTableActivityFragment$key>(
+export function Activity(props): JSX.Element {
+  const data = createFragment<StaffTableActivityFragment$key>(
     activityFragment,
     () => props.activity_def
   );
-  const timeslotData = createFragment<StaffTableTimeslotFragment$key>(
-    timeslotFragment,
-    () => props.timeslot
-  );
-  createEffect(() => {
-    console.log("Rendering Timeslot for activity:", activityData());
-    console.log("Timeslot data:", timeslotData());
+  const assignmentsHere = createMemo(() => {
+    if (props.staff_or_location == "unallocated") {
+      return data()!.timeslots.flatMap((ts) => ts.id);
+    }
+    return data()!.timeslots.flatMap((ts) =>
+      ts.assignments
+        .filter((assignment) => assignment.staff.id == props.staff_or_location)
+        .map((assignment) => assignment.id)
+    );
   });
   return (
     <div
+      draggable="true"
       class={styles.activity}
-      data-activity-id={activityData()!.id}
-      id={`activity-${activityData()!.id}`}
+      data-activity-id={data()!.id}
+      id={`activity-${data()!.id}`}
+      ondragstart={(e) => {
+        draggedAssignments = data()!.timeslots.flatMap((ts) =>
+          ts.assignments.map((assignment) => assignment.id)
+        );
+        console.log(
+          "Drag started for activity:",
+          data()!.id,
+          "with assignments:",
+          assignmentsHere(),
+          "on row_id:",
+          props.staff_or_location
+        );
+      }}
     >
-      <div class={styles.activityName}>{activityData()?.name}</div>
-      <div class={styles.activityTime}>
-        {timeslotData()?.start.slice(11, 16)} -{" "}
-        {timeslotData()?.finish.slice(11, 16)}
-      </div>
+      <div class={styles.activityName}>{data()!.name}</div>
+
       <hr />
       <div>
-        <For each={timeslotData()?.assignments}>
-          {(assignment) => (
-            <div>
-              <Show when={assignment.staff.id !== props.staff_or_location}>
-                <div class={styles.assignedStaff}>{assignment.staff.name}</div>
-              </Show>
+        <For each={data()!.timeslots}>
+          {(timeslot) => (
+            <div draggable="true">
+              <div class={styles.activityTime}>
+                {timeslot.start.slice(11, 16)} - {timeslot.finish.slice(11, 16)}
+                {timeslot.id}
+              </div>
+              <For each={timeslot.assignments}>
+                {(assignment) => (
+                  <div>
+                    <Show
+                      when={assignment.staff.id !== props.staff_or_location}
+                    >
+                      <div class={styles.assignedStaff}>
+                        {assignment.staff.name}
+                      </div>
+                    </Show>
+                  </div>
+                )}
+              </For>
             </div>
           )}
         </For>

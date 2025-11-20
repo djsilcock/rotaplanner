@@ -23,7 +23,7 @@ def adapt_uuid(value: uuid.UUID):
 
 
 def adapt_timestamp(value: datetime.datetime):
-    return value.isoformat()
+    return value.isoformat(sep=" ")
 
 
 def convert_timestamp(value: bytes):

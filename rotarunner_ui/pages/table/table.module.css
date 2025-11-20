@@ -78,6 +78,20 @@
   border: 1px solid burlywood;
   border-radius: 2px;
   cursor: pointer;
+  touch-action: none;
+  &[data-dnd-is-dragging="true"] {
+    opacity: 0.5;
+    cursor: grabbing;
+  }
+  &[data-dnd-can-drop="true"] {
+    border: 2px solid green;
+  }
+  &[data-dnd-can-drop="false"] {
+    border: 2px solid red;
+  }
+}
+.hasTitle {
+  margin-top: 0.2em;
 }
 .activity:hover {
   box-shadow: 1px 1px;
@@ -97,7 +111,6 @@
   padding-bottom: 1em;
 }
 .activityCell:hover {
-  border: 1px solid lawngreen;
   background-color: azure;
 }
 .activityCell.dragoverValid {

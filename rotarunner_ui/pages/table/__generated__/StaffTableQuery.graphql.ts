@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2ede6cc75c3c31cadbb48ae966180c3a>>
+ * @generated SignedSource<<0e2962e0b5c626ba6c57ed4d96300016>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,6 +21,7 @@ export type StaffTableQuery$data = {
       readonly node: {
         readonly activityStart: string;
         readonly id: string;
+        readonly name: string;
         readonly timeslots: ReadonlyArray<{
           readonly assignments: ReadonlyArray<{
             readonly id: string;
@@ -28,6 +29,7 @@ export type StaffTableQuery$data = {
               readonly id: string;
             };
           }>;
+          readonly finish: string;
           readonly id: string;
           readonly start: string;
           readonly " $fragmentSpreads": FragmentRefs<"StaffTableTimeslotFragment">;
@@ -135,6 +137,13 @@ v9 = {
   "storageKey": null
 },
 v10 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "finish",
+  "storageKey": null
+},
+v11 = {
   "kind": "ClientExtension",
   "selections": [
     {
@@ -189,6 +198,7 @@ return {
                   },
                   (v4/*: any*/),
                   (v9/*: any*/),
+                  (v5/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -203,6 +213,7 @@ return {
                         "name": "StaffTableTimeslotFragment"
                       },
                       (v2/*: any*/),
+                      (v10/*: any*/),
                       (v4/*: any*/),
                       {
                         "alias": null,
@@ -237,7 +248,7 @@ return {
             ],
             "storageKey": null
           },
-          (v10/*: any*/)
+          (v11/*: any*/)
         ],
         "storageKey": null
       }
@@ -282,6 +293,7 @@ return {
                 "selections": [
                   (v4/*: any*/),
                   (v5/*: any*/),
+                  (v9/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -302,13 +314,7 @@ return {
                     "selections": [
                       (v4/*: any*/),
                       (v2/*: any*/),
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "finish",
-                        "storageKey": null
-                      },
+                      (v10/*: any*/),
                       {
                         "alias": null,
                         "args": null,
@@ -333,31 +339,30 @@ return {
                       }
                     ],
                     "storageKey": null
-                  },
-                  (v9/*: any*/)
+                  }
                 ],
                 "storageKey": null
               }
             ],
             "storageKey": null
           },
-          (v10/*: any*/)
+          (v11/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "75093fc6414b979cc663984b10bc2307",
+    "cacheID": "e669bae1137f86aabf5894be83367914",
     "id": null,
     "metadata": {},
     "name": "StaffTableQuery",
     "operationKind": "query",
-    "text": "query StaffTableQuery(\n  $start: String!\n  $end: String!\n) {\n  daterange {\n    start\n    end\n  }\n  rows: staff {\n    id\n    name\n  }\n  content: activities(startDate: $start, endDate: $end) {\n    edges {\n      node {\n        ...StaffTableActivityFragment\n        id\n        activityStart\n        timeslots {\n          ...StaffTableTimeslotFragment\n          start\n          id\n          assignments {\n            id\n            staff {\n              id\n            }\n          }\n        }\n      }\n    }\n  }\n}\n\nfragment StaffTableActivityFragment on Activity {\n  id\n  name\n  location {\n    id\n    name\n  }\n  timeslots {\n    ...StaffTableTimeslotFragment\n    start\n    finish\n    assignments {\n      staff {\n        id\n        name\n      }\n      id\n    }\n    id\n  }\n}\n\nfragment StaffTableTimeslotFragment on TimeSlot {\n  id\n  start\n  finish\n  assignments {\n    id\n    staff {\n      id\n      name\n    }\n  }\n}\n"
+    "text": "query StaffTableQuery(\n  $start: String!\n  $end: String!\n) {\n  daterange {\n    start\n    end\n  }\n  rows: staff {\n    id\n    name\n  }\n  content: activities(startDate: $start, endDate: $end) {\n    edges {\n      node {\n        ...StaffTableActivityFragment\n        id\n        activityStart\n        name\n        timeslots {\n          ...StaffTableTimeslotFragment\n          start\n          finish\n          id\n          assignments {\n            id\n            staff {\n              id\n            }\n          }\n        }\n      }\n    }\n  }\n}\n\nfragment StaffTableActivityFragment on Activity {\n  id\n  name\n  activityStart\n  location {\n    id\n    name\n  }\n  timeslots {\n    id\n    start\n    finish\n    assignments {\n      id\n      staff {\n        id\n        name\n      }\n    }\n  }\n}\n\nfragment StaffTableTimeslotFragment on TimeSlot {\n  id\n  start\n  finish\n  assignments {\n    id\n    staff {\n      id\n      name\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e188f3a3f28cf63cf74151a7abdd429a";
+(node as any).hash = "f19bf9a7ddeae096b69a62c9300246d8";
 
 export default node;
