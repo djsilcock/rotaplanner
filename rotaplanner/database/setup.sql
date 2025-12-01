@@ -52,11 +52,88 @@ CREATE TABLE IF NOT EXISTS activities (
     type TEXT,
     template_id UUID REFERENCES activities(id),
     name TEXT,
-    location_id UUID REFERENCES locations(id),
-    recurrence_rules TEXTJSON,
-    requirements TEXTJSON
+    location_id UUID REFERENCES locations(id) ON DELETE SET NULL
 );
 
+CREATE TABLE IF NOT EXISTS requirement_groups (
+    id INTEGER PRIMARY KEY,
+    parent_group_id INTEGER REFERENCES requirement_groups(id) ON DELETE CASCADE,
+    activity_id UUID REFERENCES activities(id) ON DELETE CASCADE,
+    group_type TEXT
+);
+
+CREATE TABLE IF NOT EXISTS requirements (
+    id INTEGER PRIMARY KEY,
+    group_id UUID REFERENCES requirement_groups(id) ON DELETE CASCADE,
+    quantity INTEGER,
+    min_experience INTEGER,
+    max_experience INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS recurrence_rule_groups (
+    id INTEGER PRIMARY KEY,
+    activity_id UUID REFERENCES activities(id) ON DELETE CASCADE,
+    parent_group_id INTEGER REFERENCES recurrence_rule_groups(id) ON DELETE CASCADE,
+    group_type TEXT
+);
+
+CREATE TABLE IF NOT EXISTS daily_recurrence_rules (
+    id INTEGER PRIMARY KEY,
+    group_id INTEGER REFERENCES recurrence_rule_groups(id) ON DELETE CASCADE,
+    start_date TIMESTAMP,
+    end_date TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS weekly_recurrence_rules (
+    id INTEGER PRIMARY KEY,
+    group_id INTEGER REFERENCES recurrence_rule_groups(id) ON DELETE CASCADE,
+    start_date TIMESTAMP,
+    end_date TIMESTAMP,
+    days_of_week TEXT,
+    interval INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS monthly_recurrence_rules (
+    id INTEGER PRIMARY KEY,
+    group_id INTEGER REFERENCES recurrence_rule_groups(id) ON DELETE CASCADE,
+    start_date TIMESTAMP,
+    end_date TIMESTAMP,
+    day_of_month INTEGER,
+    interval INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS week_in_month_recurrence_rules (
+    id INTEGER PRIMARY KEY,
+    group_id INTEGER REFERENCES recurrence_rule_groups(id) ON DELETE CASCADE,
+    start_date TIMESTAMP,
+    end_date TIMESTAMP,
+    week_of_month INTEGER,
+    day_of_week INTEGER,
+    interval INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS tagged_date_recurrence_rules (
+    id INTEGER PRIMARY KEY,
+    group_id INTEGER REFERENCES recurrence_rule_groups(id) ON DELETE CASCADE,
+    date_tag_id UUID REFERENCES activity_tags(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS date_tags (
+    id UUID PRIMARY KEY,
+    name TEXT
+);
+
+CREATE TABLE IF NOT EXISTS tagged_dates (
+    id INTEGER PRIMARY KEY,
+    date DATE,
+    name TEXT
+);
+
+CREATE TABLE IF NOT EXISTS tagged_date_assocs (
+    tagged_date_id INTEGER REFERENCES tagged_dates(id) ON DELETE CASCADE,
+    activity_id UUID REFERENCES activities(id) ON DELETE CASCADE,
+    PRIMARY KEY (tagged_date_id, activity_id)
+);
 
 CREATE TABLE IF NOT EXISTS requirement_skills (
     requirement_id INTEGER REFERENCES requirements(id) ON DELETE CASCADE,

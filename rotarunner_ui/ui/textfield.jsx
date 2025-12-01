@@ -17,15 +17,19 @@ import { createMemo, For, Show } from "solid-js";
  * @returns {JSX.Element} The rendered TextField component.
  */
 export function TextField(props) {
+  const [rootProps, inputProps] = splitProps(
+    props,
+    ["name", "value", "required", "disabled"],
+    ["placeholder", "ref", "onInput", "onChange", "onBlur", "type"]
+  );
   return (
     <KTextField
+      {...rootProps}
       class={tfstyles.root}
-      value={props.value}
-      onChange={props.setValue}
       validationState={props.errorMessage ? "invalid" : "valid"}
     >
       <KTextField.Label class={tfstyles.label}>{props.label}</KTextField.Label>
-      <KTextField.Input class={tfstyles.input} type={props.type} />
+      <KTextField.Input class={tfstyles.input} {...inputProps} />
       <KTextField.ErrorMessage>{props.errorMessage}</KTextField.ErrorMessage>
       <KTextField.Description>{props.description}</KTextField.Description>
     </KTextField>
@@ -87,6 +91,7 @@ import { Combobox as KCombobox } from "@kobalte/core/combobox";
  * @param {Object} props - The properties object.
  * @param {string} props.value - The current value of the combobox.
  * @param {string} props.label - The label text for the combobox.
+ * @param {string} [props.errorMessage] - The error message to display.
  * @param {function} props.onChange - Callback function to update the value.
  * @param {Array} props.options - The options to display in the dropdown.
  * @param {string} props.placeholder - The placeholder text for the input.
@@ -114,6 +119,7 @@ export function Combobox(props) {
       optionLabel="label"
       optionDisabled="disabled"
       multiple={props.multiple}
+      validationState={props.errorMessage ? "invalid" : "valid"}
       itemComponent={(props) => {
         console.log(props);
 
@@ -152,7 +158,9 @@ export function Combobox(props) {
           </>
         )}
       </KCombobox.Control>
-
+      <KCombobox.ErrorMessage class={cbstyles.errorMessage}>
+        {props.errorMessage}
+      </KCombobox.ErrorMessage>
       <KCombobox.Content class={cbstyles.content}>
         <KCombobox.Listbox class={cbstyles.listbox} />
       </KCombobox.Content>

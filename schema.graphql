@@ -6,13 +6,12 @@ type Activity implements Node {
   name: String!
   type: String!
   templateId: String!
-  recurrenceRules: String!
-  requirements: String!
   activityStart: String!
   activityFinish: String!
   timeslots: [TimeSlot!]!
   location: Location
   assignments: [StaffAssignment!]!
+  tags: [ActivityTag!]!
 }
 
 """A connection to a list of items."""
@@ -43,6 +42,11 @@ input ActivityInput {
   recurrenceRules: RecurrenceGroup
   requirements: [RequirementInput!]
   timeslots: [TimeSlotInput!]
+}
+
+type ActivityTag {
+  id: ID!
+  name: String!
 }
 
 type AssignmentFlags {
@@ -148,6 +152,7 @@ type Query {
     """Returns the items in the list that come after the specified cursor."""
     last: Int = null
   ): StaffAssignmentConnection!
+  activityTags: [ActivityTag!]!
 }
 
 input RecurrenceGroup @oneOf {

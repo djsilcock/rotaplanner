@@ -10,10 +10,13 @@ import {
 } from "solid-js";
 import { Button } from "@suid/material";
 import { Dialog, useDialogContext } from "../ui/textfield.jsx";
-import { createForm } from "@tanstack/solid-form";
+import { SelectField, MultiSelect, DateField, NumberField } from "./ui.jsx";
+import { createForm, FormStore } from "@modular-forms/solid";
 import styles from "./edit_activity_template.module.css";
 import { createStore } from "solid-js/store";
 import { useAppForm, FormRow } from "./ui";
+import { createLazyLoadQuery } from "solid-relay";
+import { graphql } from "relay-runtime";
 
 const ordinal = (index) => {
   const ordinals = ["th", "st", "nd", "rd"];
@@ -602,87 +605,60 @@ function RequirementDescription(props) {
     </div>
   );
 }
+
 function RequirementForm(props) {
-  const form = useAppForm(() => ({
-    defaultValues: props.requirementSpec,
-    onSubmit: (values) => {
-      props.onSubmit(values);
-    },
-  }));
   const dialogContext = useDialogContext();
+  const [form, { Form }] = createForm({
+    defaultValues: props.requirementSpec || {
+      skills: [],
+      required: 1,
+      optional: 0,
+      attendance: 100,
+      geofence: "immediate",
+    },
+  });
   return (
     <div>
       <pre>*{JSON.stringify(props.requirementSpec)}*</pre>
-      <form.AppField name={"skills"}>
-        {(field) => {
-          return (
-            <FormRow label="Skills">
-              <field.SelectField
-                multiple
-                label="Skills"
-                options={[
-                  { value: "iac", label: "IAC" },
-                  {
-                    value: "listrunner",
-                    label: "Listrunner",
-                  },
-                  { value: "regional", label: "Regional" },
-                  {
-                    value: "paediatric",
-                    label: "Paediatric",
-                  },
-                ]}
-              />
-            </FormRow>
-          );
-        }}
-      </form.AppField>
-      <form.AppField name={"required"}>
-        {(field) => {
-          return (
-            <FormRow label="Required">
-              <field.NumberField min={0} label="Required" />
-            </FormRow>
-          );
-        }}
-      </form.AppField>
 
-      <FormRow label="Optional">
-        <form.AppField name={"optional"}>
-          {(field) => {
-            return (
-              <FormRow label="Optional">
-                <field.NumberField min={0} label="Optional" />
-              </FormRow>
-            );
-          }}
-        </form.AppField>
-      </FormRow>
-      <FormRow label="Attendance">
-        <form.AppField name={"attendance"}>
-          {(field) => {
-            return (
-              <FormRow label="Attendance">
-                <field.NumberField min={0} max={100} label="Attendance" />
-              </FormRow>
-            );
-          }}
-        </form.AppField>
-      </FormRow>
-      <FormRow label="Geofence">
-        <form.AppField name={"geofence"}>
-          {(field) => {
-            return (
-              <FormRow label="Geofence">
-                <field.SelectField
-                  label="Geofence"
-                  options={["Immediate", "Local", "Remote", "Distant"]}
-                />
-              </FormRow>
-            );
-          }}
-        </form.AppField>
-      </FormRow>
+      <SelectField
+        name="skills"
+        form={form}
+        multiple
+        label="Skills"
+        options={[
+          { value: "iac", label: "IAC" },
+          {
+            value: "listrunner",
+            label: "Listrunner",
+          },
+          { value: "regional", label: "Regional" },
+          {
+            value: "paediatric",
+            label: "Paediatric",
+          },
+        ]}
+      />
+
+      <NumberField min={0} form={form} name="required" label="Required" />
+
+      <NumberField min={0} form={form} name="optional" label="Optional" />
+
+      <NumberField
+        min={0}
+        max={100}
+        form={form}
+        name="attendance"
+        label="Attendance"
+      />
+
+      <field.SelectField
+        form={form}
+        name="geofence"
+        label="Geofence"
+        options={["Immediate", "Local", "Remote", "Distant"]}
+      />
+
       <Button
         onClick={() => {
           form.handleSubmit().then(() => dialogContext.close());
@@ -694,33 +670,52 @@ function RequirementForm(props) {
     </div>
   );
 }
+
 function EditActivity(props) {
-  const [activityForm] = createResource(props.activity, async (id) => {
-    console.log("Loading activity", id);
-    await new Promise((r) => setTimeout(r, 500));
-    console.log("Loaded activity", id);
-    return {
-      activity_def: {
-        activity_name: "Loaded activity",
-        activity_start: "2024-01-01T12:00:00",
-        activity_finish: "2024-01-01T14:00:00",
-        activity_tags: ["URO"],
-        location: "",
-        requirements: [],
-      },
-      activity_tags: [
-        { value: "URO", label: "Urology" },
-        { value: "ENT", label: "ENT" },
-      ],
-      locations: [
-        { value: "Theatre 1", label: "Theatre 1" },
-        { value: "Theatre 2", label: "Theatre 2" },
-        { value: "Theatre 3", label: "Theatre 3" },
-      ],
-    };
-  });
+  const activityForm = createLazyLoadQuery(
+    graphql`
+      query editActivityActivityQuery($id: ID!) {
+        node(id: $id) {
+          ... on Activity {
+            name
+            id
+            activityStart
+            activityFinish
+            timeslots {
+              start
+              finish
+              assignments {
+                staff {
+                  id
+                  name
+                }
+              }
+            }
+            location {
+              id
+              name
+            }
+            tags {
+              id
+              name
+            }
+          }
+        }
+        activityTags {
+          id
+          name
+        }
+        locations {
+          id
+          name
+        }
+      }
+    `,
+    () => ({ id: props.activity })
+  );
+
   const form = useAppForm(() => ({
-    defaultValues: activityForm()?.activity_def || {
+    defaultValues: activityForm()?.node || {
       activity_name: "",
       activity_date: "",
       activity_start: "",
@@ -740,26 +735,25 @@ function EditActivity(props) {
       title={props.activity?.includes("--") ? "New Activity" : "Edit Activity"}
       onClose={props.onClose}
     >
-      {<pre>*{JSON.stringify(activityForm())}*</pre>}
       <div id="template-editor-settings">
         <FormRow>
-          <form.AppField name="activity_name">
+          <form.AppField name="name">
             {(field) => <field.TextField label="Activity Name" />}
           </form.AppField>
         </FormRow>
         <FormRow>
-          <form.AppField name="activity_start">
+          <form.AppField name="activityStart">
             {(field) => <field.DateTimeField label="Activity Starts" />}
           </form.AppField>
         </FormRow>
 
         <FormRow>
-          <form.AppField name="activity_finish">
+          <form.AppField name="activityFinish">
             {(field) => <field.DateTimeField label="Activity Finishes" />}
           </form.AppField>
         </FormRow>
         <FormRow label="Tags">
-          <form.AppField name="activity_tags">
+          <form.AppField name="activityTags">
             {(field) => (
               <field.SelectField
                 label="Activity Tags"

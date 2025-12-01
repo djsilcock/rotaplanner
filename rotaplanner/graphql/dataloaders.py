@@ -1,5 +1,6 @@
 from strawberry.dataloader import DataLoader
 from .object_types import (
+    ActivityTag,
     Location,
     Staff,
     Activity,
@@ -34,6 +35,9 @@ class DataLoaders:
         )
         self.assignments_for_activity_loader = DataLoader(
             self.batch_get_assignments_for_activity
+        )
+        self.activity_tags_for_activity_loader = DataLoader(
+            self.batch_get_tags_for_activity
         )
 
     async def batch_get_assignments_for_activity(self, activity_ids):
@@ -197,3 +201,23 @@ class DataLoaders:
             timeslots_for_activity.get(activity_id, set())
             for activity_id in activity_ids
         ]
+
+    async def batch_get_tags_for_activity(self, activity_ids):
+        print(f"Batch loading tags for {len(activity_ids)} activity IDs")
+
+        cursor = self.connection.execute(
+            f"""SELECT 
+                activity_tag_assocs.activity_id,
+                activity_tags.id,
+                activity_tags.name
+            FROM activity_tag_assocs
+            JOIN activity_tags ON activity_tags.id=activity_tag_assocs.tag_id
+            WHERE activity_tag_assocs.activity_id IN ({','.join('?' for _ in activity_ids)})""",
+            activity_ids,
+        )
+        tags_for_activity = {}
+        for row in cursor.fetchall():
+            tags_for_activity.setdefault(row["activity_id"], []).append(
+                ActivityTag(id=row["id"], name=row["name"])
+            )
+        return [tags_for_activity.get(activity_id, []) for activity_id in activity_ids]

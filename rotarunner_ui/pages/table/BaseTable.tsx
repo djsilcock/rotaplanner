@@ -23,11 +23,7 @@ import {
   createLazyLoadQuery,
   createMutation,
 } from "solid-relay";
-import type { tableConfigQuery as TableConfigQuery } from "./__generated__/tableConfigQuery.graphql";
-import type { tableActivitiesQuery } from "./__generated__/tableActivitiesQuery.graphql";
 
-import { groupBy } from "lodash";
-import { tableActivityFragment$key } from "./__generated__/tableActivityFragment.graphql";
 import {
   LocationTableQuery,
   LocationTableQuery$data,
@@ -63,18 +59,16 @@ export function toOrdinal(date: Date): number {
  * @returns JSX.Element
  * TableRow component to render a single row in the table.
  */
-interface TableRowProps {
+interface TableRowProps<D> {
   row_id: string;
   row_name: string;
   i?: number;
   dates: Date[];
-  data:
-    | LocationTableQuery$data["content"]
-    | LocationTableStaffTableQuery$data["content"];
+  data: D;
   cellComponent?: (props: any) => JSX.Element;
 }
 
-function TableRow(props: TableRowProps): JSX.Element {
+function TableRow<D>(props: TableRowProps<D>): JSX.Element {
   return (
     <tr>
       <td class={styles.rowHeader}>{props.row_name}</td>
@@ -97,7 +91,12 @@ function TableRow(props: TableRowProps): JSX.Element {
 function EditActivityWrapper(props: { children?: JSX.Element }) {
   const [editActivity, setEditActivity] = createSignal<string | null>(null);
   return (
-    <div on:editactivity={(e) => setEditActivity(e.detail.activityId)}>
+    <div
+      on:editactivity={(e) => {
+        console.log(e);
+        setEditActivity(e.detail.activityId);
+      }}
+    >
       <Show when={editActivity()} fallback={<div></div>}>
         <EditActivityModal
           activity={editActivity()}
@@ -108,14 +107,20 @@ function EditActivityWrapper(props: { children?: JSX.Element }) {
     </div>
   );
 }
+export interface ActivityCellProps<D> {
+  date: Date;
+  row_id?: string;
+  i?: number;
+  data: D;
+}
 
-interface TableProps {
+interface TableProps<D> {
   children?: JSX.Element;
-  cellComponent?: (props: ActivityCellProps) => JSX.Element;
+  cellComponent?: Component<ActivityCellProps<D>>;
   query?: GraphQLTaggedNode;
 }
 
-function BaseTable(props: TableProps): JSX.Element {
+function BaseTable<D>(props: TableProps<D>): JSX.Element {
   const tableQueryResult = createLazyLoadQuery<
     LocationTableQuery | LocationTableStaffTableQuery
   >(() => props.query!, { start: "2021-01-01", end: "2100-01-01" });

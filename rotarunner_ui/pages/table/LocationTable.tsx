@@ -6,6 +6,8 @@ import {
   Component,
   lazy,
   createSignal,
+  createContext,
+  useContext,
 } from "solid-js";
 import { differenceInCalendarDays } from "date-fns";
 
@@ -17,10 +19,14 @@ import { createFragment, createMutation } from "solid-relay";
 import { LocationTableQuery$data } from "./__generated__/LocationTableQuery.graphql";
 
 import BaseTable from "./BaseTable";
+import { ActivityCellProps } from "./BaseTable";
 
 import { LocationTableActivityFragment$key } from "./__generated__/LocationTableActivityFragment.graphql";
 import DragDrop from "../../dragdrop";
+import { ReactiveSet } from "@solid-primitives/set";
 import { set } from "lodash";
+import { R } from "../../dist/assets/index-Di3oCNSn";
+import D from "../../dist/assets/activity_templates-chdWMDqn";
 const EditActivityModal = lazy(() => import("../edit_activity"));
 const epoch = new Date(2021, 0, 1);
 
@@ -33,7 +39,6 @@ export function toOrdinal(date: Date): number {
   return differenceInCalendarDays(date, epoch);
 }
 
-const dragdrop = new DragDrop();
 const activitiesByLocationQuery = graphql`
   query LocationTableQuery($start: String!, $end: String!) {
     daterange {
@@ -58,38 +63,85 @@ const activitiesByLocationQuery = graphql`
     }
   }
 `;
+const DragDropContext = createContext<DragDrop>();
+const SelectionContext = createContext<ReactiveSet<string>>();
 
 function LocationTable() {
+  const dragdrop = new DragDrop();
+  const selection = new ReactiveSet<string>();
   return (
-    <>
-      <BaseTable
-        query={activitiesByLocationQuery as unknown as GraphQLTaggedNode}
-        cellComponent={ActivityCell}
-      />
-    </>
+    <div
+      onDblClick={(e) => {
+        if (e.target?.closest(".location-table-activity")) {
+          const activityId = (
+            e.target?.closest(".location-table-activity") as HTMLElement
+          )?.dataset.activityId;
+          if (!activityId) return;
+          alert(`editing ${activityId}`);
+          e.target.dispatchEvent(
+            new CustomEvent("editactivity", {
+              bubbles: true,
+              detail: { activityId },
+            })
+          );
+        } else if (e.target?.closest("td")) {
+          const cell = e.target?.closest("td") as HTMLElement;
+          const date = cell.dataset.date;
+          const row = cell.dataset.row;
+          alert(`Creating new activity on ${date} for ${row}`);
+          e.target.dispatchEvent(
+            new CustomEvent("editactivity", {
+              bubbles: true,
+              detail: { activityId: `${date}--${row}` },
+            })
+          );
+        }
+      }}
+      onClick={(e) => {
+        if (e.target?.closest(".location-table-activity")) {
+          const activityId = (
+            e.target?.closest(".location-table-activity") as HTMLElement
+          )?.dataset.activityId;
+          if (!activityId) return;
+          if (e.shiftKey) {
+            if (selection.has(activityId)) {
+              selection.delete(activityId);
+            } else {
+              selection.add(activityId);
+            }
+          } else if (selection.size == 1 && selection.has(activityId)) {
+            selection.clear();
+          } else {
+            selection.clear();
+            selection.add(activityId);
+          }
+        }
+      }}
+    >
+      <DragDropContext.Provider value={dragdrop}>
+        <SelectionContext.Provider value={selection}>
+          <BaseTable<
+            LocationTableQuery$data["content"]["edges"] | null | undefined
+          >
+            query={activitiesByLocationQuery as unknown as GraphQLTaggedNode}
+            cellComponent={ActivityCell}
+          />
+        </SelectionContext.Provider>
+      </DragDropContext.Provider>
+    </div>
   );
 }
 
-let draggedItemType: string | null = null;
-let draggedItemId: string | null = null;
-
-function activityDraggedOverCell(event: DragEvent) {
-  if (draggedItemType !== "activity") {
-    return;
-  }
-  event.preventDefault();
-}
-
-interface ActivityCellProps {
-  date: Date;
-  y_axis_type: "staff" | "location";
-  row_id?: string;
-  i?: number;
-  data: LocationTableQuery$data["content"]["edges"] | null | undefined;
-}
-export const ActivityCell: Component<ActivityCellProps> = (props) => {
+export const ActivityCell: Component<
+  ActivityCellProps<
+    LocationTableQuery$data["content"]["edges"] | null | undefined
+  >
+> = (props) => {
   const isoDate = () => props.date.toISOString().slice(0, 10);
-
+  const dragdrop = useContext(DragDropContext);
+  if (!dragdrop) {
+    throw new Error("DragDropContext not found");
+  }
   const items = createMemo(
     () =>
       props.data?.filter(({ node: activity }) => {
@@ -135,7 +187,13 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
     dragdrop.registerDroptarget(el, { onDrop: handleDrop });
   };
   return (
-    <td data-cell-id={`${isoDate()}--${props.row_id}`} ref={registerDroptarget}>
+    <td
+      data-cell-id={`${isoDate()}--${props.row_id}`}
+      ref={registerDroptarget}
+      data-date={isoDate()}
+      data-yaxis={props.i}
+      data-row={props.row_id}
+    >
       <div
         classList={{
           [styles.activityCell]: !!props.row_id,
@@ -203,6 +261,14 @@ export function Activity(props: ActivityProps): JSX.Element {
     activityFragment,
     () => props.activity_def
   );
+  const selection = useContext(SelectionContext);
+  const dragdrop = useContext(DragDropContext);
+  if (!dragdrop) {
+    throw new Error("DragDropContext not found");
+  }
+  if (!selection) {
+    throw new Error("SelectionContext not found");
+  }
   const registerDraggable = (el, info) => {
     dragdrop.registerDraggable(el, info);
   };
@@ -213,7 +279,12 @@ export function Activity(props: ActivityProps): JSX.Element {
         setIsCurrentDrag: setIsDragging,
         data: data(),
       }}
-      classList={{ [styles.activity]: true, [styles.dragging]: isDragging() }}
+      classList={{
+        ["location-table-activity"]: true,
+        [styles.activity]: true,
+        [styles.dragging]: isDragging(),
+        [styles.selected]: selection.has(data()!.id),
+      }}
       data-activity-id={data()!.id}
       id={`activity-${data()!.id}`}
     >

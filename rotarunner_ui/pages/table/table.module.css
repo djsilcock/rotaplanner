@@ -79,6 +79,7 @@
   border-radius: 2px;
   cursor: pointer;
   touch-action: none;
+  user-select: none;
   &[data-dnd-is-dragging="true"] {
     opacity: 0.5;
     cursor: grabbing;

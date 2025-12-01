@@ -1,8 +1,10 @@
-import { splitProps } from "solid-js";
+import { mergeProps, splitProps } from "solid-js";
 
 import { Show } from "solid-js/web";
 
 import { createFormHook, createFormHookContexts } from "@tanstack/solid-form";
+
+import { Field } from "@modular-forms/solid";
 
 import * as fields from "../ui/textfield.jsx";
 export function TextField(props) {
@@ -25,37 +27,11 @@ export function NumberField(props) {
 }
 
 export function CheckboxField(props) {
-  const field = useFieldContext();
-  const isChecked = () => {
-    if (Array.isArray(field().state.value)) {
-      return field().state.value.includes(props.value);
-    }
-    if (typeof field().state.value == "object") {
-      return field().state.value[props.value] === true;
-    }
-    return field().state.value === (props.value ?? true);
-  };
-  const handleChange = (checked) => {
-    if (Array.isArray(field().state.value)) {
-      field().handleChange(
-        checked
-          ? [...field().state.value, props.value]
-          : field().state.value.filter((v) => v !== props.value)
-      );
-    } else if (typeof field().state.value == "object") {
-      field().handleChange({ ...field().state.value, [props.value]: checked });
-    } else {
-      field().handleChange(checked && props.value);
-    }
-  };
+  props = mergeProps({ type: "checkbox" }, props);
   return (
-    <input
-      name={field().name}
-      type={props.type ?? "checkbox"}
-      onBlur={field().blur}
-      onChange={(e) => handleChange(e.target.checked)}
-      checked={isChecked()}
-    />
+    <Field name={props.name} of={props.form}>
+      {(field, inputProps) => <input {...inputProps} checked={field.value} />}
+    </Field>
   );
 }
 
@@ -76,37 +52,40 @@ export function ErrorMessage() {
 }
 
 export function InputField(props) {
-  const field = useFieldContext();
   return (
-    <fields.TextField
-      {...props}
-      onBlur={field().blur}
-      setValue={(e) => {
-        field().handleChange(e);
-      }}
-      value={field().state.value}
-      label={props.label || field().label || field().name}
-      placeholder={props.placeholder || field().placeholder}
-    />
+    <Field name={props.name} of={props.form}>
+      {(field, fieldProps) => (
+        <fields.TextField
+          {...fieldProps}
+          value={field.value}
+          label={props.label || props.name}
+          placeholder={props.placeholder}
+        />
+      )}
+    </Field>
   );
 }
 export function SelectField(props) {
   const field = useFieldContext();
-  const [options, rest] = splitProps(props, ["options"]);
-
+  const [fieldProps, cbProps] = splitProps(mergeProps({ options: [] }, props), [
+    "name",
+    "form",
+  ]);
   return (
-    <fields.Combobox
-      {...rest}
-      options={options.options || []}
-      format={(item, type) => (type === "option" ? item.label : item.label)}
-      onChange={(val) => {
-        console.log(val);
-        field().handleChange(val);
-      }}
-      value={field().state.value}
-    />
+    <Field name={fieldProps.name} of={fieldProps.form}>
+      {(field, props) => (
+        <fields.Combobox
+          {...props}
+          {...cbProps}
+          format={(item, type) => (type === "option" ? item.label : item.label)}
+          value={field.value}
+          errorMessage={field.error}
+        />
+      )}
+    </Field>
   );
 }
+
 export const { fieldContext, formContext, useFieldContext } =
   createFormHookContexts();
 export const { useAppForm, useFormContext, withForm } = createFormHook({

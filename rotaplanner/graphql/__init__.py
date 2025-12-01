@@ -15,6 +15,7 @@ from collections import defaultdict
 import sqlite3
 from .context import CustomContext
 from .object_types import (
+    ActivityTag,
     Location,
     Staff,
     Activity,
@@ -165,6 +166,17 @@ class Query:
         )
         # could obviously do this in the SQL query but this is clearer and is easier to maintain
         return assignments
+
+    @strawberry.field
+    async def activity_tags(
+        self, info: strawberry.Info["CustomContext"]
+    ) -> list[ActivityTag]:
+        context = info.context
+        connection = context.connection
+        cursor = connection.execute("SELECT id FROM activity_tags", ())
+        return await context.data_loaders.activity_tags_for_activity_loader.load_many(
+            [row[0] for row in cursor.fetchall()]
+        )
 
 
 async def change_staff_assignment(

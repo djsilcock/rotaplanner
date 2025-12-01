@@ -118,6 +118,12 @@ class AssignmentFlags:
 
 
 @strawberry.type
+class ActivityTag:
+    id: strawberry.ID
+    name: str
+
+
+@strawberry.type
 class StaffAssignment(Node):
     _assignment_id: strawberry.relay.NodeID[int]
     _staff_id: strawberry.Private[str]
@@ -182,8 +188,6 @@ class Activity(Node):
     type: str
     template_id: str
     location_id: strawberry.Private[str]
-    recurrence_rules: str
-    requirements: str
 
     @classmethod
     async def resolve_nodes(
@@ -213,7 +217,7 @@ class Activity(Node):
         )
 
     @strawberry.field
-    async def location(self, info: strawberry.Info) -> Location | None:
+    async def location(self, info: strawberry.Info[CustomContext]) -> Location | None:
         context = info.context
         return await context.data_loaders.location_loader.load(self.location_id)
 
@@ -229,6 +233,13 @@ class Activity(Node):
         )
         return await context.data_loaders.staff_assignments_loader.load_many(
             assignment_ids
+        )
+
+    @strawberry.field
+    async def tags(self, info: strawberry.Info[CustomContext]) -> list[ActivityTag]:
+        context = info.context
+        return await context.data_loaders.activity_tags_for_activity_loader.load(
+            self.id
         )
 
     @classmethod
