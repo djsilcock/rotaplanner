@@ -1,0 +1,22 @@
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 250px;
+  height: 100%;
+  background-color: #999;
+  padding-top: 20px;
+  transition: transform 0.3s ease;
+  & nav {
+    display: flex;
+    flex-direction: column;
+    a {
+      padding: 10px 15px;
+      color: white;
+      text-decoration: none;
+      &:hover {
+        background-color: #777;
+      }
+    }
+  }
+}

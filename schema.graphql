@@ -12,6 +12,7 @@ type Activity implements Node {
   location: Location
   assignments: [StaffAssignment!]!
   tags: [ActivityTag!]!
+  requirements: JSON!
 }
 
 """A connection to a list of items."""
@@ -62,6 +63,11 @@ type DateRange {
   start: String!
   end: String!
 }
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
+"""
+scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
 
 type Location implements Node {
   """The Globally Unique ID of this object"""

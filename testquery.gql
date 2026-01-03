@@ -1,0 +1,38 @@
+query LocationTableQuery($start: String!, $end: String!) {
+  daterange {
+    start
+    end
+  }
+  rows: locations {
+    id
+    name
+  }
+  content: activities(startDate: $start, endDate: $end) {
+    edges {
+      node {
+        ...LocationTableActivityFragment
+      }
+    }
+  }
+}
+
+fragment LocationTableActivityFragment on Activity {
+  id
+  activityStart
+  activityFinish
+  name
+  location {
+    id
+    name
+  }
+  assignments {
+    staff {
+      id
+      name
+    }
+    timeslot {
+      start
+      finish
+    }
+  }
+}

@@ -4,6 +4,7 @@ import strawberry
 from strawberry.fastapi import BaseContext
 from strawberry.dataloader import DataLoader
 from strawberry.relay import Node
+from strawberry.scalars import JSON
 
 import sqlite3
 from .context import CustomContext
@@ -241,6 +242,11 @@ class Activity(Node):
         return await context.data_loaders.activity_tags_for_activity_loader.load(
             self.id
         )
+
+    @strawberry.field
+    async def requirements(self, info: strawberry.Info[CustomContext]) -> JSON:
+        context = info.context
+        return {}
 
     @classmethod
     def from_row(cls, row: sqlite3.Row) -> "Activity":

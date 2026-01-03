@@ -26,11 +26,10 @@ dependencies = [
     "ortools",
     "pytest",
     "pytest-asyncio",
-    "fastapi[standard]",
     "pydantic",
-    "typer",
     "fontawesomefree>=6.6.0",
-    "strawberry-graphql[cli,fastapi]>=0.282.0",
+    "datastar-py>=0.8.0",
+    "quart>=0.20.0",
 ]
 
 [project.urls]

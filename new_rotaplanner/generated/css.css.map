@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../ui/table/style.css", "../ui/layout.css"],
+  "sourcesContent": [".hovered {\r\n  background-color: yellow;\r\n}\r\n", ".sidebar {\r\n  position: fixed;\r\n  top: 0;\r\n  left: 0;\r\n  width: 250px;\r\n  height: 100%;\r\n  background-color: #999;\r\n  padding-top: 20px;\r\n  transition: transform 0.3s ease;\r\n  & nav {\r\n    display: flex;\r\n    flex-direction: column;\r\n    a {\r\n      padding: 10px 15px;\r\n      color: white;\r\n      text-decoration: none;\r\n      &:hover {\r\n        background-color: #777;\r\n      }\r\n    }\r\n  }\r\n}\r\n"],
+  "mappings": ";AAAA,CAAC;AACC,oBAAkB;AACpB;;;ACFA,CAAC;AACC,YAAU;AACV,OAAK;AACL,QAAM;AACN,SAAO;AACP,UAAQ;AACR,oBAAkB;AAClB,eAAa;AACb,cAAY,UAAU,KAAK;AAC3B,IAAE;AACA,aAAS;AACT,oBAAgB;AAChB;AACE,eAAS,KAAK;AACd,aAAO;AACP,uBAAiB;AACjB,OAAC;AACC,0BAAkB;AACpB;AACF;AACF;AACF;",
+  "names": []
+}

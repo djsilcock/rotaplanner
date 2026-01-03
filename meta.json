@@ -1,0 +1,89 @@
+{
+  "inputs": {
+    "new_rotaplanner/ui/table/dragdrop.ts": {
+      "bytes": 3155,
+      "imports": [],
+      "format": "esm"
+    },
+    "new_rotaplanner/ui/js.js": {
+      "bytes": 142,
+      "imports": [
+        {
+          "path": "new_rotaplanner/ui/table/dragdrop.ts",
+          "kind": "import-statement",
+          "original": "./table/dragdrop.ts"
+        }
+      ],
+      "format": "esm"
+    },
+    "new_rotaplanner/ui/table/style.css": {
+      "bytes": 44,
+      "imports": []
+    },
+    "new_rotaplanner/ui/layout.css": {
+      "bytes": 395,
+      "imports": []
+    },
+    "new_rotaplanner/ui/css.css": {
+      "bytes": 65,
+      "imports": [
+        {
+          "path": "new_rotaplanner/ui/table/style.css",
+          "kind": "import-rule",
+          "original": "./table/style.css"
+        },
+        {
+          "path": "new_rotaplanner/ui/layout.css",
+          "kind": "import-rule",
+          "original": "./layout.css"
+        }
+      ]
+    }
+  },
+  "outputs": {
+    "new_rotaplanner/generated/js.js.map": {
+      "imports": [],
+      "exports": [],
+      "inputs": {},
+      "bytes": 5640
+    },
+    "new_rotaplanner/generated/js.js": {
+      "imports": [],
+      "exports": [
+        "setupDataStar"
+      ],
+      "entryPoint": "new_rotaplanner/ui/js.js",
+      "inputs": {
+        "new_rotaplanner/ui/table/dragdrop.ts": {
+          "bytesInOutput": 2792
+        },
+        "new_rotaplanner/ui/js.js": {
+          "bytesInOutput": 83
+        }
+      },
+      "bytes": 3003
+    },
+    "new_rotaplanner/generated/css.css.map": {
+      "imports": [],
+      "exports": [],
+      "inputs": {},
+      "bytes": 885
+    },
+    "new_rotaplanner/generated/css.css": {
+      "imports": [],
+      "entryPoint": "new_rotaplanner/ui/css.css",
+      "inputs": {
+        "new_rotaplanner/ui/table/style.css": {
+          "bytesInOutput": 41
+        },
+        "new_rotaplanner/ui/layout.css": {
+          "bytesInOutput": 373
+        },
+        "new_rotaplanner/ui/css.css": {
+          "bytesInOutput": 0
+        }
+      },
+      "bytes": 562
+    }
+  }
+}

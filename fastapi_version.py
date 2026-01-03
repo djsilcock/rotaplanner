@@ -6,17 +6,12 @@ import httpx
 import asyncio
 
 
-from rotaplanner.activities.edit_activities import router as activities_router
-from rotaplanner.config.endpoints import router as config_router
-
-from rotaplanner.graphql import graphql_app
-
-
 app = FastAPI()
 
 api_app = APIRouter()
 
 
-app.mount("/static", StaticFiles(directory="rotaplanner/static"), name="static")
+app.mount(
+    "/generated", StaticFiles(directory="new_rotaplanner/generated"), name="generated"
+)
 app.include_router(api_app, prefix="/api")
-app.include_router(graphql_app, prefix="/graphql")
