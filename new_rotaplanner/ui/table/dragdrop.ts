@@ -22,7 +22,7 @@ function registerDraggable(
       if (maybedragging && !isdragging) {
         element.dispatchEvent(
           new CustomEvent("begin-drag", {
-            detail: { target: element },
+            detail: { target: element,initialDropzone:element.closest(allowedTargets) },
             bubbles: true,
           })
         );

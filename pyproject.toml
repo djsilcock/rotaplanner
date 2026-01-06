@@ -7,7 +7,7 @@ name = "rotaplanner"
 dynamic = ["version"]
 description = 'Rota allocation manager'
 
-requires-python = ">=3.10"
+requires-python = ">=3.10, <=3.13"
 license = "MIT"
 keywords = []
 authors = [

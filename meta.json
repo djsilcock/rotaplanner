@@ -1,12 +1,12 @@
 {
   "inputs": {
     "new_rotaplanner/ui/table/dragdrop.ts": {
-      "bytes": 3187,
+      "bytes": 3113,
       "imports": [],
       "format": "esm"
     },
     "new_rotaplanner/ui/js.js": {
-      "bytes": 142,
+      "bytes": 137,
       "imports": [
         {
           "path": "new_rotaplanner/ui/table/dragdrop.ts",
@@ -17,11 +17,11 @@
       "format": "esm"
     },
     "new_rotaplanner/ui/table/table.css": {
-      "bytes": 3235,
+      "bytes": 3069,
       "imports": []
     },
     "new_rotaplanner/ui/table/style.css": {
-      "bytes": 29,
+      "bytes": 28,
       "imports": [
         {
           "path": "new_rotaplanner/ui/table/table.css",
@@ -31,11 +31,11 @@
       ]
     },
     "new_rotaplanner/ui/layout.css": {
-      "bytes": 515,
+      "bytes": 488,
       "imports": []
     },
     "new_rotaplanner/ui/css.css": {
-      "bytes": 65,
+      "bytes": 63,
       "imports": [
         {
           "path": "new_rotaplanner/ui/table/style.css",
@@ -55,7 +55,7 @@
       "imports": [],
       "exports": [],
       "inputs": {},
-      "bytes": 5692
+      "bytes": 5513
     },
     "new_rotaplanner/generated/js.js": {
       "imports": [],
@@ -65,19 +65,19 @@
       "entryPoint": "new_rotaplanner/ui/js.js",
       "inputs": {
         "new_rotaplanner/ui/table/dragdrop.ts": {
-          "bytesInOutput": 2823
+          "bytesInOutput": 2873
         },
         "new_rotaplanner/ui/js.js": {
           "bytesInOutput": 83
         }
       },
-      "bytes": 3034
+      "bytes": 3084
     },
     "new_rotaplanner/generated/css.css.map": {
       "imports": [],
       "exports": [],
       "inputs": {},
-      "bytes": 6447
+      "bytes": 6061
     },
     "new_rotaplanner/generated/css.css": {
       "imports": [],

@@ -24,22 +24,27 @@ async def table_by_staff():
 @table_blueprint.post("/by_location")
 async def update_location():
     payload = await request.json
+    print(payload)
     match payload:
-        case {"draggedId": dragged_id, "droptargetId": droptarget_id}:
+        case {"draggedId": dragged_id, "droptargetId": droptarget_id,"initialDropzoneId":initial_dropzone_id}:
             draginfo = tuple(dragged_id.split("--"))
             dropinfo = tuple(droptarget_id.split("--"))
+            initial_info = tuple(initial_dropzone_id.split("--"))
+            if initial_info[0] != dropinfo[0]:
+                raise ValueError('incompatible drop types')
             if draginfo[0] == "act" and dropinfo[0] == "cell":
                 db = cast(Connection, current_app.db_connection)
+                date1=datetime.date.fromisoformat(initial_info[2])
+                date2=datetime.date.fromisoformat(dropinfo[2])
+                date_delta=(date2-date1).days
                 with db:
                     timeslot_ids_sqlquery = (
-                        """SELECT id FROM timeslots WHERE activity_id = ?"""
+                        """UPDATE timeslots SET start=DATETIME(start,:delta), finish=DATETIME(finish,:delta) WHERE activity_id = :id"""
                     )
-                    timeslot_ids = [
-                        row["id"]
-                        for row in db.execute(
-                            timeslot_ids_sqlquery, (draginfo[1],)
-                        ).fetchall()
-                    ]
+                    db.execute(
+                            timeslot_ids_sqlquery, {'id':draginfo[1],'delta':f'{date_delta} DAYS'}
+                        )
+                    
                     update_sqlquery = (
                         """UPDATE activities SET location_id = ? WHERE id = ?"""
                     )
