@@ -1,0 +1,159 @@
+from quart import Blueprint, render_template, current_app, request
+import datetime
+from typing import cast
+from sqlite3 import Connection
+from new_rotaplanner.types import (
+    StaffAssignment,
+    Location,
+    Staff,
+    ActivityTag,
+    Activity,
+    TimeSlot,
+)
+
+table_blueprint = Blueprint(
+    "table", __name__, template_folder="templates", url_prefix="/table"
+)
+
+
+@table_blueprint.get("/by_staff")
+async def table_by_staff():
+    return "todo"
+
+
+@table_blueprint.post("/by_location")
+async def update_location():
+    payload = await request.json
+    match payload:
+        case {"draggedId": dragged_id, "droptargetId": droptarget_id}:
+            draginfo = tuple(dragged_id.split("--"))
+            dropinfo = tuple(droptarget_id.split("--"))
+            if draginfo[0] == "act" and dropinfo[0] == "cell":
+                db = cast(Connection, current_app.db_connection)
+                with db:
+                    timeslot_ids_sqlquery = (
+                        """SELECT id FROM timeslots WHERE activity_id = ?"""
+                    )
+                    timeslot_ids = [
+                        row["id"]
+                        for row in db.execute(
+                            timeslot_ids_sqlquery, (draginfo[1],)
+                        ).fetchall()
+                    ]
+                    update_sqlquery = (
+                        """UPDATE activities SET location_id = ? WHERE id = ?"""
+                    )
+                    db.execute(
+                        update_sqlquery,
+                        (dropinfo[1] if dropinfo[1] != "None" else None, draginfo[1]),
+                    )
+            return {"status": "success"}
+    raise ValueError("Invalid payload")
+
+
+@table_blueprint.get("/by_location")
+async def table_by_location():
+    db = cast(Connection, current_app.db_connection)
+
+    with db:
+        activities: dict[str, Activity] = {}
+        staff = {}
+        locations = {None: Location(id=None, name="Unassigned")}
+        timeslots = {}
+        staffassignments = {}
+        locations_sqlquery = """SELECT id, name FROM locations"""
+        for row in db.execute(locations_sqlquery).fetchall():
+            locations[row["id"]] = Location(id=row["id"], name=row["name"])
+        staff_sqlquery = """SELECT id, name FROM staff"""
+        for row in db.execute(staff_sqlquery).fetchall():
+            staff[row["id"]] = Staff(id=row["id"], name=row["name"])
+        activities_sqlquery = """
+            SELECT 
+                activities.id, 
+                activities.name, 
+                location_id, 
+                timeslots.id,
+                timeslots.start, 
+                timeslots.finish, 
+                staff_assignments.assignment_id, 
+                staff_assignments.staff_id
+            FROM activities 
+            LEFT JOIN timeslots on activities.id = timeslots.activity_id
+            LEFT JOIN staff_assignments on timeslots.id = staff_assignments.timeslot_id"""
+        for row in db.execute(activities_sqlquery).fetchall():
+            print(dict(row))
+            (
+                activities_id,
+                activities_name,
+                locations_id,
+                timeslots_id,
+                timeslots_start,
+                timeslots_finish,
+                staffassignments_id,
+                staffassignments_staff_id,
+            ) = row
+
+            if activities_id not in activities:
+                activities[activities_id] = Activity(
+                    id=activities_id,
+                    name=activities_name,
+                    type="",
+                    template_id=None,
+                    location=locations.get(locations_id),
+                )
+            activity = activities[activities_id]
+            if timeslots_id not in timeslots:
+                timeslots[timeslots_id] = TimeSlot(
+                    id=timeslots_id,
+                    activity=activity,
+                    start=timeslots_start,
+                    finish=timeslots_finish,
+                )
+                activity.timeslots.append(timeslots[timeslots_id])
+            timeslot = timeslots[timeslots_id]
+            if (
+                staffassignments_id is not None
+                and staffassignments_id not in staffassignments
+            ):
+                staffassignments[staffassignments_id] = StaffAssignment(
+                    id=staffassignments_id,
+                    staff=staff[staffassignments_staff_id],
+                    timeslot=timeslot,
+                    flags=[],
+                )
+                timeslot.assignments.append(staffassignments[staffassignments_id])
+    min_date = min(
+        (ts.start.date() for ts in timeslots.values()), default=datetime.date.today()
+    )
+    max_date = max(
+        (ts.finish.date() for ts in timeslots.values()), default=datetime.date.today()
+    )
+
+    dates = [
+        (min_date + datetime.timedelta(days=i))
+        for i in range(max((max_date - min_date).days + 1, 30))
+    ]
+    cells = {}
+    for activity in activities.values():
+        cell = cells.setdefault(
+            (
+                activity.location.id if activity.location else None,
+                activity.activity_start.date(),
+            ),
+            [],
+        )
+        cell.append(activity)
+    table_query_result = {
+        "dates": dates,
+        "rows": [
+            {
+                "row_id": location.id,
+                "row_name": location.name,
+                "data": {date: cells.get((location.id, date), []) for date in dates},
+            }
+            for location in locations.values()
+        ],
+    }  # Placeholder for actual query result
+    return await render_template(
+        "table.html.j2", dates=dates, table_query_result=table_query_result
+    )

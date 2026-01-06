@@ -1,0 +1,72 @@
+{% extends "index.html.j2" %}
+
+{%block title%}Rota Planner{% endblock %}
+    
+    
+{% macro table_row(row, dates) %}       
+    <tr>
+      <td class=table-row-header>{{ row.row_name }}</td>
+      {%for date in dates%}       
+          <td class="table-activity-cell" id=cell--{{row.row_id}}--{{date.isoformat()}} data-class:dragover-valid="$droptarget==el">
+            {% for activity in row.data[date] %}
+            
+                {{ location_activity(activity) }}
+                
+            {% endfor %}
+          </td>
+        {%endfor%}     
+    </tr>
+{% endmacro %}
+
+{%macro location_activity(activity)%}
+    <div class=table-activity data-draggable="'.table-activity-cell'" 
+         data-class="{'is-dragging':el==$dragged,'table-selected':$selection?.contains?.(el),'droptarget':$droptarget==el}"
+      id=act--{{activity.id}}
+    >
+      <div class="table-activity-name">{{activity.name}}</div>
+      <div class="table-activity-time">
+        {{activity.activity_start.hour}} - {{activity.activity_finish.hour}}
+      </div>
+      <hr />
+      <div>
+      {%for assignment in activity.assignments%}
+            <div data-draggable="'.table-activity'">
+                <div class="table-activity-time">
+                  {{assignment.timeslot.start.hour}} - {{assignment.timeslot.finish.hour}}
+                </div>
+                <div class="table-assigned-staff">{{assignment.staff.name}}</div>
+            </div>
+        {%endfor%}
+      </div>
+    </div>
+{%endmacro%}
+    
+{%block main%}
+    <div id="app"
+    data-computed:dragged-id="$dragged?.id ?? 'none'"
+    data-computed:droptarget-id="$droptarget?.id ?? 'none'"
+    data-on:begin-drag="$dragged=evt.target;$initial=$droptargetId"
+    data-on:dropped="@post(location.href);$droptarget='x';$dragged='x'" 
+    data-on:dragging-over="$droptarget=evt.detail.droptarget ?? 'x'"
+    data-on:drag-cancelled="$droptarget='x'"
+    data-effect="console.log($current);">
+        
+        <table class="table-rota-table">
+          <thead>
+            <tr>
+              <td></td>
+              {%for date in dates%}
+                <td>{{ date.isoformat()[:10] }}</td>
+                {%endfor%}
+            </tr>
+          </thead>
+          <tbody>
+          {% for row in table_query_result.rows %}
+                {{ table_row(row, dates) }}      
+          {% endfor %}
+        
+                
+          </tbody>
+        </table>
+    </div>
+    {%endblock%}

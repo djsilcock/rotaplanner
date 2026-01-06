@@ -12,6 +12,7 @@ function registerDraggable(
     "pointerdown",
     (event) => {
       maybedragging = true;
+      event.stopPropagation();
     },
     { signal: aborter }
   );

@@ -9,6 +9,7 @@ function registerDraggable(element, allowedTargets, aborter) {
     "pointerdown",
     (event) => {
       maybedragging = true;
+      event.stopPropagation();
     },
     { signal: aborter }
   );

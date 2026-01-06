@@ -1,29 +1,25 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script
-      type="module"
-      src="{{ url_for('static', filename='js.js') }}"
-    ></script>
-    
+    <script type="module">
+      import * as datastar from "https://cdn.jsdelivr.net/gh/starfederation/datastar@1.0.0-RC.7/bundles/datastar.js";
+      import {setupDataStar} from "{{ url_for('static', filename='js.js') }}";
+      setupDataStar(datastar);
+    </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css.css') }}" />
     <title>
       {%block title %}Rotaplanner{% endblock %}
     </title>
-    <style>
     
-
-
-    </style>
   </head>
 
   <body>
     <div class="sidebar">
-        <input type="checkbox" id="menu-toggle" checked/>
+        <input type="checkbox" id="menu-toggle"/>
       <label for="menu-toggle" class="menu-icon">&#9776;</label>
       <nav class="ui inverted vertical menu">
-        <a class="item" href="/rota-grid/staff/grid">Rota by person</a>
-        <a class="item" href="/rota-grid/location/grid">Rota by location</a>
+        <a class="item" href="{{ url_for('table.table_by_staff') }}">Rota by person</a>
+        <a class="item" href="{{ url_for('table.table_by_location') }}">Rota by location</a>
 
         <a class="item" href="">Manage activity templates</a>
         <a class="item" href="/api/templates/supply">Manage supply templates</a>
@@ -35,21 +31,12 @@
     </div>
     <div class="pusher">
       <div class="header">
-        <button>
-          <sl-icon name="layout-text-sidebar-reverse" id="menubutton"></sl-icon>
-        </button>
+        <label for="menu-toggle" class="menu-icon">&#9776;</label>
         {{self.title()}}
       </div>
       {%block main%} ... {% endblock %}
-      <hr />
-      <div id="additional"></div>
+      
     </div>
-    <script>
-      const menuButton = document.getElementById("menubutton");
-      const drawer = document.querySelector("sl-drawer");
-      menuButton.addEventListener("click", () => {
-        drawer.show();
-      });
-    </script>
+    
   </body>
 </html>

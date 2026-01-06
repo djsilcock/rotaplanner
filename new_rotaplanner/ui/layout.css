@@ -4,9 +4,11 @@
   left: 0;
   width: 250px;
   height: 100%;
+  z-index: 1000;
   background-color: #999;
   padding-top: 20px;
   transition: transform 0.3s ease;
+  transform: translateX(-100%);
   & nav {
     display: flex;
     flex-direction: column;
@@ -18,5 +20,8 @@
         background-color: #777;
       }
     }
+  }
+  &:has(#menu-toggle:checked) {
+    transform: translateX(0);
   }
 }

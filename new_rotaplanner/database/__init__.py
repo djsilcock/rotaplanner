@@ -3,8 +3,8 @@ import pathlib
 import uuid
 import datetime
 import pickle
-from typing import Annotated
-from fastapi import Depends
+
+
 from contextlib import contextmanager
 
 sqlite_file_name = pathlib.Path(__file__, "..", "database.db").resolve()
@@ -58,9 +58,7 @@ def connection_dependency():
         connection.close()
 
 
-get_database_connection = contextmanager(connection_dependency)
-
-Connection = Annotated[sqlite3.Connection, Depends(connection_dependency)]
+database_connection = contextmanager(connection_dependency)
 
 
 def setup_database(connection: sqlite3.Connection):

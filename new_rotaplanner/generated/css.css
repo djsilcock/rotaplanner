@@ -1,7 +1,170 @@
-/* new_rotaplanner/ui/table/style.css */
-.hovered {
-  background-color: yellow;
+/* new_rotaplanner/ui/table/table.css */
+.table-activity-name,
+.table-assignment,
+.table-activity-location {
+  font-size: small;
 }
+.table-activity-time {
+  font-size: x-small;
+  color: grey;
+}
+.table-spans-all-rows {
+  grid-row: 1/-1;
+}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family:
+    "Gill Sans",
+    "Gill Sans MT",
+    Calibri,
+    "Trebuchet MS",
+    sans-serif;
+}
+.table-rota-names {
+  display: grid;
+  grid-row: 1/-1;
+  grid-template-rows: subgrid;
+  grid-template-columns: auto;
+  border-right: 1px solid grey;
+  position: sticky;
+  left: 0;
+  background-color: white;
+}
+.table-rota-table {
+  position: relative;
+  width: 80vw;
+  overflow: auto;
+  row-gap: 1px;
+  border: 1px solid grey;
+  td {
+    border: 1px solid grey;
+    padding: 0table-5em;
+  }
+}
+.table-rota-scrollable {
+  display: grid;
+  position: relative;
+  overflow-x: auto;
+  grid-template-rows: subgrid;
+  grid-auto-flow: column;
+  column-gap: 1px;
+  white-space: nowrap;
+}
+.table-rota-grid {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-template-columns: auto;
+  grid-auto-columns: minmax(5em, 8em);
+  grid-auto-flow: column;
+  grid-row: 1/-1;
+}
+.table-float-wrapper {
+  display: grid;
+  grid-auto-columns: auto;
+  grid-template-rows: subgrid;
+  grid-template-columns: auto 1fr;
+  grid-row: 1/-1;
+  grid-auto-flow: column;
+}
+.table-rota-segment {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-auto-columns: minmax(5em, 8em);
+  column-gap: 1px;
+  grid-row: 1/-1;
+  grid-auto-flow: column;
+}
+.table-activity {
+  background-color: antiquewhite;
+  padding: 2px;
+  border: 1px solid burlywood;
+  border-radius: 2px;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  &.droptarget {
+    border: 2px solid green;
+  }
+  &.is-dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+  }
+  &[data-dnd-can-drop=false] {
+    border: 2px solid red;
+  }
+}
+.table-has-title {
+  margin-top: 0table-2em;
+}
+.table-activity:hover {
+  box-shadow: 1px 1px;
+}
+.table-activity.table-selected {
+  background-color: burlywood;
+}
+.table-activity.table-dragover {
+  background-color: green;
+}
+.table-activity-cell {
+  scroll-snap-align: start;
+  min-width: 5em;
+  max-width: 8em;
+  background-color: white;
+  padding: 4px;
+  &.dragover-valid {
+    background-color: lightgreen;
+  }
+}
+.table-activity-cell:hover {
+  background-color: azure;
+}
+.table-activity-cell.table-dragover-invalid {
+  background-color: red;
+}
+.table-unallocated-activities {
+  min-height: 4em;
+  background-color: white;
+}
+.table-weekend {
+  background-color: lightgrey;
+}
+.table-row-header {
+  position: sticky;
+  left: 0;
+  background-color: white;
+  z-index: 10;
+  width: auto;
+  min-width: 8em;
+  border-right: 1px solid grey;
+}
+.table-row-header,
+.table-column-header {
+  position: sticky;
+  top: 0;
+  font-size: small;
+  font-weight: normal;
+  background-color: white;
+}
+.table-spinner {
+  border-top: 2px solid blue;
+  border-radius: 50%;
+  width: 1rem;
+  height: 1rem;
+  margin: auto;
+  animation: spin 2s linear 0s infinite forwards;
+}
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* new_rotaplanner/ui/table/style.css */
 
 /* new_rotaplanner/ui/layout.css */
 .sidebar {
@@ -10,9 +173,11 @@
   left: 0;
   width: 250px;
   height: 100%;
+  z-index: 1000;
   background-color: #999;
   padding-top: 20px;
   transition: transform 0.3s ease;
+  transform: translateX(-100%);
   & nav {
     display: flex;
     flex-direction: column;
@@ -24,6 +189,9 @@
         background-color: #777;
       }
     }
+  }
+  &:has(#menu-toggle:checked) {
+    transform: translateX(0);
   }
 }
 

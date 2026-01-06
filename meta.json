@@ -1,7 +1,7 @@
 {
   "inputs": {
     "new_rotaplanner/ui/table/dragdrop.ts": {
-      "bytes": 3155,
+      "bytes": 3187,
       "imports": [],
       "format": "esm"
     },
@@ -16,12 +16,22 @@
       ],
       "format": "esm"
     },
-    "new_rotaplanner/ui/table/style.css": {
-      "bytes": 44,
+    "new_rotaplanner/ui/table/table.css": {
+      "bytes": 3235,
       "imports": []
     },
+    "new_rotaplanner/ui/table/style.css": {
+      "bytes": 29,
+      "imports": [
+        {
+          "path": "new_rotaplanner/ui/table/table.css",
+          "kind": "import-rule",
+          "original": "./table.css"
+        }
+      ]
+    },
     "new_rotaplanner/ui/layout.css": {
-      "bytes": 395,
+      "bytes": 515,
       "imports": []
     },
     "new_rotaplanner/ui/css.css": {
@@ -45,7 +55,7 @@
       "imports": [],
       "exports": [],
       "inputs": {},
-      "bytes": 5640
+      "bytes": 5692
     },
     "new_rotaplanner/generated/js.js": {
       "imports": [],
@@ -55,35 +65,38 @@
       "entryPoint": "new_rotaplanner/ui/js.js",
       "inputs": {
         "new_rotaplanner/ui/table/dragdrop.ts": {
-          "bytesInOutput": 2792
+          "bytesInOutput": 2823
         },
         "new_rotaplanner/ui/js.js": {
           "bytesInOutput": 83
         }
       },
-      "bytes": 3003
+      "bytes": 3034
     },
     "new_rotaplanner/generated/css.css.map": {
       "imports": [],
       "exports": [],
       "inputs": {},
-      "bytes": 885
+      "bytes": 6447
     },
     "new_rotaplanner/generated/css.css": {
       "imports": [],
       "entryPoint": "new_rotaplanner/ui/css.css",
       "inputs": {
+        "new_rotaplanner/ui/table/table.css": {
+          "bytesInOutput": 3080
+        },
         "new_rotaplanner/ui/table/style.css": {
-          "bytesInOutput": 41
+          "bytesInOutput": 0
         },
         "new_rotaplanner/ui/layout.css": {
-          "bytesInOutput": 373
+          "bytesInOutput": 488
         },
         "new_rotaplanner/ui/css.css": {
           "bytesInOutput": 0
         }
       },
-      "bytes": 562
+      "bytes": 3758
     }
   }
 }
