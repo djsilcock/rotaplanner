@@ -1,0 +1,72 @@
+
+    
+    
+{% macro table_row(row, dates) %}       
+    <tr>
+      <td class=table-row-header>{{ row.row_name }}</td>
+      {%for date in dates%}       
+          {{ table_cell(row, date, row.data[date]) }}
+      {% endfor %}
+          
+    </tr>
+{% endmacro %}
+
+{% macro table_cell(row,date,cell)%}
+    <td class="table-activity-cell" id=cell--{{row.row_id}}--{{date.isoformat()}} data-class:dragover-valid="$droptarget==el">
+      {% for activity in cell %}
+          {{ location_activity(activity) }}
+      {% endfor %}
+    </td>
+{%endmacro%}
+
+{%macro location_activity(activity)%}
+    <div class=table-activity data-draggable="'.table-activity-cell'" 
+         data-class="{'is-dragging':el==$dragged,'table-selected':$selection?.contains?.(el),'droptarget':$droptarget==el}"
+      id=act--{{activity.id}}
+    >
+      <div class="table-activity-name">{{activity.name}}</div>
+      <div class="table-activity-time">
+        {{activity.activity_start.hour}} - {{activity.activity_finish.hour}}
+      </div>
+      <hr />
+      <div>
+      {%for timeslot in activity.timeslots%}
+            <div class="table-timeslot" data-class:dragover-valid="$droptarget==el">
+                <div class="table-activity-time">
+                  {{timeslot.start.hour}} - {{timeslot.finish.hour}}
+                </div>
+                {%for assignment in timeslot.assignments%}
+                <div class="table-assigned-staff" data-draggable="'.table-timeslot'">{{assignment.staff.name}}</div>
+                {%else%}
+                ...
+                {%endfor%}
+            </div>
+        {%endfor%}
+      </div>
+    </div>
+{%endmacro%}
+
+{%macro person_activity(activity)%}
+    <div class=table-activity data-draggable="'.table-activity-cell'" 
+         data-class="{'is-dragging':el==$dragged,'table-selected':$selection?.contains?.(el),'droptarget':$droptarget==el}"
+      id=act--{{activity.id}}
+    >
+      <div class="table-activity-name">{{activity.name}}</div>
+      <div class="table-activity-time">
+        {{activity.activity_start.hour}} - {{activity.activity_finish.hour}}
+      </div>
+      <hr />
+      <div>
+      {%for assignment in activity.assignments%}
+            <div data-draggable="'.table-activity'">
+                <div class="table-activity-time">
+                  {{assignment.timeslot.start.hour}} - {{assignment.timeslot.finish.hour}}
+                </div>
+                <div class="table-assigned-staff">{{assignment.staff.name}}</div>
+            </div>
+        {%endfor%}
+      </div>
+    </div>
+{%endmacro%}
+
+    
