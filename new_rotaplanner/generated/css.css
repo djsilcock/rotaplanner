@@ -127,6 +127,9 @@
     border-color: green;
   }
 }
+.table-activity.droptarget .table-timeslot {
+  border-color: green;
+}
 .table-activity-cell:hover {
   background-color: azure;
 }

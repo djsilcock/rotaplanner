@@ -39,56 +39,62 @@ async def update_location():
             "droptargetId": droptarget_id,
             "initialDropzoneId": initial_dropzone_id,
         }:
-            draginfo = tuple(dragged_id.split("--"))
-            dropinfo = tuple(droptarget_id.split("--"))
-            initial_info = tuple(initial_dropzone_id.split("--"))
-            if initial_info[0] != dropinfo[0]:
-                raise ValueError("incompatible drop types")
-            if draginfo[0] == "act" and dropinfo[0] == "cell":
-                db = cast(Connection, current_app.db_connection)
-                date1 = datetime.date.fromisoformat(initial_info[2])
-                date2 = datetime.date.fromisoformat(dropinfo[2])
-                date_delta = (date2 - date1).days
-                with db:
-                    timeslot_ids_sqlquery = """UPDATE timeslots SET start=DATETIME(start,:delta), finish=DATETIME(finish,:delta) WHERE activity_id = :id"""
-                    db.execute(
-                        timeslot_ids_sqlquery,
-                        {"id": draginfo[1], "delta": f"{date_delta} DAYS"},
-                    )
+            pass
+        case _:
+            raise ValueError('did not understand instruction')
+    draginfo = tuple(dragged_id.split("--"))
+    dropinfo = tuple(droptarget_id.split("--"))
+    initial_info = tuple(initial_dropzone_id.split("--"))
+    affected_cells=[]
+    db = cast(Connection, current_app.db_connection)
+    match (draginfo,initial_info,dropinfo):
+        case (('act',activity_id),('cell',from_location,from_date),('cell',to_location,to_date)):
+            date1 = datetime.date.fromisoformat(from_date)
+            date2 = datetime.date.fromisoformat(to_date)
+            date_delta = (date2 - date1).days
+            with db:
+                timeslot_ids_sqlquery = """UPDATE timeslots SET start=DATETIME(start,:delta), finish=DATETIME(finish,:delta) WHERE activity_id = :id"""
+                db.execute(
+                    timeslot_ids_sqlquery,
+                    {"id": activity_id, "delta": f"{date_delta} DAYS"},
+                )
 
-                    update_sqlquery = (
-                        """UPDATE activities SET location_id = ? WHERE id = ?"""
-                    )
-                    db.execute(
-                        update_sqlquery,
-                        (dropinfo[1] if dropinfo[1] != "None" else None, draginfo[1]),
-                    )
-                    affected_cells = [(initial_info[1], date1), (dropinfo[1], date2)]
-                    table_query_result = await get_location_query()
-                    response = []
-                    for location_id, date in affected_cells:
-                        cell_activities = table_query_result["cells"].get(
-                            (
-                                None if location_id == "None" else location_id,
-                                date,
-                            ),
-                            [],
-                        )
-                        response.append(
-                            await render_template(
-                                "cell.html.j2",
-                                row={"row_id": location_id},
-                                date=date,
-                                cell=cell_activities,
-                            )
-                        )
+                update_sqlquery = (
+                    """UPDATE activities SET location_id = ? WHERE id = ?"""
+                )
+                db.execute(
+                    update_sqlquery,
+                    (to_location if to_location != "None" else None, activity_id),
+                )
+                affected_cells = [(from_location, date1), (to_location, date2)]
+    
+    
+    
+    table_query_result = await get_location_query()
+    response = []
+    for location_id, date in affected_cells:
+        cell_activities = table_query_result["cells"].get(
+            (
+                None if location_id == "None" else location_id,
+                date,
+            ),
+            [],
+        )
+        response.append(
+            await render_template(
+                "cell.html.j2",
+                row={"row_id": location_id},
+                date=date,
+                cell=cell_activities,
+            )
+        )
 
-                    async def update_cells():
-                        for r in response:
-                            yield ServerSentEventGenerator.patch_elements(r)
+    async def update_cells():
+        for r in response:
+            yield ServerSentEventGenerator.patch_elements(r)
 
-                    return DatastarResponse(update_cells())
-    raise ValueError("Invalid payload")
+    return DatastarResponse(update_cells())
+    
 
 
 @table_blueprint.get("/by_location")
@@ -129,7 +135,7 @@ async def get_location_query():
             LEFT JOIN timeslots on activities.id = timeslots.activity_id
             LEFT JOIN staff_assignments on timeslots.id = staff_assignments.timeslot_id"""
         for row in db.execute(activities_sqlquery).fetchall():
-            print(dict(row))
+            
             (
                 activities_id,
                 activities_name,

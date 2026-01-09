@@ -11,10 +11,12 @@
     </tr>
 {% endmacro %}
 
-{% macro table_cell(row,date,cell)%}
+{% macro table_cell(row,date,cell,table_type="location")%}
     <td class="table-activity-cell" id=cell--{{row.row_id}}--{{date.isoformat()}} data-class:dragover-valid="$droptarget==el">
       {% for activity in cell %}
+      {%if table_type == "location"%}
           {{ location_activity(activity) }}
+      {%endif%}
       {% endfor %}
     </td>
 {%endmacro%}
@@ -31,12 +33,12 @@
       <hr />
       <div>
       {%for timeslot in activity.timeslots%}
-            <div class="table-timeslot" data-class:dragover-valid="$droptarget==el">
+            <div class="table-timeslot" id="timeslot--{{timeslot.id}}" data-class:dragover-valid="$droptarget==el">
                 <div class="table-activity-time">
                   {{timeslot.start.hour}} - {{timeslot.finish.hour}}
                 </div>
                 {%for assignment in timeslot.assignments%}
-                <div class="table-assigned-staff" data-draggable="'.table-timeslot'">{{assignment.staff.name}}</div>
+                <div class="table-assigned-staff" data-draggable="'.table-timeslot,.table-activity'" id="assn--{{timeslot.id}}--{{assignment.staff.id}}">{{assignment.staff.name}}</div>
                 {%else%}
                 ...
                 {%endfor%}
