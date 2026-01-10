@@ -1,13 +1,23 @@
 {
   "inputs": {
+    "new_rotaplanner/vendored/datastar.js": {
+      "bytes": 30732,
+      "imports": [],
+      "format": "esm"
+    },
     "new_rotaplanner/ui/table/dragdrop.ts": {
       "bytes": 3113,
       "imports": [],
       "format": "esm"
     },
     "new_rotaplanner/ui/js.js": {
-      "bytes": 137,
+      "bytes": 129,
       "imports": [
+        {
+          "path": "new_rotaplanner/vendored/datastar.js",
+          "kind": "import-statement",
+          "original": "../vendored/datastar.js"
+        },
         {
           "path": "new_rotaplanner/ui/table/dragdrop.ts",
           "kind": "import-statement",
@@ -17,7 +27,7 @@
       "format": "esm"
     },
     "new_rotaplanner/ui/table/table.css": {
-      "bytes": 3326,
+      "bytes": 3341,
       "imports": []
     },
     "new_rotaplanner/ui/table/style.css": {
@@ -55,36 +65,37 @@
       "imports": [],
       "exports": [],
       "inputs": {},
-      "bytes": 5513
+      "bytes": 81847
     },
     "new_rotaplanner/generated/js.js": {
       "imports": [],
-      "exports": [
-        "setupDataStar"
-      ],
+      "exports": [],
       "entryPoint": "new_rotaplanner/ui/js.js",
       "inputs": {
+        "new_rotaplanner/vendored/datastar.js": {
+          "bytesInOutput": 45655
+        },
         "new_rotaplanner/ui/table/dragdrop.ts": {
-          "bytesInOutput": 2873
+          "bytesInOutput": 3093
         },
         "new_rotaplanner/ui/js.js": {
-          "bytesInOutput": 83
+          "bytesInOutput": 38
         }
       },
-      "bytes": 3084
+      "bytes": 49126
     },
     "new_rotaplanner/generated/css.css.map": {
       "imports": [],
       "exports": [],
       "inputs": {},
-      "bytes": 6500
+      "bytes": 6547
     },
     "new_rotaplanner/generated/css.css": {
       "imports": [],
       "entryPoint": "new_rotaplanner/ui/css.css",
       "inputs": {
         "new_rotaplanner/ui/table/table.css": {
-          "bytesInOutput": 3337
+          "bytesInOutput": 3360
         },
         "new_rotaplanner/ui/table/style.css": {
           "bytesInOutput": 0
@@ -96,7 +107,7 @@
           "bytesInOutput": 0
         }
       },
-      "bytes": 4015
+      "bytes": 4038
     }
   }
 }

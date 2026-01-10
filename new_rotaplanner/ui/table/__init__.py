@@ -67,6 +67,18 @@ async def update_location():
                     (to_location if to_location != "None" else None, activity_id),
                 )
                 affected_cells = [(from_location, date1), (to_location, date2)]
+        case (('assn',assn_id,staff_id),('timeslot',from_timeslot_id),('timeslot',to_timeslot_id)):
+            with db:
+                affected=db.execute(
+                    """SELECT activities.location_id,DATE(MIN(timeslots.start)) from timeslots 
+                    LEFT JOIN activities ON timeslots.activity_id=activities.id
+                    WHERE timeslots.id IN (:from_timeslot,:to_timeslot)
+                    GROUP BY activities.id
+                    """,{'from_timeslot':from_timeslot_id,'to_timeslot':to_timeslot_id})
+                print([tuple(a) for a in affected.fetchall()])
+                db.execute(
+                    "UPDATE staff_assignments SET timeslot_id=:new_timeslot_id WHERE assignment_id=:assn_id",({'assn_id':assn_id,'new_timeslot_id':to_timeslot_id})
+                )
     
     
     

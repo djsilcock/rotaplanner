@@ -38,7 +38,7 @@
                   {{timeslot.start.hour}} - {{timeslot.finish.hour}}
                 </div>
                 {%for assignment in timeslot.assignments%}
-                <div class="table-assigned-staff" data-draggable="'.table-timeslot,.table-activity'" id="assn--{{timeslot.id}}--{{assignment.staff.id}}">{{assignment.staff.name}}</div>
+                <div class="table-assigned-staff" data-draggable="'.table-timeslot,.table-activity'" id="assn--{{assignment.id}}--{{assignment.staff.id}}">{{assignment.staff.name}}</div>
                 {%else%}
                 ...
                 {%endfor%}

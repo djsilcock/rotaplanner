@@ -7,7 +7,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "esbuild new_rotaplanner/ui/js.js new_rotaplanner/ui/css.css --sourcemap=linked  --bundle --format=esm --outdir=new_rotaplanner/generated --metafile=meta.json "
+    "build": "esbuild new_rotaplanner/ui/js.js new_rotaplanner/ui/css.css --sourcemap=linked  --bundle --outdir=new_rotaplanner/generated --metafile=meta.json "
   },
   "author": "",
   "license": "ISC",

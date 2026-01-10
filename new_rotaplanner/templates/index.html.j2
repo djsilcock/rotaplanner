@@ -1,12 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script type="module">
-      import * as datastar from "https://cdn.jsdelivr.net/gh/starfederation/datastar@1.0.0-RC.7/bundles/datastar.js";
-      import {setupDataStar} from "{{ url_for('static', filename='js.js') }}";
-      setupDataStar(datastar);
-    </script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css.css') }}" />
+    <script type="module" src="{{ url_for('static', filename='js.js') }}"></script>
+    <link rel="stylesheet" href="{{url_for('static',filename='css.css')}}">
     <title>
       {%block title %}Rotaplanner{% endblock %}
     </title>
