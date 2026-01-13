@@ -1,5 +1,6 @@
 from datastar_py import ServerSentEventGenerator
 from datastar_py.quart import DatastarResponse, read_signals
+import sqlite3
 from quart import (
     Blueprint,
     render_template,
@@ -41,47 +42,63 @@ async def update_location():
         }:
             pass
         case _:
-            raise ValueError('did not understand instruction')
+            raise ValueError("did not understand instruction")
     draginfo = tuple(dragged_id.split("--"))
     dropinfo = tuple(droptarget_id.split("--"))
     initial_info = tuple(initial_dropzone_id.split("--"))
-    affected_cells=[]
+    affected_cells = []
     db = cast(Connection, current_app.db_connection)
-    match (draginfo,initial_info,dropinfo):
-        case (('act',activity_id),('cell',from_location,from_date),('cell',to_location,to_date)):
-            date1 = datetime.date.fromisoformat(from_date)
-            date2 = datetime.date.fromisoformat(to_date)
-            date_delta = (date2 - date1).days
-            with db:
-                timeslot_ids_sqlquery = """UPDATE timeslots SET start=DATETIME(start,:delta), finish=DATETIME(finish,:delta) WHERE activity_id = :id"""
-                db.execute(
-                    timeslot_ids_sqlquery,
-                    {"id": activity_id, "delta": f"{date_delta} DAYS"},
-                )
+    try:
+        match (draginfo, initial_info, dropinfo):
+            case (
+                ("act", activity_id),
+                ("cell", from_location, from_date),
+                ("cell", to_location, to_date),
+            ):
+                date1 = datetime.date.fromisoformat(from_date)
+                date2 = datetime.date.fromisoformat(to_date)
+                date_delta = (date2 - date1).days
+                with db:
+                    timeslot_ids_sqlquery = """UPDATE timeslots SET start=DATETIME(start,:delta), finish=DATETIME(finish,:delta) WHERE activity_id = :id"""
+                    db.execute(
+                        timeslot_ids_sqlquery,
+                        {"id": activity_id, "delta": f"{date_delta} DAYS"},
+                    )
 
-                update_sqlquery = (
-                    """UPDATE activities SET location_id = ? WHERE id = ?"""
-                )
-                db.execute(
-                    update_sqlquery,
-                    (to_location if to_location != "None" else None, activity_id),
-                )
-                affected_cells = [(from_location, date1), (to_location, date2)]
-        case (('assn',assn_id,staff_id),('timeslot',from_timeslot_id),('timeslot',to_timeslot_id)):
-            with db:
-                affected=db.execute(
-                    """SELECT activities.location_id,DATE(MIN(timeslots.start)) from timeslots 
-                    LEFT JOIN activities ON timeslots.activity_id=activities.id
-                    WHERE timeslots.id IN (:from_timeslot,:to_timeslot)
-                    GROUP BY activities.id
-                    """,{'from_timeslot':from_timeslot_id,'to_timeslot':to_timeslot_id})
-                print([tuple(a) for a in affected.fetchall()])
-                db.execute(
-                    "UPDATE staff_assignments SET timeslot_id=:new_timeslot_id WHERE assignment_id=:assn_id",({'assn_id':assn_id,'new_timeslot_id':to_timeslot_id})
-                )
-    
-    
-    
+                    update_sqlquery = (
+                        """UPDATE activities SET location_id = ? WHERE id = ?"""
+                    )
+                    db.execute(
+                        update_sqlquery,
+                        (to_location if to_location != "None" else None, activity_id),
+                    )
+                    affected_cells = [(from_location, date1), (to_location, date2)]
+            case (
+                ("assn", assn_id, staff_id),
+                ("timeslot", from_timeslot_id),
+                ("timeslot", to_timeslot_id),
+            ):
+                with db:
+                    affected = db.execute(
+                        """SELECT activities.location_id,DATE(MIN(timeslots.start)) from timeslots 
+                        LEFT JOIN activities ON timeslots.activity_id=activities.id
+                        WHERE timeslots.id IN (:from_timeslot,:to_timeslot)
+                        GROUP BY activities.id
+                        """,
+                        {
+                            "from_timeslot": from_timeslot_id,
+                            "to_timeslot": to_timeslot_id,
+                        },
+                    )
+                    print([tuple(a) for a in affected.fetchall()])
+                    db.execute(
+                        "UPDATE staff_assignments SET timeslot_id=:new_timeslot_id WHERE assignment_id=:assn_id",
+                        ({"assn_id": assn_id, "new_timeslot_id": to_timeslot_id}),
+                    )
+    except sqlite3.IntegrityError as e:
+        print("Integrity error:", e)
+        affected_cells = []
+
     table_query_result = await get_location_query()
     response = []
     for location_id, date in affected_cells:
@@ -106,7 +123,6 @@ async def update_location():
             yield ServerSentEventGenerator.patch_elements(r)
 
     return DatastarResponse(update_cells())
-    
 
 
 @table_blueprint.get("/by_location")
@@ -123,10 +139,10 @@ async def get_location_query():
     db = cast(Connection, current_app.db_connection)
     with db:
         activities: dict[str, Activity] = {}
-        staff = {}
+        staff: dict[str, Staff] = {}
         locations = {None: Location(id=None, name="Unassigned")}
-        timeslots = {}
-        staffassignments = {}
+        timeslots: dict[str, TimeSlot] = {}
+        staffassignments: dict[str, StaffAssignment] = {}
         locations_sqlquery = """SELECT id, name FROM locations"""
         for row in db.execute(locations_sqlquery).fetchall():
             locations[row["id"]] = Location(id=row["id"], name=row["name"])
@@ -143,11 +159,12 @@ async def get_location_query():
                 timeslots.finish, 
                 staff_assignments.assignment_id, 
                 staff_assignments.staff_id
-            FROM activities 
-            LEFT JOIN timeslots on activities.id = timeslots.activity_id
+            FROM activities
+            LEFT JOIN timeslots_in_activities on activities.id = timeslots_in_activities.activity_id
+            LEFT JOIN timeslots on timeslots_in_activities.timeslot_id = timeslots.id
             LEFT JOIN staff_assignments on timeslots.id = staff_assignments.timeslot_id"""
         for row in db.execute(activities_sqlquery).fetchall():
-            
+
             (
                 activities_id,
                 activities_name,

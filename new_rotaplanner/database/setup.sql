@@ -40,10 +40,9 @@ CREATE TABLE IF NOT EXISTS assignment_tag_assocs (
 );
 CREATE TABLE IF NOT EXISTS timeslots (
     id INTEGER PRIMARY KEY,
-    activity_id UUID REFERENCES activities(id) ON DELETE CASCADE,
     start TIMESTAMP,
     finish TIMESTAMP,
-    UNIQUE (activity_id, start),
+    UNIQUE (start, finish),
     CHECK (finish > start)
 );
 
@@ -53,6 +52,12 @@ CREATE TABLE IF NOT EXISTS activities (
     template_id UUID REFERENCES activities(id),
     name TEXT,
     location_id UUID REFERENCES locations(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS timeslots_in_activities (
+    timeslot_id INTEGER REFERENCES timeslots(id) ON DELETE CASCADE,
+    activity_id UUID REFERENCES activities(id) ON DELETE CASCADE,
+    PRIMARY KEY (timeslot_id, activity_id)
 );
 
 CREATE TABLE IF NOT EXISTS requirement_groups (
@@ -143,10 +148,11 @@ CREATE TABLE IF NOT EXISTS requirement_skills (
 
 CREATE TABLE IF NOT EXISTS staff_assignments (
     assignment_id INTEGER PRIMARY KEY,
+    activity_id UUID REFERENCES activities(id) ON DELETE CASCADE,
     timeslot_id INTEGER REFERENCES timeslots(id) ON DELETE CASCADE,
     staff_id UUID REFERENCES staff(id) ON DELETE CASCADE,
     attendance INTEGER DEFAULT 100,
-    UNIQUE (timeslot_id, staff_id)
+    UNIQUE (assignment_id, timeslot_id, staff_id)
 );
 
 CREATE TABLE IF NOT EXISTS personal_patterns (
