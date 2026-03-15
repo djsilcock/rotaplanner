@@ -1,5 +1,5 @@
 import asyncio
-from new_rotaplanner.ui import app
+from rotaplanner.ui import app
 
 killswitch = asyncio.Event()
 

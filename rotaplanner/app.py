@@ -1,20 +1,23 @@
-from flask import Flask
-from .database import db
-from scrapyard.flask_unpoly import FlaskUnpoly
-from flask_wtf import CSRFProtect
-from flask_cors import CORS
-import pathlib
+from quart import Quart, render_template
+from rotaplanner.database import database_connection
+import rotaplanner.database.commands as db_commands
 
-app = Flask(
-    __name__,
-    static_url_path="/assets",
-    static_folder=pathlib.Path(__file__).parent.joinpath("static", "assets"),
-)
+app = Quart(__name__, static_folder="generated", static_url_path="/generated")
+app.debug = True
+app.config["TESTING"] = True
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.sqlite"
-app.config["SECRET_KEY"] = "qwertyuiopasdfghjkl"
-# app.config["SQLALCHEMY_ECHO"] = True
-FlaskUnpoly().init_app(app)
-# csrf = CSRFProtect(app)
-# cors = CORS(app)
-db.init_app(app)
+
+@app.while_serving
+async def setup_db_connection():
+    with database_connection() as conn:
+        app.db_connection = conn
+        yield
+
+
+@app.route("/")
+async def index():
+    return await render_template("index.html.j2")
+
+
+app.cli.command("init-db")(db_commands.setup_database)
+app.cli.command("populate-db")(db_commands.populate_database)

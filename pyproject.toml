@@ -30,6 +30,9 @@ dependencies = [
     "fontawesomefree>=6.6.0",
     "datastar-py>=0.8.0",
     "quart>=0.20.0",
+    "xmldiff>=2.7.0",
+    "lxml>=6.0.2",
+    "jsonpatch>=1.33",
 ]
 
 [project.urls]

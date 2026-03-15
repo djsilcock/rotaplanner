@@ -1,0 +1,185 @@
+.activityName,
+.assignment,
+.activityLocation {
+  font-size: small;
+}
+.activityTime {
+  font-size: x-small;
+  color: grey;
+}
+.spans-all-rows {
+  grid-row: 1/-1;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family:
+    "Segoe UI Semilight", "Segoe UI", "Segoe", Tahoma, Helvetica, Arial,
+    sans-serif;
+}
+
+.rotaNames {
+  display: grid;
+  grid-row: 1/-1;
+  grid-template-rows: subgrid;
+  grid-template-columns: auto;
+  border-right: 1px solid grey;
+  position: sticky;
+  left: 0;
+  background-color: white;
+}
+.rotaTable {
+  position: relative;
+  width: 80vw;
+  overflow: auto;
+  row-gap: 1px;
+  border: 1px solid grey;
+  td {
+    border: 1px solid grey;
+    padding: 0.5em;
+  }
+}
+.rotaScrollable {
+  display: grid;
+  position: relative;
+  overflow-x: auto;
+  grid-template-rows: subgrid;
+  grid-auto-flow: column;
+  column-gap: 1px;
+  white-space: nowrap;
+}
+.rotaGrid {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-template-columns: auto;
+  grid-auto-columns: minmax(5em, 8em);
+  grid-auto-flow: column;
+  grid-row: 1/-1;
+}
+.floatWrapper {
+  display: grid;
+  grid-auto-columns: auto;
+  grid-template-rows: subgrid;
+  grid-template-columns: auto 1fr;
+  grid-row: 1/-1;
+  grid-auto-flow: column;
+}
+.rotaSegment {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-auto-columns: minmax(5em, 8em);
+  column-gap: 1px;
+  grid-row: 1/-1;
+  grid-auto-flow: column;
+}
+
+.activity {
+  background-color: antiquewhite;
+  padding: 2px;
+  border: 1px solid burlywood;
+  border-radius: 2px;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+
+  &:global(.droptarget) {
+    border: 2px solid green;
+  }
+  &[data-dragging] {
+    opacity: 0.5;
+    cursor: grabbing;
+    &[data-ctrldrag] {
+      cursor: copy;
+    }
+    &:not([data-can-drop]) {
+      border: 2px solid red;
+      cursor: not-allowed;
+    }
+  }
+}
+.has-title {
+  margin-top: 0.2em;
+}
+.activity:hover {
+  box-shadow: 1px 1px;
+}
+.activity:global(.selected) {
+  background-color: burlywood;
+}
+.activity:global(.dragover) {
+  background-color: green;
+}
+.activityCell {
+  scroll-snap-align: start;
+  min-width: 5em;
+  max-width: 8em;
+  background-color: white;
+  padding: 4px;
+  &[data-dragover] {
+    background-color: lightgreen;
+  }
+}
+.timeslot {
+  border: 1px solid lightgrey;
+  margin-top: 2px;
+  padding: 2px;
+  border-radius: 2px;
+  background-color: #f9f9f9;
+  &[data-dragover] {
+    border-color: green;
+  }
+}
+.activity[data-droptarget] .timeslot {
+  border-color: green;
+}
+.activityCell:hover {
+  background-color: azure;
+}
+
+.activityCell[data-dragover-invalid] {
+  background-color: red;
+}
+.unallocatedActivities {
+  min-height: 4em;
+  background-color: white;
+}
+.weekend {
+  background-color: lightgrey;
+}
+
+.rowHeader {
+  position: sticky;
+  left: 0;
+  background-color: white;
+  z-index: 10;
+  width: auto;
+  min-width: 8em;
+  border-right: 1px solid grey;
+}
+.rowHeader,
+.columnHeader {
+  position: sticky;
+  top: 0;
+  font-size: small;
+  font-weight: normal;
+  background-color: white;
+}
+
+.spinner {
+  border-top: 2px solid blue;
+  border-radius: 50%;
+  width: 1rem;
+  height: 1rem;
+  margin: auto;
+  animation: spin 2s linear 0s infinite forwards;
+}
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
