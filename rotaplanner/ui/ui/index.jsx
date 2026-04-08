@@ -20,7 +20,7 @@ export function TextField(props) {
   const [rootProps, inputProps] = splitProps(
     props,
     ["name", "value", "required", "disabled"],
-    ["placeholder", "ref", "onInput", "onChange", "onBlur", "type"]
+    ["placeholder", "ref", "onInput", "onChange", "onBlur", "type"],
   );
   return (
     <KTextField
@@ -84,6 +84,7 @@ export function Dialog(props) {
     </>
   );
 }
+
 import { Combobox as KCombobox } from "@kobalte/core/combobox";
 
 /**
@@ -102,7 +103,7 @@ export function Combobox(props) {
   const value = createMemo(() =>
     props.multiple
       ? props.value?.map((val) => ({ value: val }))
-      : props.value && { value: props.value }
+      : props.value && { value: props.value },
   );
   return (
     <KCombobox

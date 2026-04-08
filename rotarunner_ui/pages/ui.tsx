@@ -4,7 +4,7 @@ import { Show } from "solid-js/web";
 
 import { Field, FieldStore, FormStore } from "@modular-forms/solid";
 
-import * as fields from "../ui/index.jsx";
+import * as fields from "../../rotaplanner/ui/ui/index.jsx";
 export function TextField(props) {
   return <InputField type="text" {...props} />;
 }

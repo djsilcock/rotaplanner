@@ -8,30 +8,116 @@ from quart import (
     request,
     get_template_attribute,
 )
+from quart_schema import validate_request, validate_response
 import jsonpatch
 import datetime
 from typing import cast
 from sqlite3 import Connection
 from collections import OrderedDict
 from uuid import uuid4, UUID
-from rotaplanner.typedefs import (
-    StaffAssignment,
-    Location,
-    Staff,
-    ActivityTag,
-    Activity,
-    TimeSlot,
-)
+
+
+from pydantic import BaseModel, Field, computed_field
 
 table_blueprint = Blueprint(
     "table", __name__, template_folder="templates", url_prefix="/api/table"
 )
 
-location_query_cache = OrderedDict()
-latest_location_query = None
-staff_query_cache = OrderedDict()
-latest_staff_query = None
-latest_queries = {"location": None, "staff": None}
+
+class Location(BaseModel):
+    id: str | None
+    name: str
+
+
+class Staff(BaseModel):
+    id: str | None
+    name: str
+
+
+class StaffAssignment(BaseModel):
+    id: int
+    staff: str
+
+
+class Timeslot(BaseModel):
+    id: int
+    start: datetime.datetime
+    finish: datetime.datetime
+    assignments: list[StaffAssignment] = Field(default_factory=list)
+
+
+class Activity(BaseModel):
+    id: str
+    name: str
+
+    @computed_field
+    @property
+    def activity_start(self) -> datetime.datetime:
+        return min(t.start for t in self.timeslots)
+
+    @computed_field
+    @property
+    def activity_finish(self) -> datetime.datetime:
+        return max(t.finish for t in self.timeslots)
+
+    location: str | None
+    timeslots: list[Timeslot] = Field(default_factory=list)
+
+
+class DateRange(BaseModel):
+    start: datetime.date
+    end: datetime.date
+
+
+class TableDataResult(BaseModel):
+    queryVersion: UUID = Field(default_factory=uuid4)
+    dateRange: DateRange
+    staff: list[str]
+    locations: list[str]
+    staffData: dict[str | None, Staff]
+    locationsData: dict[str | None, Location]
+    activities: dict[str, Activity]
+
+
+class QueryCache:
+    def __init__(self):
+        self.cache = OrderedDict()
+        self.latest_query_id = None
+
+    def get(self, query_id) -> TableDataResult | None:
+        return self.cache.get(query_id)
+
+    def set(self, result: TableDataResult):
+        query_key = result.queryVersion
+        self.latest_query_id = query_key
+        self.cache[query_key] = result
+
+    def get_latest(self):
+        if self.latest_query_id:
+            return self.cache.get(self.latest_query_id)
+        return None
+
+    def get_delta(self, old_query_id):
+        if old_query_id and old_query_id in self.cache:
+            old_result = self.cache.get(old_query_id)
+            if old_result is None:
+                old_result = {}
+            else:
+                old_result = old_result.model_dump()
+            new_result = self.get_latest()
+            if new_result:
+
+                patch = jsonpatch.JsonPatch.from_diff(
+                    old_result, new_result.model_dump()
+                )
+                return {
+                    "queryVersion": new_result.queryVersion,
+                    "delta": patch.to_string(),
+                }
+        return None
+
+
+query_cache = QueryCache()
 
 
 def valid_uuid_or_none(value):
@@ -113,7 +199,7 @@ async def update_location():
         print("Integrity error:", e)
         affected_cells = []
 
-    return await table_by_location(force_refresh=True)
+    return await table_data(force_refresh=True)
 
 
 @table_blueprint.post("/by_staff")
@@ -225,91 +311,34 @@ async def update_staff():
         except sqlite3.IntegrityError as e:
             print("Integrity error:", e)
 
-    return await table_by_staff(force_refresh=True)
+    return await table_data(force_refresh=True)
 
 
-def serialise_activity(activity: Activity):
-    return {
-        "id": activity.id,
-        "name": activity.name,
-        "activity_start": activity.activity_start.hour,
-        "activity_finish": activity.activity_finish.hour,
-        "location": activity.location.id if activity.location else None,
-        "timeslots": [
-            {
-                "id": timeslot.id,
-                "start": timeslot.start.hour,
-                "finish": timeslot.finish.hour,
-                "assignments": [
-                    {
-                        "id": assignment.id,
-                        "staff": {
-                            "id": assignment.staff.id,
-                            "name": assignment.staff.name,
-                        },
-                    }
-                    for assignment in timeslot.assignments
-                ],
-            }
-            for timeslot in activity.timeslots
-        ],
-    }
+@table_blueprint.get("/data")
+@validate_response(TableDataResult)
+async def table_data(force_refresh=True):
+    if old_query_result := query_cache.get_latest() is None or force_refresh:
+        dates, locations, activities, staff = await get_core_query()
 
-
-def serialise_result(table_query_result):
-    return {
-        "dates": [date.isoformat() for date in table_query_result["dates"]],
-        "staff": {
-            str(staff_id): {"id": staff.id, "name": staff.name}
-            for staff_id, staff in table_query_result["staff"].items()
-        },
-        "locations": {
-            str(location_id): {"id": location.id, "name": location.name}
-            for location_id, location in table_query_result["locations"].items()
-        },
-        "cells": {
-            f"{str(row_id)}-{date.isoformat()}": content
-            for (row_id, date), content in table_query_result["cells"].items()
-        },
-        "activities": {
-            str(activity_id): serialise_activity(activity)
-            for activity_id, activity in table_query_result["activities"].items()
-        },
-    }
-
-
-@table_blueprint.get("/by_staff")
-async def table_by_staff(force_refresh=True):
-    if (
-        old_query_result := staff_query_cache.get(latest_queries["staff"]) is None
-        or force_refresh
-    ):
-        result = await get_staff_query()
-
-        latest_queries["staff"] = str(uuid4())
-        staff_query_cache[latest_queries["staff"]] = {
-            "queryVersion": latest_queries["staff"],
-            "rowHeaders": list(result["staff"].keys()),
-            **serialise_result(result),
-        }
-    return staff_query_cache.get(latest_queries["staff"])
-
-
-@table_blueprint.get("/by_location")
-async def table_by_location(force_refresh=True):
-    if (
-        old_query_result := location_query_cache.get(latest_queries["location"]) is None
-        or force_refresh
-    ):
-        result = await get_location_query()
-
-        latest_queries["location"] = str(uuid4())
-        location_query_cache[latest_queries["location"]] = {
-            "queryVersion": latest_queries["location"],
-            "rowHeaders": list(result["locations"].keys()),
-            **serialise_result(result),
-        }
-    return location_query_cache.get(latest_queries["location"])
+        query_cache.set(
+            TableDataResult(
+                dateRange=(
+                    DateRange(start=dates[0], end=dates[1])
+                    if dates
+                    else DateRange(
+                        start=datetime.date.today(), end=datetime.date.today()
+                    )
+                ),
+                staff=[l for l in staff.keys() if l is not None],
+                locations=[l for l in locations.keys() if l is not None],
+                staffData=staff,
+                locationsData=locations,
+                activities=activities,
+            )
+        )
+    response = query_cache.get_latest()
+    print(response)
+    return response
 
 
 async def get_core_query():
@@ -317,8 +346,8 @@ async def get_core_query():
     with db:
         activities: dict[str, Activity] = {}
         staff: dict[str, Staff] = {}
-        locations = {}
-        timeslots: dict[str, TimeSlot] = {}
+        locations: dict[str, Location] = {}
+        timeslots: dict[str, Timeslot] = {}
         staffassignments: dict[str, StaffAssignment] = {}
         locations_sqlquery = """SELECT id, name FROM locations"""
         for row in db.execute(locations_sqlquery).fetchall():
@@ -359,13 +388,11 @@ async def get_core_query():
                 activities[activities_id] = Activity(
                     id=activities_id,
                     name=activities_name,
-                    type="",
-                    template_id=None,
-                    location=locations.get(locations_id),
+                    location=locations_id,
                 )
             activity = activities[activities_id]
             if timeslots_id not in timeslots:
-                timeslots[timeslots_id] = TimeSlot(
+                timeslots[timeslots_id] = Timeslot(
                     id=timeslots_id,
                     activity=activity,
                     start=timeslots_start,
@@ -379,7 +406,7 @@ async def get_core_query():
             ):
                 staffassignments[staffassignments_id] = StaffAssignment(
                     id=staffassignments_id,
-                    staff=staff[staffassignments_staff_id],
+                    staff=staffassignments_staff_id,
                     timeslot=timeslot,
                     flags=[],
                 )
@@ -391,61 +418,6 @@ async def get_core_query():
         (ts.finish.date() for ts in timeslots.values()), default=datetime.date.today()
     )
 
-    dates = [
-        (min_date + datetime.timedelta(days=i))
-        for i in range(max((max_date - min_date).days + 1, 30))
-    ]
+    dates = (min_date, max_date)
 
-    location_cells = {}
-    for activity_id, activity in activities.items():
-        cell = location_cells.setdefault(
-            (
-                activity.location.id if activity.location else None,
-                activity.activity_start.date(),
-            ),
-            [],
-        )
-        cell.append(activity_id)
-
-    staff_cells = {}
-    for activity in activities.values():
-        target_cells = set()
-        for timeslot in activity.timeslots:
-            for assignment in timeslot.assignments:
-                target_cells.add((assignment.staff.id, timeslot.start.date()))
-            if not timeslot.assignments:
-                target_cells.add((None, timeslot.start.date()))
-        for cell_id in target_cells:
-            cell = staff_cells.setdefault(
-                cell_id,
-                [],
-            )
-            cell.append(activity.id)
-    return dates, locations, activities, staff, location_cells, staff_cells
-
-
-async def get_location_query():
-    core_query_result = await get_core_query()
-    dates, locations, activities, staff, location_cells, staff_cells = core_query_result
-
-    table_query_result = {
-        "dates": dates,
-        "locations": locations,
-        "cells": location_cells,
-        "activities": activities,
-        "staff": staff,
-    }
-    return table_query_result
-
-
-async def get_staff_query():
-    core_query_result = await get_core_query()
-    dates, locations, activities, staff, location_cells, staff_cells = core_query_result
-    table_query_result = {
-        "dates": dates,
-        "staff": staff,
-        "cells": staff_cells,
-        "activities": activities,
-        "locations": locations,
-    }
-    return table_query_result
+    return dates, locations, activities, staff

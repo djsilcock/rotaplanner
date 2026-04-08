@@ -1,8 +1,13 @@
 .activityName,
 .assignment,
-.activityLocation {
+.activityLocation,
+.assignedStaff {
   font-size: small;
 }
+.activityName {
+  font-weight: bold;
+}
+
 .activityTime {
   font-size: x-small;
   color: grey;
@@ -113,8 +118,8 @@
 }
 .activityCell {
   scroll-snap-align: start;
-  min-width: 5em;
-  max-width: 8em;
+  min-width: 8em;
+  max-width: 16em;
   background-color: white;
   padding: 4px;
   &[data-dragover] {

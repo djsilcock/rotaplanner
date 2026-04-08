@@ -9,7 +9,7 @@ import {
   createResource,
 } from "solid-js";
 import { Button } from "@suid/material";
-import { Dialog, useDialogContext } from "../../ui/index.jsx";
+import { Dialog, useDialogContext } from "../../../rotaplanner/ui/ui/index.jsx";
 import { SelectField, DateField, NumberField, TextField } from "../ui.jsx";
 import { createForm, FormStore } from "@modular-forms/solid";
 import styles from "./edit_activity_template.module.css";
@@ -630,6 +630,14 @@ function RequirementDescription(props) {
   );
 }
 
+interface RequirementDetails {
+  skills: string[];
+  required: number;
+  optional: number;
+  attendance: number;
+  geofence: "immediate" | "local" | "remote" | "distant";
+}
+
 function RequirementForm(props) {
   const dialogContext = useDialogContext();
   const [form, { Form }] = createForm({
@@ -695,10 +703,35 @@ function RequirementForm(props) {
   );
 }
 
+interface AssignmentDetails {
+  staffId: string;
+  assignmentTags: string[];
+}
 
+interface TimeslotDetails {
+  start: string;
+  finish: string;
+  assignments: AssignmentDetails[];
+}
 
+interface ActivityDetails {
+  name: string;
+  id: string;
+  activityStart: string;
+  activityFinish: string;
+  requirements: RequirementDetails[];
+  timeslots: TimeslotDetails[];
+  locationId: string;
+  tags:string [];
+}
 
 function EditActivity(props) {
+
+  const activityDetails = createResource<ActivityDetails>(() => props.activity, async (id) => {
+    const response = await fetch(`/api/activity/${id}`);
+    const data = await response.json();
+    return data;
+  });
   const editActivityMutation = graphql`
     mutation editActivityMutation($input: ActivityInput!) {
       editActivity(activity: $input) {

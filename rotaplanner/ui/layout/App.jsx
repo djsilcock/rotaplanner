@@ -2,6 +2,7 @@ import MenuIcon from "@suid/icons-material/Menu";
 import PersonIcon from "@suid/icons-material/Person";
 import MapIcon from "@suid/icons-material/Map";
 import Build from "@suid/icons-material/Build";
+import ArrowDownward from "@suid/icons-material/ArrowDropDown";
 import {
   AppBar,
   Box,
@@ -48,6 +49,121 @@ function MenuItem(props) {
     </A>
   );
 }
+
+import { NavigationMenu } from "@kobalte/core/navigation-menu";
+import "./navmenu.css";
+export function NavMenu() {
+  const [orientation, setOrientation] = createSignal("horizontal");
+  return (
+    <NavigationMenu class="navigation-menu__root" orientation={orientation()}>
+      <NavigationMenu.Menu>
+        <NavigationMenu.Trigger class="navigation-menu__trigger">
+          Rota{" "}
+          <NavigationMenu.Icon class="navigation-menu__trigger-indicator">
+            <ArrowDownward />
+          </NavigationMenu.Icon>
+        </NavigationMenu.Trigger>
+        <NavigationMenu.Portal>
+          <NavigationMenu.Content class="navigation-menu__content content-1">
+            <NavigationMenu.Item
+              class="navigation-menu__item"
+              href="/rota-grid/staff"
+            >
+              <NavigationMenu.ItemLabel class="navigation-menu__item-label">
+                By person
+              </NavigationMenu.ItemLabel>
+              <NavigationMenu.ItemDescription class="navigation-menu__item-description">
+                View rota organized by staff members.
+              </NavigationMenu.ItemDescription>
+            </NavigationMenu.Item>
+            <NavigationMenu.Item
+              class="navigation-menu__item"
+              href="/rota-grid/location"
+            >
+              <NavigationMenu.ItemLabel class="navigation-menu__item-label">
+                By location
+              </NavigationMenu.ItemLabel>
+              <NavigationMenu.ItemDescription class="navigation-menu__item-description">
+                View rota organized by locations.
+              </NavigationMenu.ItemDescription>
+            </NavigationMenu.Item>
+          </NavigationMenu.Content>
+        </NavigationMenu.Portal>
+      </NavigationMenu.Menu>
+      <NavigationMenu.Menu>
+        <NavigationMenu.Trigger class="navigation-menu__trigger">
+          Manage{" "}
+          <NavigationMenu.Icon class="navigation-menu__trigger-indicator">
+            <ArrowDownward />
+          </NavigationMenu.Icon>
+        </NavigationMenu.Trigger>
+        <NavigationMenu.Portal>
+          <NavigationMenu.Content class="navigation-menu__content content-2">
+            <NavigationMenu.Item
+              class="navigation-menu__item"
+              href="/manage-activity-templates"
+            >
+              <NavigationMenu.ItemLabel class="navigation-menu__item-label">
+                Activity templates
+              </NavigationMenu.ItemLabel>
+              <NavigationMenu.ItemDescription class="navigation-menu__item-description">
+                Create and manage activity templates.
+              </NavigationMenu.ItemDescription>
+            </NavigationMenu.Item>
+            <NavigationMenu.Item
+              class="navigation-menu__item"
+              href="/manage-supply-templates"
+            >
+              <NavigationMenu.ItemLabel class="navigation-menu__item-label">
+                Supply templates
+              </NavigationMenu.ItemLabel>
+              <NavigationMenu.ItemDescription class="navigation-menu__item-description">
+                Create and manage supply templates.
+              </NavigationMenu.ItemDescription>
+            </NavigationMenu.Item>
+            <NavigationMenu.Item
+              class="navigation-menu__item"
+              href="/rota-solver"
+            >
+              <NavigationMenu.ItemLabel class="navigation-menu__item-label">
+                Rota solver
+              </NavigationMenu.ItemLabel>
+              <NavigationMenu.ItemDescription class="navigation-menu__item-description">
+                Solve the rota using the solver.
+              </NavigationMenu.ItemDescription>
+            </NavigationMenu.Item>
+            <NavigationMenu.Item
+              class="navigation-menu__item"
+              href="/import-from-clw"
+            >
+              <NavigationMenu.ItemLabel class="navigation-menu__item-label">
+                Import from CLW
+              </NavigationMenu.ItemLabel>
+              <NavigationMenu.ItemDescription class="navigation-menu__item-description">
+                Import data from CLW.
+              </NavigationMenu.ItemDescription>
+            </NavigationMenu.Item>
+            <NavigationMenu.Item
+              class="navigation-menu__item"
+              href="/setup-staff"
+            >
+              <NavigationMenu.ItemLabel class="navigation-menu__item-label">
+                Setup staff
+              </NavigationMenu.ItemLabel>
+              <NavigationMenu.ItemDescription class="navigation-menu__item-description">
+                Add and manage staff members.
+              </NavigationMenu.ItemDescription>
+            </NavigationMenu.Item>
+          </NavigationMenu.Content>
+        </NavigationMenu.Portal>
+      </NavigationMenu.Menu>
+      <NavigationMenu.Viewport class="navigation-menu__viewport">
+        <NavigationMenu.Arrow class="navigation-menu__arrow" />
+      </NavigationMenu.Viewport>
+    </NavigationMenu>
+  );
+}
+
 function Layout(props) {
   const [isOpen, setOpen] = createSignal(false);
 
@@ -103,33 +219,8 @@ function Layout(props) {
 
   return (
     <div>
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            sx={{ mr: 2 }}
-            onClick={toggleDrawer(true)}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            News
-          </Typography>
-          <Button color="inherit">Login</Button>
-        </Toolbar>
-      </AppBar>
+      <NavMenu />
 
-      <Drawer
-        anchor="left"
-        open={isOpen()}
-        sx={{ zIndex: 9999 }}
-        onClose={toggleDrawer(false)}
-      >
-        {list()}
-      </Drawer>
       <div style={{ padding: "1em" }}>{props.children}</div>
     </div>
   );
@@ -146,7 +237,7 @@ const Table = lazy(() => import("../table/components/table"));
 
 export default function App() {
   return (
-    <Router root={Layout} base="/site">
+    <Router root={Layout}>
       <Route path="/" component={IndexPage} />
       <Route path="/rota-grid/:tableType" component={Table} />
 
