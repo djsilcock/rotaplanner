@@ -26,13 +26,36 @@ import { ReactiveSet } from "@solid-primitives/set";
 import styles from "./table.module.css";
 import { dndzone, TRIGGERS } from "solid-dnd-directive";
 import { Dynamic } from "solid-js/web";
-import D from "../../../../rotarunner_ui/dist/assets/activity_templates-chdWMDqn";
+import {
+  getTableData,
+  GetTableDataResponse,
+  postUpdateLocation,
+  postUpdateStaff,
+} from "../../../generated/client";
+
+type Activity = GetTableDataResponse["activities"][number];
+
 import { registerDraggable } from "../dragdrop";
 import { useParams, createAsyncStore } from "@solidjs/router";
-import { create } from "lodash";
-import { Dialog } from "../../ui";
+import { create, get, set } from "lodash";
+import { Dialog } from "../../ui/components";
+import { assert } from "chai";
 
+//polyfill for Temporal API
+import { Temporal } from "@js-temporal/polyfill";
+import { Combobox, TextField } from "../../ui/formComponents";
+import { createForm, getValues } from "@modular-forms/solid";
+
+import { EditActivityDialog } from "./editActivity";
 export const title = "Rota Planner";
+
+function assertCustomEvent<T extends Record<string, unknown>>(
+  event: Event,
+): asserts event is CustomEvent<T> {
+  if (!(event instanceof CustomEvent)) {
+    throw new Error("Event is not a CustomEvent");
+  }
+}
 
 const DropTargetContext = createContext<Accessor<HTMLElement | null>>();
 const DragContext = createContext<Accessor<HTMLElement | null>>();
@@ -41,13 +64,14 @@ const QualifierContext =
   createContext<
     Accessor<{ shiftKey: boolean; altKey: boolean; ctrlKey: boolean }>
   >();
+const TableQueryContext = createContext<GetTableDataResponse>();
 
 interface TableRowProps {
   rowId: string;
   rowName: string;
   i?: number;
-  dates: Date[];
-  cells: Map<string, any>;
+  dates: string[];
+  cells: Record<string, Record<string, string[]>>;
   tableType: string;
   activities: Record<string, any>;
 }
@@ -72,8 +96,8 @@ function TableRow(props: TableRowProps): JSX.Element {
 function TableCell(props: {
   row: string;
   date: string;
-  cells: Record<string, any>;
-  activities: Record<string, any>;
+  cells: Record<string, Record<string, string[]>>;
+  activities: Record<string, Activity>;
   tableType: string;
 }): JSX.Element {
   const cell = () => props.cells?.[props.date]?.[props.row] ?? [];
@@ -132,10 +156,10 @@ function LocationActivity(props: { activity: any }): JSX.Element {
       classList={{
         [styles.activity]: true,
         activity: true,
-        [styles.selected]: selection!.has(el),
+        [styles.selected]: selection!.has(el!),
       }}
       id={`act--${props.activity.id}`}
-      use:registerDraggable=".table-cell"
+      ref={(el) => registerDraggable(el, () => ".table-cell")}
     >
       <div class={styles.activityName} title={JSON.stringify(props.activity)}>
         {props.activity.name}
@@ -183,17 +207,21 @@ function ActivityWithoutAllocatedStaff(props: {
   date: string;
 }): JSX.Element {
   const selection = useContext(SelectionContext);
-  let el: HTMLDivElement = null;
+  let el: HTMLDivElement | null = null;
+  const register = (elem: HTMLDivElement) => {
+    registerDraggable(elem, () => `.table-cell[data-date='${props.date}']`);
+    el = elem;
+  };
+  console.log("Rendering unallocated activity", JSON.stringify(props.activity));
   return (
     <div
       classList={{
         [styles.activity]: true,
         activity: true,
-        [styles.selected]: selection!.has?.(el),
+        [styles.selected]: selection!.has?.(el!),
       }}
       id={`act--${props.activity.id}`}
-      ref={el}
-      use:registerDraggable=".table-cell"
+      ref={register}
     >
       <div class={styles.activityName}>{props.activity.name}</div>
       <div class={styles.activityTime}>
@@ -210,7 +238,12 @@ function ActivityWithoutAllocatedStaff(props: {
                   [styles.timeslot]: true,
                 }}
                 id={`timeslot--${timeslot.id}`}
-                use:registerDraggable=".table-cell"
+                ref={(el) =>
+                  registerDraggable(
+                    el,
+                    () => `.table-cell[data-date='${props.date}']`,
+                  )
+                }
               >
                 <div class={styles.activityTime}>
                   {timeslot.start.slice(11, 16)} -{" "}
@@ -232,16 +265,20 @@ function PersonActivity(props: {
 }): JSX.Element {
   const selection = useContext(SelectionContext);
   let el: HTMLElement | null = null;
+  const register = (elem: HTMLElement) => {
+    registerDraggable(elem, () => `.table-cell[data-date='${props.date}']`);
+    el = elem;
+  };
+
   return (
     <div
       classList={{
         activity: true,
         [styles.activity]: true,
-        [styles.selected]: selection.has?.(el),
+        [styles.selected]: selection?.has?.(el!),
       }}
       id={`act--${props.activity.id}`}
-      ref={el}
-      use:registerDraggable={`.table-cell[data-date='${props.date}']`}
+      ref={register}
     >
       <div class={styles.activityName}>{props.activity.name}</div>
       <div class={styles.activityTime}>
@@ -260,7 +297,12 @@ function PersonActivity(props: {
                       [styles.timeslot]: true,
                     }}
                     id={`timeslot--${timeslot.id}`}
-                    use:registerDraggable={`.table-cell[data-date='${props.date}']`}
+                    ref={(el) =>
+                      registerDraggable(
+                        el,
+                        () => `.table-cell[data-date='${props.date}']`,
+                      )
+                    }
                   >
                     <div class={styles.activityTime}>
                       {timeslot.start.slice(11, 16)} -{" "}
@@ -276,38 +318,36 @@ function PersonActivity(props: {
     </div>
   );
 }
-function activitiesByLocationCell(tableQueryResult): Record<string, any> {
+function activitiesByLocationCell(
+  activities: Record<string, Activity>,
+): Record<string, any> {
   const activitiesByCell: Record<string, any> = {};
-  for (const date of (tableQueryResult.dates ?? []).map((d) =>
-    d.slice(0, 10),
+
+  for (const activity of Object.values(activities ?? {}).toSorted((a, b) =>
+    a.activity_start < b.activity_start ? -1 : 1,
   )) {
-    activitiesByCell[date] = {};
-    for (const row_header of tableQueryResult.locations) {
-      activitiesByCell[date][row_header] = [];
-    }
-    activitiesByCell[date][null] = [];
-  }
-  for (const activity of Object.values(
-    tableQueryResult.activities ?? {},
-  ).toSorted((a, b) => (a.activity_start < b.activity_start ? -1 : 1))) {
     const activityDate = activity.activity_start.slice(0, 10);
     const locationId = activity.location;
 
-    ((activitiesByCell[activityDate] ??= {})[null] ??= []).push(activity.id);
+    ((activitiesByCell[activityDate] ??= {})[locationId ?? "null"] ??= []).push(
+      activity.id,
+    );
   }
   return activitiesByCell;
 }
 
-function activitiesByStaffCell(tableQueryResult): Record<string, any> {
+function activitiesByStaffCell(
+  activities: Record<string, Activity>,
+): Record<string, Record<string, Activity[]>> {
   const activitiesByCell: Record<string, any> = {};
 
-  for (const activity of Object.values(
-    tableQueryResult.activities ?? {},
-  ).toSorted((a, b) => a.activity_start.localeCompare(b.activity_start))) {
+  for (const activity of Object.values(activities ?? {}).toSorted((a, b) =>
+    a.activity_start.localeCompare(b.activity_start),
+  )) {
     const activityDate = activity.activity_start.slice(0, 10);
     let unallocated = true;
-    for (const timeslot of activity.timeslots) {
-      for (const assignment of timeslot.assignments) {
+    for (const timeslot of activity.timeslots!) {
+      for (const assignment of timeslot.assignments!) {
         const staffId = assignment.staff;
         if (
           !((activitiesByCell[activityDate] ??= {})[staffId] ??= []).includes(
@@ -320,14 +360,15 @@ function activitiesByStaffCell(tableQueryResult): Record<string, any> {
       }
     }
     if (unallocated) {
-      ((activitiesByCell[activityDate] ??= {})[null] ??= []).push(activity.id);
+      ((activitiesByCell[activityDate] ??= {})["null"] ??= []).push(
+        activity.id,
+      );
     }
   }
   return activitiesByCell;
 }
-const TableQueryContext = createContext();
 
-export default function Table(props) {
+export default function Table() {
   const params = useParams();
   const [dragged, setDragged] = createSignal<HTMLElement | null>(null);
   const [droptarget, setDroptarget] = createSignal<HTMLElement | null>(null);
@@ -338,35 +379,65 @@ export default function Table(props) {
     ctrlKey: boolean;
   }>({ shiftKey: false, altKey: false, ctrlKey: false });
   const selection = new ReactiveSet<HTMLElement>();
-  const [tableQueryResult, setTableQueryResult] = createStore<any>({});
-  const [activitiesByCell, setActivitiesByCell] = createStore<any>({});
+  const [tableQueryResult, setTableQueryResult] =
+    createStore<GetTableDataResponse>(null as unknown as GetTableDataResponse);
+  const [activitiesByCell, setActivitiesByCell] = createStore<
+    Record<string, any>
+  >({});
+  const [activities, updateActivities] = createStore<Record<string, Activity>>(
+    {},
+  );
+  const [editingActivity, setEditingActivity] = createSignal<string | null>(
+    null,
+  );
+
   const dates = createMemo(() => {
     if (!tableQueryResult.dateRange) {
       return [];
     }
-    const minDate = parseISO(tableQueryResult.dateRange?.start);
-    const maxDate = parseISO(tableQueryResult.dateRange?.end);
-    return eachDayOfInterval({ start: minDate, end: maxDate }).map((d) =>
-      d.toISOString().slice(0, 10),
-    );
-  });
-  createEffect(() => {
-    fetch(`/api/table/data`)
-      .then((res) => res.json())
-      .then((newdata) => setTableQueryResult(reconcile(newdata)));
-  });
-  createEffect(() => {
-    console.log("Recomputing activities by cell");
-    if (!tableQueryResult.queryVersion) {
-      console.log("no data yet");
-      return;
+    const minDate = Temporal.PlainDate.from(tableQueryResult.dateRange.start);
+    const maxDate = Temporal.PlainDate.from(tableQueryResult.dateRange.end);
+    const days: string[] = [];
+    for (
+      let d = minDate;
+      Temporal.PlainDate.compare(d, maxDate) <= 0;
+      d = d.add({ days: 1 })
+    ) {
+      days.push(d.toString());
     }
+    return days;
+  });
+  function processTableData(newdata: {
+    data?: GetTableDataResponse;
+    error?: any;
+  }) {
+    if (newdata.data) {
+      setTableQueryResult(reconcile(newdata.data));
+      const newActivities: Record<
+        string,
+        GetTableDataResponse["activities"][number]
+      > = {};
+      for (const activity of newdata.data.activities ?? []) {
+        newActivities[activity.id] = activity;
+      }
+      console.log("Fetched activities", newActivities);
+      updateActivities(reconcile(newActivities));
+    } else if (newdata.error) {
+      console.error("Failed to fetch table data");
+    }
+  }
+
+  createEffect(() => {
+    getTableData().then((newdata) => {
+      processTableData(newdata);
+    });
+  });
+
+  createEffect(() => {
     if (params.tableType === "location") {
-      setActivitiesByCell(
-        reconcile(activitiesByLocationCell(tableQueryResult)),
-      );
+      setActivitiesByCell(reconcile(activitiesByLocationCell(activities)));
     } else if (params.tableType === "staff") {
-      setActivitiesByCell(reconcile(activitiesByStaffCell(tableQueryResult)));
+      setActivitiesByCell(reconcile(activitiesByStaffCell(activities)));
     } else {
       console.warn(`Unknown table type: ${params.tableType}`);
       setActivitiesByCell(reconcile({}));
@@ -375,24 +446,37 @@ export default function Table(props) {
 
   const attachListeners = (el: HTMLElement) => {
     el.addEventListener("dropped", (evt) => {
+      assertCustomEvent<{
+        initialTarget: HTMLElement;
+        droptarget: HTMLElement;
+        shiftKey: boolean;
+        altKey: boolean;
+        ctrlKey: boolean;
+      }>(evt);
       const tableType = params.tableType;
       const payload = {
-        draggedId: evt.target.id,
-        initialDropzoneId: evt.detail.initialTarget?.id,
-        droptargetId: evt.detail.droptarget?.id,
+        draggedId: (evt.target as HTMLElement).id,
+        initialDropzoneId: evt.detail.initialTarget.id,
+        droptargetId: evt.detail.droptarget.id,
         shiftKey: evt.detail.shiftKey,
         altKey: evt.detail.altKey,
         ctrlKey: evt.detail.ctrlKey,
       };
-      fetch(`/api/table/by_${tableType}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      })
-        .then((res) => res.json())
-        .then((newdata) => setTableQueryResult(reconcile(newdata)))
+      if (payload.initialDropzoneId === payload.droptargetId) {
+        console.log("Dropped in the same cell, ignoring", payload);
+        return;
+      }
+      if (tableType !== "location" && tableType !== "staff") {
+        console.error(`Unknown table type: ${tableType}`);
+        return;
+      }
+      (tableType === "location"
+        ? postUpdateLocation({ body: payload })
+        : postUpdateStaff({ body: payload })
+      )
+        .then((newdata) =>
+          newdata.data ? setTableQueryResult(reconcile(newdata.data)) : null,
+        )
         .finally(() => {
           setDroptarget(null);
           setDragged(null);
@@ -406,7 +490,7 @@ export default function Table(props) {
       console.log("Double click on", target);
       if (target.classList.contains("activity")) {
         const activityId = target.id.split("--")[1];
-        window.open(`/activity/${activityId}`, "_blank");
+        setEditingActivity(activityId);
       }
     });
   };
@@ -416,6 +500,15 @@ export default function Table(props) {
       <SelectionContext.Provider value={selection}>
         <div id="app" ref={attachListeners}>
           table
+          <Show when={editingActivity()}>
+            <EditActivityDialog
+              activity={activities[editingActivity()!]}
+              onClose={() => setEditingActivity(null)}
+              locationOptions={Object.values(
+                tableQueryResult.locationsData ?? {},
+              ).map((loc) => ({ value: loc.id, label: loc.name }))}
+            />
+          </Show>
           <table
             classList={{
               [styles.rotaTable]: true,
@@ -440,18 +533,18 @@ export default function Table(props) {
               >
                 {(row_header, i) => (
                   <TableRow
-                    rowId={row_header}
+                    rowId={row_header ?? "null"}
                     rowName={
                       tableQueryResult[
                         (params.tableType as string) == "location"
                           ? "locationsData"
                           : "staffData"
-                      ]?.[row_header]?.name
+                      ]?.[row_header ?? "null"]?.name
                     }
                     i={i()}
                     dates={dates()}
                     cells={activitiesByCell}
-                    activities={tableQueryResult.activities}
+                    activities={activities}
                     tableType={params.tableType as string}
                   />
                 )}

@@ -1,5 +1,5 @@
 import styles from "./activity_templates.module.css";
-import EditActivityTemplate from "./edit_activity";
+import EditActivityTemplate from "../../rotaplanner/ui/table/components/editActivity";
 import { Dialog } from "@suid/material";
 import { createSignal, Show, For, createEffect } from "solid-js";
 

@@ -34,7 +34,9 @@ import {
 } from "./__generated__/LocationTableStaffTableQuery.graphql";
 import { Dynamic } from "solid-js/web";
 
-const EditActivityModal = lazy(() => import("../edit_activity"));
+const EditActivityModal = lazy(
+  () => import("../../../rotaplanner/ui/table/components/editActivity"),
+);
 const epoch = new Date(2021, 0, 1);
 
 /**

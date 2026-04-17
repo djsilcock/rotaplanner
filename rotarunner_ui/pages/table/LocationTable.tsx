@@ -27,7 +27,9 @@ import { ReactiveSet } from "@solid-primitives/set";
 import { set } from "lodash";
 import { R } from "../../dist/assets/index-Di3oCNSn";
 import D from "../../dist/assets/activity_templates-chdWMDqn";
-const EditActivityModal = lazy(() => import("../edit_activity"));
+const EditActivityModal = lazy(
+  () => import("../../../rotaplanner/ui/table/components/editActivity"),
+);
 const epoch = new Date(2021, 0, 1);
 
 /**
@@ -82,7 +84,7 @@ function LocationTable() {
             new CustomEvent("editactivity", {
               bubbles: true,
               detail: { activityId },
-            })
+            }),
           );
         } else if (e.target?.closest("td")) {
           const cell = e.target?.closest("td") as HTMLElement;
@@ -93,7 +95,7 @@ function LocationTable() {
             new CustomEvent("editactivity", {
               bubbles: true,
               detail: { activityId: `${date}--${row}` },
-            })
+            }),
           );
         }
       }}
@@ -150,7 +152,7 @@ export const ActivityCell: Component<
         return (
           activityDate == isoDate() && (locId ?? "unallocated") == props.row_id
         );
-      }) ?? []
+      }) ?? [],
   );
 
   const [editActivity] = createMutation(graphql`
@@ -259,7 +261,7 @@ interface ActivityProps {
 export function Activity(props: ActivityProps): JSX.Element {
   const data = createFragment<LocationTableActivityFragment$key>(
     activityFragment,
-    () => props.activity_def
+    () => props.activity_def,
   );
   const selection = useContext(SelectionContext);
   const dragdrop = useContext(DragDropContext);

@@ -56,7 +56,9 @@ import {
 import { StaffTableTimeslotFragment$key } from "./__generated__/StaffTableTimeslotFragment.graphql";
 import { StaffTableActivityFragment$key } from "./__generated__/StaffTableActivityFragment.graphql";
 
-const EditActivityModal = lazy(() => import("../edit_activity"));
+const EditActivityModal = lazy(
+  () => import("../../../rotaplanner/ui/table/components/editActivity"),
+);
 const epoch = new Date(2021, 0, 1);
 
 /**
@@ -121,7 +123,7 @@ interface DraggableActivity {
 }
 
 function* splitActivitiesIntoTimeslots(
-  activities: StaffTableQuery$data["content"]["edges"]
+  activities: StaffTableQuery$data["content"]["edges"],
 ) {
   for (const activity of activities) {
     const timeslots = activity.node.timeslots.map((timeslot) => ({
@@ -191,7 +193,9 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
     }
     return (timeslots: TimeSlots) => {
       return timeslots.filter((ts) =>
-        ts.assignments.some((assignment) => assignment.staff.id == props.row_id)
+        ts.assignments.some(
+          (assignment) => assignment.staff.id == props.row_id,
+        ),
       );
     };
   };
@@ -213,8 +217,8 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
           ({ node }) =>
             props.row_id == "unallocated" ||
             node.timeslots.some((ts) =>
-              ts.assignments.some((ass) => ass.staff.id == props.row_id)
-            )
+              ts.assignments.some((ass) => ass.staff.id == props.row_id),
+            ),
         )
         .toSorted((a, b) => {
           if (a.node.activityStart == b.node.activityStart) {
@@ -223,7 +227,7 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
           return a.node.activityStart < b.node.activityStart ? -1 : 1;
         })
 
-        .map(mapAssignmentToDraggable)
+        .map(mapAssignmentToDraggable),
   );
 
   const handleMove = ({ detail }) => {
@@ -238,7 +242,7 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
             return a.activity.name < b.activity.name ? -1 : 1;
           }
           return a.activity.activityStart < b.activity.activityStart ? -1 : 1;
-        })
+        }),
     );
   };
 
@@ -258,13 +262,13 @@ export const ActivityCell: Component<ActivityCellProps> = (props) => {
     }
     if (detail.info.trigger == TRIGGERS.DROPPED_INTO_ZONE) {
       const movedItem = detail.items.find(
-        (i: DraggableActivity) => i.id == detail.info.id
+        (i: DraggableActivity) => i.id == detail.info.id,
       );
       if (!movedItem) {
         console.error(
           "Moved item not found in cellActivities",
           detail.info.id,
-          detail.items
+          detail.items,
         );
 
         return;
@@ -384,7 +388,7 @@ let draggedAssignments: string[] = [];
 export function Activity(props): JSX.Element {
   const data = createFragment<StaffTableActivityFragment$key>(
     activityFragment,
-    () => props.activity_def
+    () => props.activity_def,
   );
   const assignmentsHere = createMemo(() => {
     if (props.staff_or_location == "unallocated") {
@@ -393,7 +397,7 @@ export function Activity(props): JSX.Element {
     return data()!.timeslots.flatMap((ts) =>
       ts.assignments
         .filter((assignment) => assignment.staff.id == props.staff_or_location)
-        .map((assignment) => assignment.id)
+        .map((assignment) => assignment.id),
     );
   });
   return (
@@ -404,7 +408,7 @@ export function Activity(props): JSX.Element {
       id={`activity-${data()!.id}`}
       ondragstart={(e) => {
         draggedAssignments = data()!.timeslots.flatMap((ts) =>
-          ts.assignments.map((assignment) => assignment.id)
+          ts.assignments.map((assignment) => assignment.id),
         );
         console.log(
           "Drag started for activity:",
@@ -412,7 +416,7 @@ export function Activity(props): JSX.Element {
           "with assignments:",
           assignmentsHere(),
           "on row_id:",
-          props.staff_or_location
+          props.staff_or_location,
         );
       }}
     >

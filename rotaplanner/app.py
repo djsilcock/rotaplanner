@@ -30,7 +30,7 @@ def _default(o):
     raise TypeError(f"Object of type {type(o).__name__} is not JSON serializable")
 
 
-app.json.default = _default
+# app.json.default = _default
 
 
 @app.while_serving

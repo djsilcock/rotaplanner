@@ -9,18 +9,18 @@ import {
   createResource,
 } from "solid-js";
 import { Button } from "@suid/material";
-import { Dialog, useDialogContext } from "../../../rotaplanner/ui/ui/index.jsx";
-import { SelectField, DateField, NumberField, TextField } from "../ui.jsx";
+import { Dialog, useDialogContext } from "../../ui/components.jsx";
+import { SelectField, DateField, NumberField, TextField } from "../../ui/formComponents.jsx";
 import { createForm, FormStore } from "@modular-forms/solid";
 import styles from "./edit_activity_template.module.css";
 import { createStore } from "solid-js/store";
-import { FormRow } from "../ui.jsx";
+import { FormRow } from "../../ui/formComponents.jsx";
 import { createLazyLoadQuery } from "solid-relay";
 import { graphql } from "relay-runtime";
 import {
   editActivityQuery,
   editActivityQuery$data,
-} from "./__generated__/editActivityQuery.graphql.js";
+} from "../../../../rotarunner_ui/pages/edit_activity/__generated__/editActivityQuery.graphql.js";
 import {
   ActivityInput,
   DailyRecurrenceInput,
@@ -30,8 +30,8 @@ import {
   TimeSlotInput,
   WeekInMonthRecurrenceInput,
   WeeklyRecurrenceInput,
-} from "./__generated__/editActivityMutation.graphql.js";
-import * as fields from "../ui";
+} from "../../../../rotarunner_ui/pages/edit_activity/__generated__/editActivityMutation.graphql.js";
+import * as fields from "../../ui/formComponents.jsx";
 
 type DeepMutable<T> =
   // If T is a ReadonlyArray, make it mutable and recurse on its elements

@@ -1,0 +1,15 @@
+[2026-04-12T20:00:58.608Z] Error: Error opening file "C:\openapi.json" 
+ENOENT: no such file or directory, open 'C:\openapi.json'
+Stack:
+ResolverError: Error opening file "C:\openapi.json" 
+ENOENT: no such file or directory, open 'C:\openapi.json'
+    at Object.handler (file:///C:/Users/danny/Documents/rotaplanner/node_modules/@hey-api/json-schema-ref-parser/dist/index.mjs:1438:9)
+    at async $RefParser.parse (file:///C:/Users/danny/Documents/rotaplanner/node_modules/@hey-api/json-schema-ref-parser/dist/index.mjs:1700:5)
+    at async $RefParser.bundle (file:///C:/Users/danny/Documents/rotaplanner/node_modules/@hey-api/json-schema-ref-parser/dist/index.mjs:1647:3)
+    at async createClient$1 (file:///C:/Users/danny/Documents/rotaplanner/node_modules/@hey-api/openapi-ts/dist/src-BzTu1krN.mjs:83:8)
+    at async file:///C:/Users/danny/Documents/rotaplanner/node_modules/@hey-api/openapi-ts/dist/src-BzTu1krN.mjs:193:12
+    at async Promise.all (index 0)
+    at async createClient (file:///C:/Users/danny/Documents/rotaplanner/node_modules/@hey-api/openapi-ts/dist/src-BzTu1krN.mjs:191:21)
+    at async BasicMinimalPluginContext.configResolved (file:///C:/Users/danny/Documents/rotaplanner/node_modules/@hey-api/vite-plugin/dist/index.mjs:8:4)
+    at async Promise.all (index 0)
+    at async resolveConfig (file:///C:/Users/danny/Documents/rotaplanner/node_modules/vite/dist/node/chunks/node.js:34257:2)

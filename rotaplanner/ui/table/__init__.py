@@ -8,7 +8,7 @@ from quart import (
     request,
     get_template_attribute,
 )
-from quart_schema import validate_request, validate_response
+from quart_schema import validate_request, validate_response, validate_querystring
 import jsonpatch
 import datetime
 from typing import cast
@@ -76,7 +76,7 @@ class TableDataResult(BaseModel):
     locations: list[str]
     staffData: dict[str | None, Staff]
     locationsData: dict[str | None, Location]
-    activities: dict[str, Activity]
+    activities: list[Activity]
 
 
 class QueryCache:
@@ -128,16 +128,24 @@ def valid_uuid_or_none(value):
         return None
 
 
+class UpdateLocationRequest(BaseModel):
+    draggedId: str
+    droptargetId: str
+    initialDropzoneId: str
+
+
 @table_blueprint.post("/by_location")
-async def update_location():
-    payload = await request.get_json()
+@validate_request(UpdateLocationRequest)
+@validate_response(TableDataResult)
+async def update_location(data: UpdateLocationRequest):
+    payload = data
     print(payload)
     match payload:
-        case {
-            "draggedId": dragged_id,
-            "droptargetId": droptarget_id,
-            "initialDropzoneId": initial_dropzone_id,
-        }:
+        case UpdateLocationRequest(
+            draggedId=dragged_id,
+            droptargetId=droptarget_id,
+            initialDropzoneId=initial_dropzone_id,
+        ):
             pass
         case _:
             raise ValueError("did not understand instruction")
@@ -202,17 +210,26 @@ async def update_location():
     return await table_data(force_refresh=True)
 
 
+class UpdateStaffRequest(BaseModel):
+    draggedId: str
+    droptargetId: str
+    initialDropzoneId: str
+    ctrlKey: bool
+
+
 @table_blueprint.post("/by_staff")
-async def update_staff():
-    payload = await request.get_json()
+@validate_request(UpdateStaffRequest)
+@validate_response(TableDataResult)
+async def update_staff(data: UpdateStaffRequest):
+    payload = data
     print(payload)
     match payload:
-        case {
-            "draggedId": dragged_id,
-            "droptargetId": droptarget_id,
-            "initialDropzoneId": initial_dropzone_id,
-            "ctrlKey": should_copy,
-        }:
+        case UpdateStaffRequest(
+            draggedId=dragged_id,
+            droptargetId=droptarget_id,
+            initialDropzoneId=initial_dropzone_id,
+            ctrlKey=should_copy,
+        ):
             pass
         case _:
             raise ValueError("did not understand instruction")
@@ -333,7 +350,7 @@ async def table_data(force_refresh=True):
                 locations=[l for l in locations.keys() if l is not None],
                 staffData=staff,
                 locationsData=locations,
-                activities=activities,
+                activities=list(activities.values()),
             )
         )
     response = query_cache.get_latest()
@@ -421,3 +438,42 @@ async def get_core_query():
     dates = (min_date, max_date)
 
     return dates, locations, activities, staff
+
+
+class AvailableForTimeslotQuery(BaseModel):
+    timeslot_id: int
+
+
+class AvailableForTimeslotResult(BaseModel):
+    availability_type: str
+    available_staff: list[Staff]
+
+
+@table_blueprint.get("/available_for_timeslot")
+@validate_querystring(AvailableForTimeslotQuery)
+@validate_response(list[AvailableForTimeslotResult])
+def available_for_timeslot(query_args: AvailableForTimeslotQuery):
+    db = cast(Connection, current_app.db_connection)
+    with db:
+        timeslot_id = query_args.timeslot_id
+        availability_sqlquery = """
+            SELECT DISTINCT
+                staff.id, 
+                staff.name,
+                CASE WHEN staff_assignments.staff_id IS NULL THEN 'available' ELSE 'assigned' END as availability_type
+            FROM staff
+            LEFT JOIN staff_assignments ON staff.id = staff_assignments.staff_id AND staff_assignments.timeslot_id = :timeslot_id
+        """
+        availability = {}
+        for row in db.execute(
+            availability_sqlquery, {"timeslot_id": timeslot_id}
+        ).fetchall():
+            staff_id, staff_name, availability_type = row
+            availability.setdefault(availability_type, []).append(
+                Staff(id=staff_id, name=staff_name)
+            )
+
+        return [
+            AvailableForTimeslotResult(availability_type=atype, available_staff=staff)
+            for atype, staff in availability.items()
+        ]
