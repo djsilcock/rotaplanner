@@ -1,19 +1,26 @@
 import sqlite3
 import pathlib
 
-from quart import current_app
 
-from . import database_connection
+from . import get_database_connection
+import click
 
 
+@click.group()
+def db():
+    pass
+
+
+@db.command("setup")
 def setup_database():
-    with database_connection(force=True) as connection:
+    with get_database_connection(force=True) as connection:
         sqlite_setup_file = pathlib.Path(__file__, "..", "setup.sql").resolve()
         with open(sqlite_setup_file) as f:
             sql_setup = f.read()
             connection.executescript(sql_setup)
 
 
+@db.command("populate")
 def populate_database():
     from test_data import (
         staff_list,
@@ -22,7 +29,7 @@ def populate_database():
         activities,
     )
 
-    with database_connection() as connection:
+    with get_database_connection() as connection:
         connection.executemany(
             "INSERT INTO staff (id, name) VALUES (?, ?) ON CONFLICT(id) DO NOTHING",
             staff_list,
@@ -38,12 +45,12 @@ def populate_database():
         for activity in activities:
             activity_id = activity[0]
             activity_name = activity[1]
-            activity_times = activity[2]
+            start, finish = activity[2]
             connection.execute(
-                "INSERT INTO activities (id, name) VALUES (?, ?) ON CONFLICT(id) DO NOTHING",
-                (activity_id, activity_name),
+                "INSERT INTO activities (id, name, start, finish) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO NOTHING",
+                (activity_id, activity_name, start, finish),
             )
-            connection.executemany(
-                "INSERT INTO timeslots (start, finish, activity_id) VALUES (?, ?, ?) ON CONFLICT(activity_id,start) DO NOTHING",
-                [(*times, activity_id) for times in activity_times],
-            )
+        connection.execute(
+            "INSERT INTO activity_roles (activity_id, name) SELECT id, ? FROM activities",
+            ("default",),
+        )

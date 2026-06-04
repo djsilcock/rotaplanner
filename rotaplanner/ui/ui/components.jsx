@@ -115,10 +115,10 @@ export function Combobox(props) {
       }
       options={props.options}
       placeholder={props.placeholder}
-      optionValue="value"
-      optionTextValue="label"
-      optionLabel="label"
-      optionDisabled="disabled"
+      optionValue={props.optionValue ?? "value"}
+      optionTextValue={props.optionTextValue ?? "label"}
+      optionLabel={props.optionLabel ?? "label"}
+      optionDisabled={props.optionDisabled ?? "disabled"}
       multiple={props.multiple}
       validationState={props.errorMessage ? "invalid" : "valid"}
       itemComponent={(props) => {
@@ -127,7 +127,7 @@ export function Combobox(props) {
         return (
           <KCombobox.Item item={props.item} class={cbstyles.item}>
             <KCombobox.ItemLabel>
-              {props.item.rawValue.label}
+              {props.item.rawValue[props.optionLabel ?? "label"]}
 
               <KCombobox.ItemIndicator class={cbstyles.itemIndicator}>
                 ✓
@@ -148,7 +148,7 @@ export function Combobox(props) {
                     class={cbstyles.chip}
                     onPointerDown={(e) => e.stopPropagation()}
                   >
-                    {option.label}
+                    {option[props.optionTextValue ?? "label"]}
                     <button onClick={() => state.remove(option)}>x</button>
                   </span>
                 )}

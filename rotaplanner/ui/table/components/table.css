@@ -1,14 +1,15 @@
-.activityName,
+.activity-name,
 .assignment,
-.activityLocation,
-.assignedStaff {
+.activity-location,
+.assigned-staff {
   font-size: small;
 }
-.activityName {
+.activity-name {
   font-weight: bold;
 }
 
-.activityTime {
+.activity-time,
+.role-name {
   font-size: x-small;
   color: grey;
 }
@@ -25,7 +26,7 @@
     sans-serif;
 }
 
-.rotaNames {
+.rota-names {
   display: grid;
   grid-row: 1/-1;
   grid-template-rows: subgrid;
@@ -35,7 +36,7 @@
   left: 0;
   background-color: white;
 }
-.rotaTable {
+.rota-table {
   position: relative;
   width: 80vw;
   overflow: auto;
@@ -46,7 +47,7 @@
     padding: 0.5em;
   }
 }
-.rotaScrollable {
+.rota-scrollable {
   display: grid;
   position: relative;
   overflow-x: auto;
@@ -55,7 +56,7 @@
   column-gap: 1px;
   white-space: nowrap;
 }
-.rotaGrid {
+.rota-grid {
   display: grid;
   grid-template-rows: subgrid;
   grid-template-columns: auto;
@@ -63,7 +64,7 @@
   grid-auto-flow: column;
   grid-row: 1/-1;
 }
-.floatWrapper {
+.float-wrapper {
   display: grid;
   grid-auto-columns: auto;
   grid-template-rows: subgrid;
@@ -71,7 +72,7 @@
   grid-row: 1/-1;
   grid-auto-flow: column;
 }
-.rotaSegment {
+.rota-segment {
   display: grid;
   grid-template-rows: subgrid;
   grid-auto-columns: minmax(5em, 8em);
@@ -88,13 +89,15 @@
   cursor: pointer;
   touch-action: none;
   user-select: none;
+  margin: 2px;
 
-  &:global(.droptarget) {
+  &.droptarget {
     border: 2px solid green;
   }
   &[data-dragging] {
     opacity: 0.5;
     cursor: grabbing;
+    z-index: 100;
     &[data-ctrldrag] {
       cursor: copy;
     }
@@ -107,16 +110,28 @@
 .has-title {
   margin-top: 0.2em;
 }
-.activity:hover {
-  box-shadow: 1px 1px;
+.timeline-bar {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background-color: rgba(0, 0, 255, 0.5);
 }
-.activity:global(.selected) {
+.activity-wrapper:hover {
+  & .activity {
+    box-shadow: 1px 1px;
+  }
+  & .timeline-bar {
+    background-color: red;
+  }
+}
+.activity.selected {
   background-color: burlywood;
 }
-.activity:global(.dragover) {
+.activity.dragover {
   background-color: green;
 }
-.activityCell {
+.activity-cell {
   scroll-snap-align: start;
   min-width: 8em;
   max-width: 16em;
@@ -126,7 +141,7 @@
     background-color: lightgreen;
   }
 }
-.timeslot {
+.role {
   border: 1px solid lightgrey;
   margin-top: 2px;
   padding: 2px;
@@ -139,14 +154,14 @@
 .activity[data-droptarget] .timeslot {
   border-color: green;
 }
-.activityCell:hover {
+.activity-cell:hover {
   background-color: azure;
 }
 
-.activityCell[data-dragover-invalid] {
+.activity-cell[data-dragover-invalid] {
   background-color: red;
 }
-.unallocatedActivities {
+.unallocated-activities {
   min-height: 4em;
   background-color: white;
 }
@@ -154,7 +169,7 @@
   background-color: lightgrey;
 }
 
-.rowHeader {
+.row-header {
   position: sticky;
   left: 0;
   background-color: white;
@@ -163,8 +178,8 @@
   min-width: 8em;
   border-right: 1px solid grey;
 }
-.rowHeader,
-.columnHeader {
+.row-header,
+.column-header {
   position: sticky;
   top: 0;
   font-size: small;

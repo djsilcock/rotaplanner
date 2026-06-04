@@ -101,7 +101,7 @@ export function Combobox(props) {
       options={localProps.options}
       defaultValue={
         localProps.multiple
-          ? fieldProps.field.value.map((v: any) => ({ value: v }))
+          ? (fieldProps.field.value?.map((v: any) => ({ value: v })) ?? [])
           : { value: fieldProps.field.value }
       }
       placeholder={props.placeholder}
@@ -110,10 +110,10 @@ export function Combobox(props) {
           ? "items"
           : undefined
       }
-      optionValue={(opt) => (opt as Option).value}
-      optionTextValue={(opt) => (opt as Option).label}
-      optionLabel={(opt) => (opt as Option).label}
-      optionDisabled={(opt) => (opt as Option).disabled || false}
+      optionValue={props.optionValue ?? "value"}
+      optionTextValue={props.optionTextValue ?? "label"}
+      optionLabel={props.optionLabel ?? "label"}
+      optionDisabled={props.optionDisabled ?? "disabled"}
       multiple={localProps.multiple}
       validationState={fieldProps.field.error ? "invalid" : "valid"}
       itemComponent={(props) => {
@@ -140,20 +140,22 @@ export function Combobox(props) {
       <KCombobox.Control class={cbstyles.control}>
         {(state) => (
           <>
-            <Show when={localProps.multiple}>
-              <For each={state.selectedOptions()}>
-                {(option) => (
-                  <span
-                    class={cbstyles.chip}
-                    onPointerDown={(e) => e.stopPropagation()}
-                  >
-                    {(option as Option).label}
-                    <button onClick={() => state.remove(option)}>x</button>
-                  </span>
-                )}
-              </For>
-            </Show>
-            <KCombobox.Input class={cbstyles.input} />
+            <div>
+              <Show when={localProps.multiple}>
+                <For each={state.selectedOptions()}>
+                  {(option) => (
+                    <span
+                      class={cbstyles.chip}
+                      onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      {(option as Option).label}
+                      <button onClick={() => state.remove(option)}>x</button>
+                    </span>
+                  )}
+                </For>
+              </Show>
+              <KCombobox.Input class={cbstyles.input} />
+            </div>
             <KCombobox.Trigger class={cbstyles.trigger}>▼</KCombobox.Trigger>
           </>
         )}
@@ -167,3 +169,105 @@ export function Combobox(props) {
     </KCombobox>
   );
 }
+
+import { Component } from "solid-js";
+
+export interface ComboboxOption {
+  value: string;
+  label: string;
+}
+
+interface ModularMultiComboboxProps {
+  field: FieldStore<any, any>; // Passed from Modular Forms' <Field>
+  props: JSX.HTMLAttributes<HTMLSelectElement>;
+  options: ComboboxOption[];
+  label?: string;
+  placeholder?: string;
+}
+
+export const ModularMultiCombobox: Component<ModularMultiComboboxProps> = (
+  props,
+) => {
+  return (
+    <KCombobox<ComboboxOption>
+      multiple
+      options={props.options}
+      optionValue="value"
+      optionLabel="label"
+      // 1. Initialize value from Modular Forms' current state (expects array of objects or empty array)
+      defaultValue={props.options.filter((opt) =>
+        props.field.value?.includes(opt.value),
+      )}
+      onChange={(value) => {
+        // 3. Update Modular Forms state when selection changes
+        const selectedValues = value.map((opt) => opt.value);
+        console.log("Selected values:", selectedValues);
+        //props.field.setValue(selectedValues);
+      }}
+      placeholder={props.placeholder}
+      itemComponent={(props) => (
+        <KCombobox.Item item={props.item} class="combobox__item">
+          <KCombobox.ItemLabel>{props.item.textValue}</KCombobox.ItemLabel>
+          <KCombobox.ItemIndicator class="combobox__item-indicator">
+            ✓
+          </KCombobox.ItemIndicator>
+        </KCombobox.Item>
+      )}
+    >
+      <Show when={props.label}>
+        <KCombobox.Label class="combobox__label">{props.label}</KCombobox.Label>
+      </Show>
+
+      <div class="combobox__control">
+        <KCombobox.Control
+          aria-label={props.label}
+          class="combobox__control-inner"
+        >
+          {/* Kobalte's built-in tag list rendering */}
+
+          {(state) => (
+            <>
+              {state.selectedOptions().map((option) => (
+                <span class="combobox__tag">
+                  {option.label}
+                  <button
+                    type="button"
+                    class="combobox__tag-remove"
+                    onClick={() => state.remove(option)}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+              <KCombobox.Input class="combobox__input" />
+              <KCombobox.Trigger class="combobox__trigger">
+                <KCombobox.Icon class="combobox__icon">▼</KCombobox.Icon>
+              </KCombobox.Trigger>
+            </>
+          )}
+        </KCombobox.Control>
+      </div>
+
+      {/* 
+        2. The HiddenSelect renders a native <select multiple> element.
+        We hook Modular Forms directly into its attributes.
+      */}
+      <KCombobox.HiddenSelect
+        name={props.field.name}
+        ref={props.props.ref}
+        onBlur={props.props.onBlur}
+        onChange={props.props.onChange} // Use onInput or onChange to notify Modular Forms
+      />
+
+      <Show when={props.field.error}>
+        <span class="combobox__error-message">{props.field.error}</span>
+      </Show>
+
+      <KCombobox.Portal>
+        <KCombobox.Content class="combobox__content">
+          <KCombobox.Listbox class="combobox__listbox" />
+        </KCombobox.Content>
+      </KCombobox.Portal>
+    </KCombobox>
+  );
+};

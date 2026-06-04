@@ -1,52 +1,46 @@
 import {
   createEffect,
   createSignal,
+  createResource,
   For,
   Show,
-  Suspense,
   createMemo,
   JSX,
   Component,
-  lazy,
   useContext,
   createContext,
   Accessor,
   Match,
   Switch,
 } from "solid-js";
-import { createStore, produce, reconcile } from "solid-js/store";
-import {
-  differenceInCalendarDays,
-  parseISO,
-  eachDayOfInterval,
-} from "date-fns";
-import { applyPatch } from "fast-json-patch";
+import { createStore, reconcile } from "solid-js/store";
+import { parseISO } from "date-fns";
 import { ReactiveSet } from "@solid-primitives/set";
-
 import styles from "./table.module.css";
-import { dndzone, TRIGGERS } from "solid-dnd-directive";
-import { Dynamic } from "solid-js/web";
 import {
-  getTableData,
-  GetTableDataResponse,
-  postUpdateLocation,
-  postUpdateStaff,
-} from "../../../generated/client";
-
-type Activity = GetTableDataResponse["activities"][number];
-
+  TableApi,
+  TableDataResult,
+  UpdateLocationRequest,
+  UpdateStaffRequest,
+} from "../types";
 import { registerDraggable } from "../dragdrop";
-import { useParams, createAsyncStore } from "@solidjs/router";
-import { create, get, set } from "lodash";
-import { Dialog } from "../../ui/components";
-import { assert } from "chai";
-
-//polyfill for Temporal API
 import { Temporal } from "@js-temporal/polyfill";
-import { Combobox, TextField } from "../../ui/formComponents";
-import { createForm, getValues } from "@modular-forms/solid";
+import { createSubscribedSignal, getTypedApi } from "../../../utils";
 
-import { EditActivityDialog } from "./editActivity";
+const api = getTypedApi<TableApi>();
+
+function getTableData() {
+  return api().data();
+}
+function postUpdateLocation(payload: UpdateLocationRequest) {
+  return api().update_location(payload);
+}
+function postUpdateStaff(payload: UpdateStaffRequest) {
+  return api().update_staff(payload);
+}
+
+type Activity = TableDataResult["activities"][number];
+
 export const title = "Rota Planner";
 
 function assertCustomEvent<T extends Record<string, unknown>>(
@@ -64,7 +58,7 @@ const QualifierContext =
   createContext<
     Accessor<{ shiftKey: boolean; altKey: boolean; ctrlKey: boolean }>
   >();
-const TableQueryContext = createContext<GetTableDataResponse>();
+const TableQueryContext = createContext<TableDataResult>();
 
 interface TableRowProps {
   rowId: string;
@@ -100,7 +94,38 @@ function TableCell(props: {
   activities: Record<string, Activity>;
   tableType: string;
 }): JSX.Element {
-  const cell = () => props.cells?.[props.date]?.[props.row] ?? [];
+  const cell = createMemo<
+    (Activity & { track: number; totalTracks: () => number })[]
+  >(() => {
+    const tracks: string[] = [];
+
+    return (props.cells?.[props.date]?.[props.row] ?? [])
+      .map((activityId) => {
+        const activity = props.activities[activityId];
+        if (!activity) {
+          console.warn(
+            `Activity with id ${activityId} not found in activities data`,
+          );
+          return null;
+        }
+        for (let i = 0; i < tracks.length; i++) {
+          if (activity.activity_start >= tracks[i]) {
+            tracks[i] = activity.activity_finish;
+            return { ...activity, track: i, totalTracks: () => tracks.length };
+          }
+        }
+        tracks.push(activity.activity_finish);
+        return {
+          ...activity,
+          track: tracks.length - 1,
+          totalTracks: () => tracks.length,
+        };
+      })
+      .filter((activity) => activity !== null) as (Activity & {
+      track: number;
+      totalTracks: () => number;
+    })[];
+  });
 
   let el: HTMLTableCellElement = undefined as unknown as HTMLTableCellElement;
   return (
@@ -113,25 +138,29 @@ function TableCell(props: {
       }}
       data-date={props.date}
       title={JSON.stringify({ cell: cell(), date: props.date, row: props.row })}
+      style={{
+        position: "relative",
+        "padding-top": `${cell()?.[0]?.totalTracks() * 5 + 5}px`,
+      }}
     >
       <For each={cell()}>
         {(activity) => (
           <Switch>
             <Match when={props.tableType === "location"}>
-              <LocationActivity activity={props.activities[activity]} />
+              <LocationActivity activity={activity} />
             </Match>
             <Match when={props.tableType === "staff"}>
               <Switch>
                 <Match when={props.row}>
                   <PersonActivity
-                    activity={props.activities[activity]}
+                    activity={activity}
                     staff_id={props.row}
                     date={props.date}
                   />
                 </Match>
                 <Match when={!props.row}>
                   <ActivityWithoutAllocatedStaff
-                    activity={props.activities[activity]}
+                    activity={activity}
                     date={props.date}
                   />
                 </Match>
@@ -144,66 +173,81 @@ function TableCell(props: {
     </td>
   );
 }
-
-function LocationActivity(props: { activity: any }): JSX.Element {
+function TimelineBar(props: { activity: Activity }): JSX.Element {
+  const start = parseISO(props.activity.activity_start).getHours();
+  const end = parseISO(props.activity.activity_finish).getHours();
+  const duration = end - start;
+  return (
+    <div
+      class={styles.timelineBar}
+      style={{
+        left: `${(start / 24) * 100}%`,
+        width: `${(duration / 24) * 100}%`,
+        top: `${props.activity.track * 5}px`,
+      }}
+    >
+      &nbsp;
+    </div>
+  );
+}
+function LocationActivity(props: {
+  activity: Activity & { track: number; totalTracks: () => number };
+}): JSX.Element {
   const dragged = useContext(DragContext);
   const droptarget = useContext(DropTargetContext);
   const selection = useContext(SelectionContext);
   const tableQuery = useContext(TableQueryContext);
   let el: HTMLElement | null = null;
   return (
-    <div
-      classList={{
-        [styles.activity]: true,
-        activity: true,
-        [styles.selected]: selection!.has(el!),
-      }}
-      id={`act--${props.activity.id}`}
-      ref={(el) => registerDraggable(el, () => ".table-cell")}
-    >
-      <div class={styles.activityName} title={JSON.stringify(props.activity)}>
-        {props.activity.name}
-      </div>
-      <div class={styles.activityTime}>
-        {props.activity.activity_start.slice(11, 16)} -{" "}
-        {props.activity.activity_finish.slice(11, 16)}
-      </div>
-      <hr />
-      <div>
-        <For each={props.activity.timeslots}>
-          {(timeslot) => (
-            <div
-              classList={{
-                [styles.timeslot]: true,
-              }}
-              id={`timeslot--${timeslot.id}`}
-            >
-              <div class={styles.activityTime}>
-                {timeslot.start.slice(11, 16)} - {timeslot.finish.slice(11, 16)}
+    <div class={styles.activityWrapper}>
+      <TimelineBar activity={props.activity} />
+      <div
+        classList={{
+          [styles.activity]: true,
+          activity: true,
+          [styles.selected]: selection!.has(el!),
+        }}
+        id={`act--${props.activity.id}`}
+        ref={(el) => registerDraggable(el, () => ".table-cell")}
+      >
+        <div class={styles.activityName} title={JSON.stringify(props.activity)}>
+          {props.activity.name}
+        </div>
+        <div class={styles.activityTime}>
+          {props.activity.activity_start.slice(11, 16)} -{" "}
+          {props.activity.activity_finish.slice(11, 16)}
+        </div>
+
+        <hr />
+        <div>
+          <For each={props.activity.roles}>
+            {(role) => (
+              <div class={styles.role}>
+                <div class={styles.roleName}>{role.name}</div>
+                <For each={role.assignments}>
+                  {(assignment) => (
+                    <div
+                      class={styles.assignedStaff}
+                      data-draggable="'.table-activity'"
+                      id={`assn--${assignment.id}--${assignment.staff}`}
+                      ref={(el) => registerDraggable(el, () => ".activity")}
+                    >
+                      {tableQuery?.staffData?.[assignment.staff]?.name ??
+                        assignment.staff}
+                    </div>
+                  )}
+                </For>
               </div>
-              <For each={timeslot.assignments}>
-                {(assignment) => (
-                  <div
-                    class={styles.assignedStaff}
-                    data-draggable="'.table-timeslot,.table-activity'"
-                    id={`assn--${assignment.id}--${assignment.staff}`}
-                  >
-                    {tableQuery?.staffData?.[assignment.staff]?.name ??
-                      assignment.staff}
-                  </div>
-                )}
-              </For>
-              <Show when={timeslot.assignments.length === 0}>...</Show>
-            </div>
-          )}
-        </For>
+            )}
+          </For>
+        </div>
       </div>
     </div>
   );
 }
 
 function ActivityWithoutAllocatedStaff(props: {
-  activity: any;
+  activity: Activity & { track: number; totalTracks: () => number };
   date: string;
 }): JSX.Element {
   const selection = useContext(SelectionContext);
@@ -346,19 +390,19 @@ function activitiesByStaffCell(
   )) {
     const activityDate = activity.activity_start.slice(0, 10);
     let unallocated = true;
-    for (const timeslot of activity.timeslots!) {
-      for (const assignment of timeslot.assignments!) {
-        const staffId = assignment.staff;
-        if (
-          !((activitiesByCell[activityDate] ??= {})[staffId] ??= []).includes(
-            activity.id,
-          )
-        ) {
-          activitiesByCell[activityDate][staffId].push(activity.id);
-          unallocated = false;
-        }
+
+    for (const assignment of activity.assignments!) {
+      const staffId = assignment.staff;
+      if (
+        !((activitiesByCell[activityDate] ??= {})[staffId] ??= []).includes(
+          activity.id,
+        )
+      ) {
+        activitiesByCell[activityDate][staffId].push(activity.id);
+        unallocated = false;
       }
     }
+
     if (unallocated) {
       ((activitiesByCell[activityDate] ??= {})["null"] ??= []).push(
         activity.id,
@@ -369,7 +413,6 @@ function activitiesByStaffCell(
 }
 
 export default function Table() {
-  const params = useParams();
   const [dragged, setDragged] = createSignal<HTMLElement | null>(null);
   const [droptarget, setDroptarget] = createSignal<HTMLElement | null>(null);
   const [initial, setInitial] = createSignal<HTMLElement | null>(null);
@@ -379,8 +422,9 @@ export default function Table() {
     ctrlKey: boolean;
   }>({ shiftKey: false, altKey: false, ctrlKey: false });
   const selection = new ReactiveSet<HTMLElement>();
-  const [tableQueryResult, setTableQueryResult] =
-    createStore<GetTableDataResponse>(null as unknown as GetTableDataResponse);
+  const [tableQueryResult, setTableQueryResult] = createStore<TableDataResult>(
+    null as unknown as TableDataResult,
+  );
   const [activitiesByCell, setActivitiesByCell] = createStore<
     Record<string, any>
   >({});
@@ -390,6 +434,8 @@ export default function Table() {
   const [editingActivity, setEditingActivity] = createSignal<string | null>(
     null,
   );
+  const [tableType, setTableType] = createSubscribedSignal("tableType");
+  const [version, setVersion] = createSubscribedSignal("version");
 
   const dates = createMemo(() => {
     if (!tableQueryResult.dateRange) {
@@ -407,39 +453,33 @@ export default function Table() {
     }
     return days;
   });
-  function processTableData(newdata: {
-    data?: GetTableDataResponse;
-    error?: any;
-  }) {
-    if (newdata.data) {
-      setTableQueryResult(reconcile(newdata.data));
-      const newActivities: Record<
-        string,
-        GetTableDataResponse["activities"][number]
-      > = {};
-      for (const activity of newdata.data.activities ?? []) {
-        newActivities[activity.id] = activity;
-      }
-      console.log("Fetched activities", newActivities);
-      updateActivities(reconcile(newActivities));
-    } else if (newdata.error) {
-      console.error("Failed to fetch table data");
+  function processTableData(newdata: TableDataResult) {
+    setTableQueryResult(reconcile(newdata));
+    const newActivities: Record<string, TableDataResult["activities"][number]> =
+      {};
+    for (const activity of newdata.activities ?? []) {
+      newActivities[activity.id] = activity;
     }
+    console.log("Fetched activities", newActivities);
+    updateActivities(reconcile(newActivities));
   }
+  const [tableData] = createResource(version, () => getTableData());
 
   createEffect(() => {
-    getTableData().then((newdata) => {
-      processTableData(newdata);
-    });
+    if (tableData()) {
+      processTableData(tableData()!);
+    }
   });
 
   createEffect(() => {
-    if (params.tableType === "location") {
+    if (tableType() === "location") {
       setActivitiesByCell(reconcile(activitiesByLocationCell(activities)));
-    } else if (params.tableType === "staff") {
+    } else if (tableType() === "staff") {
       setActivitiesByCell(reconcile(activitiesByStaffCell(activities)));
     } else {
-      console.warn(`Unknown table type: ${params.tableType}`);
+      console.warn(
+        `Unknown table type: ${tableType()}, cannot compute activities by cell`,
+      );
       setActivitiesByCell(reconcile({}));
     }
   });
@@ -453,7 +493,7 @@ export default function Table() {
         altKey: boolean;
         ctrlKey: boolean;
       }>(evt);
-      const tableType = params.tableType;
+
       const payload = {
         draggedId: (evt.target as HTMLElement).id,
         initialDropzoneId: evt.detail.initialTarget.id,
@@ -466,17 +506,20 @@ export default function Table() {
         console.log("Dropped in the same cell, ignoring", payload);
         return;
       }
-      if (tableType !== "location" && tableType !== "staff") {
-        console.error(`Unknown table type: ${tableType}`);
+      if (tableType() !== "location" && tableType() !== "staff") {
+        console.error(
+          `Unknown table type: ${tableType()}, cannot process drop`,
+        );
         return;
       }
-      (tableType === "location"
-        ? postUpdateLocation({ body: payload })
-        : postUpdateStaff({ body: payload })
+      (tableType() === "location"
+        ? postUpdateLocation(payload)
+        : postUpdateStaff(payload)
       )
-        .then((newdata) =>
-          newdata.data ? setTableQueryResult(reconcile(newdata.data)) : null,
-        )
+        .then((newdata) => setTableQueryResult(reconcile(newdata)))
+        .catch((err) => {
+          console.error("Error updating assignment", err);
+        })
         .finally(() => {
           setDroptarget(null);
           setDragged(null);
@@ -490,7 +533,7 @@ export default function Table() {
       console.log("Double click on", target);
       if (target.classList.contains("activity")) {
         const activityId = target.id.split("--")[1];
-        setEditingActivity(activityId);
+        api().open_activity_editor(activityId);
       }
     });
   };
@@ -499,16 +542,6 @@ export default function Table() {
     <TableQueryContext.Provider value={tableQueryResult}>
       <SelectionContext.Provider value={selection}>
         <div id="app" ref={attachListeners}>
-          table
-          <Show when={editingActivity()}>
-            <EditActivityDialog
-              activity={activities[editingActivity()!]}
-              onClose={() => setEditingActivity(null)}
-              locationOptions={Object.values(
-                tableQueryResult.locationsData ?? {},
-              ).map((loc) => ({ value: loc.id, label: loc.name }))}
-            />
-          </Show>
           <table
             classList={{
               [styles.rotaTable]: true,
@@ -525,7 +558,7 @@ export default function Table() {
             <tbody>
               <For
                 each={[
-                  ...((params.tableType == "location"
+                  ...((tableType() == "location"
                     ? tableQueryResult.locations
                     : tableQueryResult.staff) ?? []),
                   null,
@@ -536,7 +569,7 @@ export default function Table() {
                     rowId={row_header ?? "null"}
                     rowName={
                       tableQueryResult[
-                        (params.tableType as string) == "location"
+                        tableType() == "location"
                           ? "locationsData"
                           : "staffData"
                       ]?.[row_header ?? "null"]?.name
@@ -545,7 +578,7 @@ export default function Table() {
                     dates={dates()}
                     cells={activitiesByCell}
                     activities={activities}
-                    tableType={params.tableType as string}
+                    tableType={tableType()}
                   />
                 )}
               </For>

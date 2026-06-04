@@ -3,6 +3,7 @@ import pathlib
 import uuid
 import datetime
 import pickle
+from logging import getLogger
 
 
 from contextlib import contextmanager
@@ -11,7 +12,8 @@ sqlite_file_name = pathlib.Path(__file__, "..", "database.db").resolve()
 
 
 sqlite_url = f"sqlite:///{sqlite_file_name}"
-print(sqlite_url)
+logger = getLogger(__name__)
+logger.info("SQLite URL: %s", sqlite_url)
 connect_args = {"check_same_thread": False}
 
 
@@ -30,10 +32,11 @@ def convert_timestamp(value: bytes):
 
 
 sqlite3.register_adapter(datetime.datetime, adapt_timestamp)
+sqlite3.register_adapter(uuid.UUID, adapt_uuid)
 sqlite3.register_converter("timestamp", convert_timestamp)
 
 
-def database_connection(force=False):
+def get_database_connection(force=False):
     # check if the database file exists, if not create it and run setup
     if not sqlite_file_name.exists() and not force:
         raise RuntimeError("Database file does not exist, please run setup")
@@ -44,11 +47,12 @@ def database_connection(force=False):
         detect_types=sqlite3.PARSE_COLNAMES | sqlite3.PARSE_DECLTYPES,
     )
     connection.row_factory = sqlite3.Row
-    # connection.set_trace_callback(print)
+    connection.set_trace_callback(logger.info)
     return connection
 
 
-def connection_dependency(force=False):
-    connection = database_connection(force=force)
+@contextmanager
+def database_connection(force=False):
+    connection = get_database_connection(force=force)
     yield connection
     connection.close()

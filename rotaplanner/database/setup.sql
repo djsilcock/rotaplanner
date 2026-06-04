@@ -27,29 +27,31 @@ CREATE TABLE IF NOT EXISTS activity_tag_assocs (
     PRIMARY KEY (tag_id, activity_id)
 );
 
-CREATE TABLE IF NOT EXISTS timeslots (
-    id INTEGER PRIMARY KEY,
-    activity_id UUID REFERENCES activities(id) ON DELETE CASCADE,
-    start TIMESTAMP,
-    finish TIMESTAMP,
-    UNIQUE (activity_id, start),
-    CHECK (finish > start)
-);
 
 CREATE TABLE IF NOT EXISTS activities (
     id UUID PRIMARY KEY,
     type TEXT,
     template_id UUID REFERENCES activities(id),
     name TEXT,
-    location_id UUID REFERENCES locations(id) ON DELETE SET NULL
+    location_id UUID REFERENCES locations(id) ON DELETE SET NULL,
+    start TIMESTAMP,
+    finish TIMESTAMP,
+    CHECK (finish > start)
+);
+
+CREATE TABLE IF NOT EXISTS activity_roles (
+    id INTEGER PRIMARY KEY,
+    activity_id UUID REFERENCES activities(id) ON DELETE CASCADE,
+    name TEXT
 );
 
 CREATE TABLE IF NOT EXISTS staff_assignments (
     assignment_id INTEGER PRIMARY KEY,
-    timeslot_id INTEGER REFERENCES timeslots(id) ON DELETE CASCADE,
+    activity_id UUID REFERENCES activities(id) ON DELETE CASCADE,           -- This is probably redundant but it makes some queries easier and doesn't take up much space
+    role_id INTEGER REFERENCES activity_roles(id) ON DELETE CASCADE,
     staff_id UUID REFERENCES staff(id) ON DELETE CASCADE,
     attendance INTEGER DEFAULT 100,
-    UNIQUE (timeslot_id, staff_id)
+    UNIQUE (activity_id, staff_id)
 );
 
 CREATE TABLE IF NOT EXISTS assignment_tags (
@@ -76,15 +78,25 @@ CREATE TABLE IF NOT EXISTS requirement_groups (
     id INTEGER PRIMARY KEY,
     parent_group_id INTEGER REFERENCES requirement_groups(id) ON DELETE CASCADE,
     activity_id UUID REFERENCES activities(id) ON DELETE CASCADE,
-    group_type TEXT
+    role_id INTEGER REFERENCES activity_roles(id) ON DELETE CASCADE,
+    group_type TEXT,
+    CHECK (group_type IN ('AND', 'OR', 'NOT')),
+    CHECK (NOT (activity_id IS NULL AND parent_group_id IS NULL AND role_id IS NULL))
+
 );
 
 CREATE TABLE IF NOT EXISTS requirements (
     id INTEGER PRIMARY KEY,
-    group_id UUID REFERENCES requirement_groups(id) ON DELETE CASCADE,
-    quantity INTEGER,
-    min_experience INTEGER,
-    max_experience INTEGER
+    group_id INTEGER REFERENCES requirement_groups(id) ON DELETE CASCADE,
+    attendance INTEGER DEFAULT 100,
+    min_required INTEGER,
+    max_required INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS requirement_skills (
+    requirement_id INTEGER REFERENCES requirements(id) ON DELETE CASCADE,
+    skill_id UUID REFERENCES skill(id) ON DELETE CASCADE,
+    PRIMARY KEY (requirement_id, skill_id)
 );
 
 CREATE TABLE IF NOT EXISTS recurrence_rule_groups (
@@ -152,11 +164,7 @@ CREATE TABLE IF NOT EXISTS tagged_date_assocs (
     PRIMARY KEY (tagged_date_id, activity_id)
 );
 
-CREATE TABLE IF NOT EXISTS requirement_skills (
-    requirement_id INTEGER REFERENCES requirements(id) ON DELETE CASCADE,
-    skill_id UUID REFERENCES skill(id) ON DELETE CASCADE,
-    PRIMARY KEY (requirement_id, skill_id)
-);
+
 
 
 

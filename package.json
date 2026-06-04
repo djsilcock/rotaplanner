@@ -26,12 +26,15 @@
     "@solidjs/router": "^0.15.3",
     "@suid/icons-material": "^0.9.0",
     "@thisbeyond/solid-select": "^0.15.0",
+    "concurrently": "^9.2.1",
     "date-fns": "^4.1.0",
     "fast-json-patch": "^3.1.1",
+    "json-schema-to-typescript": "^15.0.4",
     "lodash": "^4.17.21",
     "relay-runtime": "^20.1.1",
     "solid-dnd-directive": "0.2.0",
     "solid-js": "^1.9.12",
+    "vite-plugin-singlefile": "^2.3.3",
     "vite-plugin-solid": "^2.11.12",
     "watchman": "^1.0.0"
   }
