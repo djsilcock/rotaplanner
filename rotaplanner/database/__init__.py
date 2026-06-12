@@ -7,6 +7,7 @@ from logging import getLogger
 
 
 from contextlib import contextmanager
+from reaktiv import Signal
 
 sqlite_file_name = pathlib.Path(__file__, "..", "database.db").resolve()
 
@@ -56,3 +57,5 @@ def database_connection(force=False):
     connection = get_database_connection(force=force)
     yield connection
     connection.close()
+
+database_version = Signal(0)

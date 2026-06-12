@@ -35,7 +35,7 @@ import {
 import { Dynamic } from "solid-js/web";
 
 const EditActivityModal = lazy(
-  () => import("../../../rotaplanner/ui/table/components/editActivity"),
+  () => import("../../../rotaplanner/table/components/editActivity"),
 );
 const epoch = new Date(2021, 0, 1);
 

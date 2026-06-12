@@ -2,7 +2,7 @@ import logging
 from queue import Queue
 from threading import Thread
 import webview
-from rotaplanner.ui.table import create_window
+from rotaplanner.table import create_window
 import json
 
 logger = logging.getLogger(__name__)

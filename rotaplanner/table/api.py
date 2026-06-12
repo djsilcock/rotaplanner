@@ -10,8 +10,8 @@ from pydantic import BaseModel, Field
 from rotaplanner.apigen import JSApi, generate_typescript
 from rotaplanner.database import database_connection
 
-from ..common_types import Activity, Location, Role, Staff, StaffAssignment, Timeslot
-from ..editactivity import create_window as create_edit_activity_window
+from ..ui.common_types import Activity, Location, Role, Staff, StaffAssignment, Timeslot
+from ..ui.editactivity import create_window as create_edit_activity_window
 
 logger = getLogger(__name__)
 
@@ -489,6 +489,3 @@ class TableApi(JSApi):
         self._activity_windows[
             activity_id
         ].events.closed += lambda: self._activity_windows.pop(activity_id, None)
-
-
-generate_typescript(TableApi(), "TableApi", __file__, "../types.ts")

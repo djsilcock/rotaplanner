@@ -57,7 +57,7 @@ import { StaffTableTimeslotFragment$key } from "./__generated__/StaffTableTimesl
 import { StaffTableActivityFragment$key } from "./__generated__/StaffTableActivityFragment.graphql";
 
 const EditActivityModal = lazy(
-  () => import("../../../rotaplanner/ui/table/components/editActivity"),
+  () => import("../../../rotaplanner/table/components/editActivity"),
 );
 const epoch = new Date(2021, 0, 1);
 

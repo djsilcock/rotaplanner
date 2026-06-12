@@ -28,7 +28,7 @@ import { set } from "lodash";
 import { R } from "../../dist/assets/index-Di3oCNSn";
 import D from "../../dist/assets/activity_templates-chdWMDqn";
 const EditActivityModal = lazy(
-  () => import("../../../rotaplanner/ui/table/components/editActivity"),
+  () => import("../../../rotaplanner/table/components/editActivity"),
 );
 const epoch = new Date(2021, 0, 1);
 

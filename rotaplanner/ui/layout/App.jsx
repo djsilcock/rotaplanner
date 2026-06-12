@@ -1,7 +1,7 @@
 import { Route, HashRouter as Router, useNavigate } from "@solidjs/router";
 import { Show, createResource, createEffect } from "solid-js";
 import { createSubscribedSignal } from "../../utils";
-import Table from "../table/components/table";
+import Table from "../../table/components/table";
 import EditActivity from "../editactivity/editActivity";
 import { waitForApi } from "../../utils";
 
