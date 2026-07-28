@@ -1,0 +1,1 @@
+from .multiselect import SearchableMultiSelect

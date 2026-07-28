@@ -1,0 +1,856 @@
+import dominate
+from dominate.tags import div, label, select, option, span, ul, li, input_, script
+from dominate.util import raw
+from dominate.svg import svg, path
+import uuid
+
+from pywry.toolbar import MultiSelect, Option, get_toolbar_script
+
+
+class SearchableMultiSelect:
+    """
+    A reusable, fully scoped, searchable multi-select component.
+    Generates isolated HTML/JS markup with custom standard CSS class styling.
+    Seamlessly integrates with native <form> and FormData.
+    """
+
+    def __init__(
+        self,
+        name,
+        label_text,
+        options,
+        placeholder="Select options...",
+        id_prefix="multiselect",
+        value=None,
+    ):
+        self.name = (
+            name  # The name attribute used for standard form submissions (FormData)
+        )
+        self.label_text = label_text
+        self.options = (
+            options  # List of dicts, e.g., [{"value": "py", "label": "Python"}]
+        )
+        self.placeholder = placeholder
+        self.value = value if value is not None else []  # Pre-selected values
+        self.uid = f"{id_prefix}_{uuid.uuid4().hex[:8]}"
+
+    def render(self):
+        # Create a container block unique to this component instance
+        container = div(
+            id=f"container-{self.uid}", _class="ms-container", data_uid=self.uid
+        )
+
+        with container:
+            # 1. Label
+            label(self.label_text, cls="ms-label")
+
+            # 2. Native hidden select element to back standard HTML Form and FormData
+            hidden_select = select(
+                name=self.name,
+                id=f"native-select-{self.uid}",
+                multiple=True,
+                _class="ms-hidden-select",
+            )
+            with hidden_select:
+                for opt in self.options:
+                    option(
+                        opt["label"],
+                        value=opt["value"],
+                        selected=opt["value"] in self.value,
+                    )
+
+            # 3. Interactive Custom Trigger display box
+            with div(id=f"trigger-{self.uid}", _class="ms-trigger"):
+                # Placeholder
+                span(
+                    self.placeholder,
+                    id=f"placeholder-{self.uid}",
+                    _class="ms-placeholder",
+                )
+
+                # Tag Pills render target
+                div(id=f"tags-{self.uid}", _class="ms-tags")
+
+                # Chevron Arrow Container
+                with div(_class="ms-chevron-wrapper"):
+                    with svg(
+                        _class="ms-chevron-icon",
+                        id=f"chevron-{self.uid}",
+                        fill="none",
+                        stroke="currentColor",
+                        viewBox="0 0 24 24",
+                    ):
+                        path(
+                            stroke_linecap="round",
+                            stroke_linejoin="round",
+                            stroke_width="2.5",
+                            d="M19 9l-7 7-7-7",
+                        )
+
+            # 4. Dropdown Panel Container
+            with div(id=f"panel-{self.uid}", _class="ms-panel"):
+                # Filter Search Container
+                with div(_class="ms-search-container"):
+                    with div(_class="ms-search-wrapper"):
+                        with div(_class="ms-search-icon-wrapper"):
+                            with svg(
+                                _class="ms-search-icon",
+                                fill="none",
+                                stroke="currentColor",
+                                viewBox="0 0 24 24",
+                            ):
+                                path(
+                                    stroke_linecap="round",
+                                    stroke_linejoin="round",
+                                    stroke_width="2.5",
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z",
+                                )
+                        input_(
+                            type="text",
+                            id=f"search-{self.uid}",
+                            placeholder="Type to search...",
+                            _class="ms-search-input",
+                        )
+
+                # Scrollable Options List
+                with ul(id=f"options-{self.uid}", _class="ms-options custom-scrollbar"):
+                    for opt in self.options:
+                        with li(
+                            _class="ms-option",
+                            data_value=opt["value"],
+                            data_name=opt["label"],
+                        ):
+                            # Custom check box box-indicator
+                            with span(_class="ms-checkbox-indicator"):
+                                with svg(
+                                    _class="ms-check-mark hidden",
+                                    fill="none",
+                                    stroke="currentColor",
+                                    stroke_width="3",
+                                    viewBox="0 0 24 24",
+                                ):
+                                    path(
+                                        stroke_linecap="round",
+                                        stroke_linejoin="round",
+                                        d="M4.5 12.75l6 6 9-13.5",
+                                    )
+
+                            span(opt["label"], _class="ms-option-label")
+
+                    # Empty template for fallback
+                    li(
+                        "No matches found",
+                        id=f"no-results-{self.uid}",
+                        _class="ms-no-results ms-hidden",
+                    )
+
+            # 5. Scoped Controller Script (IIFE ensures no global namespace collisions)
+            with script():
+                raw("""
+                (function (uid) {
+                    
+                    
+                    // Element caching
+                    const container = document.getElementById(`container-${uid}`);
+                    const trigger = document.getElementById(`trigger-${uid}`);
+                    const panel = document.getElementById(`panel-${uid}`);
+                    const searchInput = document.getElementById(`search-${uid}`);
+                    const optionsList = document.getElementById(`options-${uid}`);
+                    const optionItems = optionsList.querySelectorAll('li:not([id^="no-results-"])');
+                    const noResults = document.getElementById(`no-results-${uid}`);
+                    const tagContainer = document.getElementById(`tags-${uid}`);
+                    const placeholder = document.getElementById(`placeholder-${uid}`);
+                    const chevronIcon = document.getElementById(`chevron-${uid}`);
+                    const nativeSelect = document.getElementById(`native-select-${uid}`);
+
+                    let isOpen = false;
+                    let selectedValues = new Set();
+
+                    Array.from(nativeSelect.options).forEach(opt => {
+                        if (opt.selected) {
+                            selectedValues.add(opt.value);
+                        }
+                    });
+
+                    function toggleDropdown(forceState = null) {
+                        isOpen = forceState !== null ? forceState : !isOpen;
+                        if (isOpen) {
+                            panel.classList.add('open');
+                            chevronIcon.classList.add('rotate-180');
+                            setTimeout(() => searchInput.focus(), 50);
+                        } else {
+                            panel.classList.remove('open');
+                            chevronIcon.classList.remove('rotate-180');
+                            searchInput.value = '';
+                            filterOptions('');
+                        }
+                    }
+
+                    function syncNativeSelect() {
+                        // Reset all native options
+                        Array.from(nativeSelect.options).forEach(opt => {
+                            opt.selected = selectedValues.has(opt.value);
+                        });
+                        
+                        // Fire a change event on the native element to support standard handlers
+                        const changeEvent = new Event('change', { bubbles: true });
+                        nativeSelect.dispatchEvent(changeEvent);
+                    }
+
+                    function renderTags() {
+                        tagContainer.innerHTML = '';
+                        
+                        if (selectedValues.size === 0) {
+                            placeholder.classList.remove('ms-hidden');
+                        } else {
+                            placeholder.classList.add('ms-hidden');
+                        }
+
+                        selectedValues.forEach(val => {
+                            const item = Array.from(optionItems).find(i => i.getAttribute('data-value') === val);
+                            if (!item) return;
+                            const label = item.getAttribute('data-name');
+
+                            const pill = document.createElement('div');
+                            pill.className = "ms-tag";
+                            
+                            const labelSpan = document.createElement('span');
+                            labelSpan.textContent = label;
+                            
+                            const closeBtn = document.createElement('button');
+                            closeBtn.type = 'button';
+                            closeBtn.className = "ms-tag-remove";
+                            closeBtn.innerHTML = `
+                                <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            `;
+                            closeBtn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                toggleItem(val);
+                            });
+
+                            pill.appendChild(labelSpan);
+                            pill.appendChild(closeBtn);
+                            tagContainer.appendChild(pill);
+                        });
+                    }
+
+                    function toggleItem(val) {
+                        const item = Array.from(optionItems).find(i => i.getAttribute('data-value') === val);
+                        if (!item) return;
+
+                        const checkbox = item.querySelector('.ms-checkbox-indicator');
+                        const svg = checkbox.querySelector('.ms-check-mark');
+
+                        if (selectedValues.has(val)) {
+                            selectedValues.delete(val);
+                            item.classList.remove('selected');
+                            svg.classList.add('hidden');
+                        } else {
+                            selectedValues.add(val);
+                            item.classList.add('selected');
+                            svg.classList.remove('hidden');
+                        }
+
+                        syncNativeSelect();
+                        renderTags();
+                    }
+
+                    function filterOptions(query) {
+                        const cleanQuery = query.toLowerCase().trim();
+                        let matches = 0;
+
+                        optionItems.forEach(item => {
+                            const name = item.getAttribute('data-name').toLowerCase();
+                            if (name.includes(cleanQuery)) {
+                                item.classList.remove('ms-hidden');
+                                matches++;
+                            } else {
+                                item.classList.add('ms-hidden');
+                            }
+                        });
+
+                        if (matches === 0) {
+                            noResults.classList.remove('ms-hidden');
+                        } else {
+                            noResults.classList.add('ms-hidden');
+                        }
+                    }
+
+                    // Setup localized click listeners
+                    trigger.addEventListener('click', () => toggleDropdown());
+
+                    searchInput.addEventListener('input', (e) => {
+                        filterOptions(e.target.value);
+                    });
+
+                    searchInput.addEventListener('keydown', (e) => {
+                        if (e.key === ' ') e.stopPropagation();
+                    });
+
+                    optionItems.forEach(item => {
+                        item.addEventListener('click', () => {
+                            const val = item.getAttribute('data-value');
+                            toggleItem(val);
+                            searchInput.focus();
+                        });
+                    });
+
+                    // Global body listener to close dropdown, verified via container scope
+                    document.addEventListener('click', (e) => {
+                        if (!container.contains(e.target)) {
+                            toggleDropdown(false);
+                        }
+                    });
+
+                })
+                """ f"('{self.uid}');")
+
+        return container
+
+
+def generate_form_demo():
+    doc = dominate.document(title="Vanilla CSS Searchable Multi-Select")
+
+    with doc.head:
+        meta(charset="utf-8")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+
+        # Injected Custom Vanilla CSS (completely replacing Tailwind utility libraries)
+        style("""
+            /* Design Tokens & Universal Styles */
+            :root {
+                --bg-page: #f8fafc;
+                --bg-card: #ffffff;
+                --text-main: #0f172a;
+                --text-muted: #64748b;
+                --primary: #4f46e5;
+                --primary-hover: #4338ca;
+                --primary-light: #e0e7ff;
+                --primary-light-text: #4338ca;
+                --border-color: #cbd5e1;
+                --border-light: #f1f5f9;
+                --border-hover: #94a3b8;
+                --shadow-main: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+                --shadow-panel: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            }
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                background-color: var(--bg-page);
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+                color: var(--text-main);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 3rem 1rem;
+                min-height: 100vh;
+                line-height: 1.5;
+            }
+
+            /* Main Layout Form Card */
+            .form-card {
+                background: var(--bg-card);
+                max-width: 42rem;
+                width: 100%;
+                border-radius: 1rem;
+                border: 1px solid var(--border-light);
+                box-shadow: var(--shadow-main);
+                padding: 2.5rem;
+                margin-bottom: 2rem;
+            }
+
+            .header-block {
+                text-align: center;
+                border-bottom: 1px solid var(--border-light);
+                padding-bottom: 1.5rem;
+                margin-bottom: 2rem;
+            }
+
+            .header-block h1 {
+                font-size: 1.5rem;
+                font-weight: 800;
+                color: var(--text-main);
+                letter-spacing: -0.025em;
+            }
+
+            .header-block p {
+                font-size: 0.875rem;
+                color: var(--text-muted);
+                margin-top: 0.25rem;
+            }
+
+            /* Regular Form Fields */
+            .form-form {
+                display: flex;
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .field-group {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .field-label {
+                display: block;
+                font-size: 0.875rem;
+                font-weight: 600;
+                color: #334155;
+                margin-bottom: 0.5rem;
+            }
+
+            .field-input {
+                width: 100%;
+                padding: 0.65rem 1rem;
+                font-size: 0.875rem;
+                border: 1px solid var(--border-color);
+                border-radius: 0.75rem;
+                background-color: #ffffff;
+                color: var(--text-main);
+                outline: none;
+                transition: border-color 0.2s, box-shadow 0.2s;
+            }
+
+            .field-input:focus {
+                border-color: var(--primary);
+                box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+            }
+
+            /* Submit Button styling */
+            .submit-btn {
+                display: inline-flex;
+                justify-content: center;
+                align-items: center;
+                width: 100%;
+                padding: 0.75rem 1.5rem;
+                font-size: 0.875rem;
+                font-weight: 600;
+                color: #ffffff;
+                background-color: var(--primary);
+                border: none;
+                border-radius: 0.75rem;
+                cursor: pointer;
+                transition: background-color 0.15s, transform 0.1s, box-shadow 0.15s;
+                margin-top: 1rem;
+                box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+            }
+
+            .submit-btn:hover {
+                background-color: var(--primary-hover);
+            }
+
+            .submit-btn:active {
+                transform: scale(0.98);
+            }
+
+            /* Scoped Custom Multi-Select Styling */
+            .ms-container {
+                position: relative;
+                width: 100%;
+                text-align: left;
+            }
+
+            .ms-label {
+                display: block;
+                font-size: 0.875rem;
+                font-weight: 600;
+                color: #334155;
+                margin-bottom: 0.5rem;
+            }
+
+            .ms-hidden-select {
+                display: none !important;
+            }
+
+            .ms-trigger {
+                width: 100%;
+                min-height: 46px;
+                padding: 0.375rem 0.75rem;
+                background-color: #ffffff;
+                border: 1px solid var(--border-color);
+                border-radius: 0.75rem;
+                cursor: pointer;
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 0.375rem;
+                transition: border-color 0.2s, box-shadow 0.2s;
+            }
+
+            .ms-trigger:focus-within {
+                border-color: var(--primary);
+                box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+            }
+
+            .ms-placeholder {
+                color: #94a3b8;
+                font-size: 0.875rem;
+                user-select: none;
+                padding-left: 0.25rem;
+                padding-top: 0.25rem;
+                padding-bottom: 0.25rem;
+            }
+
+            .ms-tags {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.375rem;
+            }
+
+            .ms-tag {
+                display: flex;
+                align-items: center;
+                gap: 0.25rem;
+                background-color: var(--primary-light);
+                color: var(--primary-light-text);
+                font-size: 0.75rem;
+                font-weight: 600;
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.5rem;
+                border: 1px solid rgba(79, 70, 229, 0.2);
+                transition: all 0.15s ease-in-out;
+            }
+
+            .ms-tag-remove {
+                background: transparent;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                color: var(--primary-light-text);
+                opacity: 0.7;
+                transition: opacity 0.1s;
+                padding: 0;
+            }
+
+            .ms-tag-remove:hover {
+                opacity: 1;
+            }
+
+            .ms-tag-remove svg {
+                width: 0.875rem;
+                height: 0.875rem;
+            }
+
+            .ms-chevron-wrapper {
+                margin-left: auto;
+                padding-left: 0.5rem;
+                color: #94a3b8;
+                display: flex;
+                align-items: center;
+            }
+
+            .ms-chevron-icon {
+                width: 1.25rem;
+                height: 1.25rem;
+                transition: transform 0.2s;
+            }
+
+            .ms-chevron-icon.rotate-180 {
+                transform: rotate(180deg);
+            }
+
+            /* Dropdown Option Panel and Transitions */
+            .ms-panel {
+                position: absolute;
+                left: 0;
+                right: 0;
+                margin-top: 0.5rem;
+                background-color: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 0.75rem;
+                box-shadow: var(--shadow-panel);
+                z-index: 50;
+                overflow: hidden;
+                transform: scale(0.95);
+                opacity: 0;
+                pointer-events: none;
+                transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s ease-out;
+                transform-origin: top;
+            }
+
+            .ms-panel.open {
+                transform: scale(1);
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            /* Inner Search Box */
+            .ms-search-container {
+                padding: 0.75rem;
+                border-bottom: 1px solid #f1f5f9;
+                background-color: #f8fafc;
+            }
+
+            .ms-search-wrapper {
+                position: relative;
+                width: 100%;
+            }
+
+            .ms-search-icon-wrapper {
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                padding-left: 0.75rem;
+                display: flex;
+                align-items: center;
+                pointer-events: none;
+                color: #94a3b8;
+            }
+
+            .ms-search-icon {
+                width: 1rem;
+                height: 1rem;
+            }
+
+            .ms-search-input {
+                width: 100%;
+                padding: 0.5rem 1rem 0.5rem 2.25rem;
+                font-size: 0.875rem;
+                background-color: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 0.5rem;
+                outline: none;
+                color: var(--text-main);
+                transition: border-color 0.15s;
+            }
+
+            .ms-search-input:focus {
+                border-color: var(--primary);
+                box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+            }
+
+            /* Option Lists */
+            .ms-options {
+                max-height: 240px;
+                overflow-y: auto;
+                padding: 0.25rem 0;
+                list-style: none;
+            }
+
+            .ms-option {
+                display: flex;
+                align-items: center;
+                padding: 0.625rem 1rem;
+                font-size: 0.875rem;
+                cursor: pointer;
+                user-select: none;
+                color: #334155;
+                transition: background-color 0.1s, color 0.1s;
+            }
+
+            .ms-option:hover {
+                background-color: #f8fafc;
+            }
+
+            .ms-option.selected {
+                background-color: rgba(79, 70, 229, 0.04);
+                color: var(--primary-hover);
+            }
+
+            /* Checkbox Square Markers */
+            .ms-checkbox-indicator {
+                margin-right: 0.75rem;
+                width: 1.25rem;
+                height: 1.25rem;
+                border: 1px solid #cbd5e1;
+                border-radius: 0.375rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #cbd5e1;
+                transition: background-color 0.15s, border-color 0.15s;
+                background-color: #ffffff;
+            }
+
+            .ms-option.selected .ms-checkbox-indicator {
+                background-color: var(--primary);
+                border-color: var(--primary);
+            }
+
+            .ms-check-mark {
+                width: 0.875rem;
+                height: 0.875rem;
+                color: #ffffff;
+            }
+
+            .ms-check-mark.hidden {
+                display: none !important;
+            }
+
+            .ms-no-results {
+                padding: 1.25rem;
+                font-size: 0.875rem;
+                color: var(--text-muted);
+                text-align: center;
+                font-style: italic;
+            }
+
+            .ms-hidden {
+                display: none !important;
+            }
+
+            /* Debug Panel (Form Data Monitor) */
+            .debug-panel {
+                max-width: 42rem;
+                width: 100%;
+                background-color: #0f172a;
+                border-radius: 0.75rem;
+                padding: 1.25rem;
+                color: #e2e8f0;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                font-size: 0.75rem;
+                box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            }
+
+            .debug-title {
+                color: #94a3b8;
+                font-weight: 600;
+                margin-bottom: 0.75rem;
+                padding-bottom: 0.5rem;
+                border-bottom: 1px solid #1e293b;
+            }
+
+            .debug-content {
+                color: #4ade80;
+                white-space: pre-wrap;
+            }
+
+            /* Utility scrollbars */
+            .custom-scrollbar::-webkit-scrollbar {
+                width: 5px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-track {
+                background: #f1f1f1;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                background: #cbd5e1;
+                border-radius: 4px;
+            }
+        """)
+
+    with doc.body:
+        # Outer form layout card
+        with div(_class="form-card"):
+
+            # Form Header block
+            with div(_class="header-block"):
+                h1("Candidate Onboarding Form")
+                p(
+                    "Features native multi-instance components designed without external styling frameworks."
+                )
+
+            # Form structure
+            with form(
+                id="profile-form", _class="form-form", onsubmit="handleSubmit(event)"
+            ):
+
+                # Full Name
+                with div(_class="field-group"):
+                    label("Candidate Name", cls="field-label")
+                    input_(
+                        type="text",
+                        name="candidate_name",
+                        required=True,
+                        placeholder="e.g. Marie Curie",
+                        _class="field-input",
+                    )
+
+                # Instance 1: Languages
+                tech_options = [
+                    {"value": "python", "label": "Python"},
+                    {"value": "js", "label": "JavaScript"},
+                    {"value": "rust", "label": "Rust"},
+                    {"value": "go", "label": "Go"},
+                    {"value": "c_sharp", "label": "C#"},
+                    {"value": "java", "label": "Java"},
+                ]
+                tech_select = SearchableMultiSelect(
+                    name="programming_languages",
+                    label_text="Preferred Programming Languages",
+                    options=tech_options,
+                    placeholder="Choose programming languages...",
+                )
+                tech_select.render()
+
+                # Instance 2: Cloud Infrastructure
+                cloud_options = [
+                    {"value": "aws", "label": "Amazon Web Services (AWS)"},
+                    {"value": "gcp", "label": "Google Cloud Platform (GCP)"},
+                    {"value": "azure", "label": "Microsoft Azure"},
+                    {"value": "docker", "label": "Docker Containers"},
+                    {"value": "k8s", "label": "Kubernetes Clusters"},
+                ]
+                cloud_select = SearchableMultiSelect(
+                    name="cloud_infrastructure",
+                    label_text="Cloud Infrastructure Stack",
+                    options=cloud_options,
+                    placeholder="Choose cloud platforms...",
+                )
+                cloud_select.render()
+
+                # Submission Row
+                with div():
+                    button(
+                        "Submit Candidate Details", type="submit", _class="submit-btn"
+                    )
+
+        # Dynamic debugger display area
+        with div(_class="debug-panel"):
+            div(
+                "Live Captured FormData (via standard browser FormData API):",
+                _class="debug-title",
+            )
+            pre(id="form-output-log", _class="debug-content")(
+                "Waiting for form submission..."
+            )
+
+        # Form Processing Logic Showcase
+        with script():
+            raw("""
+            function handleSubmit(event) {
+                event.preventDefault();
+                
+                const formElement = document.getElementById('profile-form');
+                
+                // Read from native DOM standard browser FormData
+                const formData = new FormData(formElement);
+                
+                // Map values cleanly
+                const parsedData = {
+                    candidate_name: formData.get('candidate_name'),
+                    programming_languages: formData.getAll('programming_languages'),
+                    cloud_infrastructure: formData.getAll('cloud_infrastructure')
+                };
+
+                // Output parsed FormData properties to terminal debug panel
+                const displayArea = document.getElementById('form-output-log');
+                displayArea.textContent = JSON.stringify(parsedData, null, 4);
+                
+                // Smooth scroll into view
+                displayArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            """)
+
+    return doc
+
+
+if __name__ == "__main__":
+    rendered_doc = generate_form_demo()
+
+    output_filename = "scoped_form_demo.html"
+    with open(output_filename, "w", encoding="utf-8") as f:
+        f.write(rendered_doc.render())
+
+    print(
+        f"Successfully generated offline-capable vanilla CSS multi-select form at: '{output_filename}'"
+    )

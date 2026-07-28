@@ -81,30 +81,39 @@
   grid-auto-flow: column;
 }
 
-.activity {
-  background-color: antiquewhite;
-  padding: 2px;
-  border: 1px solid burlywood;
-  border-radius: 2px;
-  cursor: pointer;
+[data-draggable] {
   touch-action: none;
   user-select: none;
-  margin: 2px;
-
-  &.droptarget {
-    border: 2px solid green;
+  cursor: pointer;
+  &.ghost {
+    opacity: 0.5;
+    pointer-events: none;
+    position: absolute;
+    &:not([data-can-drop]) {
+      border: 2px solid red;
+    }
   }
   &[data-dragging] {
-    opacity: 0.5;
     cursor: grabbing;
     z-index: 100;
     &[data-ctrldrag] {
       cursor: copy;
     }
     &:not([data-can-drop]) {
-      border: 2px solid red;
       cursor: not-allowed;
     }
+  }
+}
+.activity {
+  background-color: antiquewhite;
+  padding: 2px;
+  border: 1px solid burlywood;
+  border-radius: 2px;
+
+  margin: 2px;
+
+  &.droptarget {
+    border: 2px solid green;
   }
 }
 .has-title {
@@ -123,6 +132,43 @@
   }
   & .timeline-bar {
     background-color: red;
+  }
+}
+.activity-wrapper.remove {
+  animation: fade-out-and-shrink 1s forwards;
+}
+
+@keyframes fade-out-and-shrink {
+  0% {
+    opacity: 1;
+    max-height: 200px;
+  }
+  50% {
+    opacity: 0;
+    max-height: 200px;
+  }
+  100% {
+    opacity: 0;
+    max-height: 0px;
+  }
+}
+
+.activity-wrapper.add {
+  animation: grow-and-fade-in 1s forwards;
+}
+
+@keyframes grow-and-fade-in {
+  0% {
+    opacity: 0;
+    max-height: 0px;
+  }
+  50% {
+    opacity: 0;
+    max-height: 200px;
+  }
+  100% {
+    opacity: 1;
+    max-height: 200px;
   }
 }
 .activity.selected {

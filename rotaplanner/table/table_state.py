@@ -5,7 +5,7 @@ import dominate.tags as tags
 from logging import getLogger
 
 from .types import Activity, Location, Role, Staff, StaffAssignment
-from rotaplanner.database import database_connection,database_version
+from rotaplanner.database import database_connection, database_version
 from pydantic import BaseModel, Field
 import inspect
 
@@ -18,6 +18,7 @@ import reaktiv
 
 __all__ = ["locations", "staff", "activities", "dates"]
 
+
 @reaktiv.Computed
 def locations() -> list[Location]:
     logger.info("Loading locations from database")
@@ -27,6 +28,7 @@ def locations() -> list[Location]:
         for row in db.execute("""SELECT id, name FROM locations""").fetchall():
             locations.append(Location(id=row["id"], name=row["name"]))
         return locations
+
 
 @reaktiv.Computed
 def staff() -> list[Staff]:
@@ -38,10 +40,12 @@ def staff() -> list[Staff]:
             staff.append(Staff(id=row["id"], name=row["name"]))
         return staff
 
+
 @reaktiv.Computed
 def activities() -> dict[str, Activity]:
     logger.info("Loading activities from database")
     database_version.get()  # Establish dependency on database_version signal for cache invalidation
+    staff_dict = {s.id: s for s in staff()}
     with database_connection() as db:
         activities: dict[str, Activity] = {}
         staffassignments: dict[str, StaffAssignment] = {}
@@ -58,44 +62,54 @@ def activities() -> dict[str, Activity]:
                 staff_assignments.assignment_id, 
                 staff_assignments.staff_id
             FROM activities
-            LEFT JOIN activity_roles ON activities.id = activity_roles.activity_id
-            LEFT JOIN staff_assignments on activity_roles.id = staff_assignments.role_id"""
+            
+            LEFT JOIN staff_assignments on activities.id = staff_assignments.activity_id
+            LEFT JOIN activity_roles ON activity_roles.id = staff_assignments.role_id"""
         for row in db.execute(activities_sqlquery).fetchall():
+            try:
 
-            (
-                activities_id,
-                activities_name,
-                locations_id,
-                activities_start,
-                activities_finish,
-                role_id,
-                role_name,
-                staffassignments_id,
-                staffassignments_staff_id,
-            ) = row
+                (
+                    activities_id,
+                    activities_name,
+                    locations_id,
+                    activities_start,
+                    activities_finish,
+                    role_id,
+                    role_name,
+                    staffassignments_id,
+                    staffassignments_staff_id,
+                ) = row
 
-            if activities_id not in activities:
-                activities[activities_id] = Activity(
-                    id=activities_id,
-                    name=activities_name,
-                    location=locations_id,
-                    activity_start=activities_start,
-                    activity_finish=activities_finish,
-                )
-            activity = activities[activities_id]
-            if role_id not in roles:
-                roles[role_id] = Role(id=role_id, name=role_name)
-                activity.roles.append(roles[role_id])
-            role = roles[role_id]
-            if staffassignments_id is not None:
-                if staffassignments_id not in staffassignments:
-                    staffassignments[staffassignments_id] = StaffAssignment(
-                        id=staffassignments_id,
-                        staff=staffassignments_staff_id,
-                        flags=[],
+                if activities_id not in activities:
+                    activities[activities_id] = Activity(
+                        id=activities_id,
+                        name=activities_name,
+                        location=locations_id,
+                        activity_start=activities_start,
+                        activity_finish=activities_finish,
                     )
-                role.assignments.append(staffassignments[staffassignments_id])
+                activity = activities[activities_id]
+                if role_id is not None:
+                    if role_id not in roles:
+                        roles[role_id] = Role(id=role_id, name=role_name)
+                        activity.roles.append(roles[role_id])
+                    role = roles[role_id]
+                else:
+                    role = None
+                if staffassignments_id is not None:
+                    if staffassignments_id not in staffassignments:
+                        staffassignments[staffassignments_id] = StaffAssignment(
+                            id=staffassignments_id,
+                            staff=staff_dict.get(staffassignments_staff_id),
+                            flags=[],
+                            role=role,
+                        )
+                    activity.assignments.append(staffassignments[staffassignments_id])
+            except Exception as e:
+                logger.error(f"Error processing row {tuple(row)}: {e}")
+                raise e
         return activities
+
 
 @reaktiv.Computed
 def dates() -> list[datetime.date]:
@@ -115,5 +129,3 @@ def dates() -> list[datetime.date]:
         for i in range((max_date - min_date).days + 1)
     ]
     return dates
-
-
